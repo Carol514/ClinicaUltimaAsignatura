@@ -1,0 +1,15 @@
+FROM mysql:8.0
+
+#Establecer variables de entorno por defecto
+ENV MYSQL_ROOT_PASSWORD=root 
+ENV MYSQL_DATABASE=clinicaDB
+ENV MYSQL_USER=admin
+ENV MYSQL_PASSWORD=admin123
+
+#Exponer el puerto de MySQL
+EXPOSE 3306
+
+#Configurar el charset y collation por defecto
+RUN echo "[mysqld]" > /etc/mysql/conf.d/charset.cnf && \
+    echo "character-set-server=utf8mb4" >> /etc/mysql/conf.d/charset.cnf && \
+    echo "collation-server=utf8mb4_unicode_ci" >> /etc/mysql/conf.d/charset.cnf

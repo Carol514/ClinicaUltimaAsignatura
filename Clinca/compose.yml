@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  mysql:
+    build: .
+    container_name: mysql-todosystem2
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: clinicaDB
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin123
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./Data:/var/lib/mysql
+    networks:
+      - mysql-network
+
+networks:
+  mysql-network:
+    driver: bridge

@@ -17,6 +17,17 @@ services:
     networks:
       - mysql-network
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-clinica
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql-todosystem2
+    networks:
+      - mysql-network
+
 networks:
   mysql-network:
     driver: bridge

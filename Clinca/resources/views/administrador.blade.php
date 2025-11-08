@@ -1,54 +1,40 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Panel del Administrador</title>
-  <link rel="stylesheet" href="{{ asset('css/panel.css') }}">
-</head>
+@extends('layouts.app')
 
-<body>
-  <!-- Navbar -->
-  <header class="navbar">
-    <div class="logo-container">
-      <img src="{{ asset('img/templogo.jpg') }}" alt="Hospital Logo" class="logo">
+@section('title','Panel del Administrador')
+@section('greeting','Bienvenido, Administrador')
+
+@section('content')
+  <h2>Panel del Administrador</h2>
+
+  <h3 class="section-title">Administración de Roles</h3>
+  <div class="card-container">
+    <div class="card" data-link="{{ url('/administrar-roles') }}">
+      <h3>Administrar Usuarios</h3>
     </div>
-    <div class="greeting">Bienvenido, Administrador</div>
-    <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
-  </header>
+  </div>
 
-  <!-- Main Dashboard -->
-  <main class="dashboard">
-    <h2>Panel del Administrador</h2>
+  <hr>
 
-    <h3 class="section-title">Administración de Roles</h3>
-    <div class="card-container">
-      <div class="card" onclick="window.location.href='{{ url('administrar_roles') }}'">
-        <h3>Administrar Usuarios</h3>
-      </div>
+  <h3 class="section-title">Reportes Globales</h3>
+  <div class="card-container">
+    <div class="card" data-link="{{ url('/reportes') }}">
+      <h3>Generador de Reportes</h3>
     </div>
-
-    <hr>
-
-    <h3 class="section-title">Reportes Globales</h3>
-    <div class="card-container">
-      <div class="card" onclick="window.location.href='{{ url('generador_reportes') }}'">
-        <h3>Generador de Reportes</h3>
-      </div>
-      <div class="card" onclick="window.location.href='{{ url('respaldo_bd') }}'">
-        <h3>Respaldo de Base de Datos</h3>
-      </div>
+    <div class="card" data-link="{{ url('/respaldo-bd') }}">
+      <h3>Respaldo de Base de Datos</h3>
     </div>
-  </main>
+  </div>
+@endsection
 
+@section('scripts')
+  {{-- JS específico de la vista Administrador --}}
   <script>
-    const name = localStorage.getItem('adminName') || 'Administrador';
-    document.querySelector('.greeting').textContent = `Bienvenido, ${name}`;
-
-    function logout() {
-      localStorage.removeItem('adminName');
-      window.location.href = '{{ url('login') }}';
-    }
+    // convierte todas las tarjetas con data-link en links clicables
+    document.querySelectorAll('.card[data-link]').forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        window.location.href = card.getAttribute('data-link');
+      });
+    });
   </script>
-</body>
-</html>
+@endsection

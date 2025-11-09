@@ -1204,3 +1204,26 @@ font-family: Arial, Helvetica, sans-serif;
 #trat-form label { display:block; margin-bottom:6px; font-weight:600; text-align:left; }
 #trat-form input, #trat-form textarea { width:100%; }
 #trat-form .btn-container { justify-content:center; gap:12px; }
+
+
+/* Signos vitales: ancho consistente y labels arriba */
+#sv-context,
+#sv-form,
+#sv-list {
+  max-width: 700px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#sv-form label { display:block; margin-bottom:6px; font-weight:600; text-align:left; }
+#sv-form input { width:100%; }
+
+#sv-form .btn-container { justify-content:center; gap:12px; }
+
+/* En pantallas muy pequeñas, botones en columna (ya usamos este patrón) */
+@media (max-width: 600px){
+  #sv-form .btn-container { flex-direction: column; align-items: stretch; }
+  #sv-form .btn-container .confirm-btn,
+  #sv-form .btn-container .cancel-btn { width:100%; }
+}

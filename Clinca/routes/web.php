@@ -45,3 +45,12 @@ Route::view('/medico', 'medico')->name('medico');
 Route::view('/enfermera', 'enfermera')->name('enfermera');
 Route::view('/recepcionista', 'recepcionista')->name('recepcionista');
 Route::view('/paciente', 'paciente')->name('paciente');
+
+// ==== MÉDICO ====
+Route::prefix('medico')->group(function () {
+    Route::view('/', 'medico.panel')->name('medico.panel'); // dashboard simple
+    Route::view('/historial',    'medico.historial')->name('medico.historial');
+    Route::view('/documentos',   'medico.documentos')->name('medico.documentos');
+    Route::view('/tratamientos', 'medico.tratamientos')->name('medico.tratamientos');
+});
+

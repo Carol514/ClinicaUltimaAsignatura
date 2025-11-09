@@ -65,7 +65,12 @@ Route::prefix('recepcionista')->group(function () {
 
 
 // Paciente
-Route::view('/paciente', 'paciente')->name('paciente.panel');
+Route::prefix('paciente')->group(function () {
+    Route::view('/',              'paciente.panel')->name('paciente.panel');          // dashboard
+    Route::view('/historial',     'paciente.historial')->name('paciente.historial');  // consulta historial
+    Route::view('/recordatorios', 'paciente.recordatorios')->name('paciente.recordatorios'); // recordatorios
+});
+
 
 /* ---------- REDIRECCIÓN RAÍZ ---------- */
 Route::redirect('/', '/login');

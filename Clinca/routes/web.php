@@ -53,3 +53,9 @@ Route::view('/paciente',       'paciente')->name('paciente.panel');
 
 /* Raíz -> login */
 Route::redirect('/', '/login');
+
+// Enfermera
+Route::prefix('enfermera')->group(function () {
+    Route::view('/',       'enfermera.panel')->name('enfermera.panel');
+    Route::view('/signos', 'enfermera.signos')->name('enfermera.signos');
+});

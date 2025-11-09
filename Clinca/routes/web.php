@@ -44,6 +44,7 @@ Route::prefix('medico')->group(function () {
     Route::view('/historial',   'medico.historial')->name('medico.historial');
     Route::view('/documentos',  'medico.documentos')->name('medico.documentos');
     Route::view('/tratamientos','medico.tratamientos')->name('medico.tratamientos');
+    Route::view('/alta-historial', 'medico.alta_historial')->name('medico.alta');
 });
 
 // Enfermera

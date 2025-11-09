@@ -13,6 +13,8 @@
       <button class="confirm-btn" onclick="go('historial')">Consultar historial</button>
       <button class="confirm-btn" onclick="go('documentos')">Subir documentos</button>
       <button class="confirm-btn" onclick="go('tratamientos')">Editar tratamientos</button>
+      <button class="confirm-btn" onclick="go('alta-historial')">Alta de historial</button>
+      
     </div>
   </div>
 </main>

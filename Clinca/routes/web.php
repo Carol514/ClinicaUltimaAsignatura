@@ -60,7 +60,7 @@ Route::prefix('recepcionista')->group(function () {
 
     // HU-15
     Route::view('/citas',    'recepcionista.citas')->name('recepcionista.citas');
-    Route::view('/agenda',   'recepcionista.agenda')->name('recepcionista.agenda');
+    //Route::view('/agenda',   'recepcionista.agenda')->name('recepcionista.agenda');
 });
 
 

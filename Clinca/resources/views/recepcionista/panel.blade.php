@@ -10,10 +10,10 @@
     <a class="card" href="{{ route('recepcionista.registro') }}" style="text-decoration: none;">
       Registrar paciente
     </a>
-    <a class="card" href="#" style="text-decoration: none;">
+    <a class="card" href="{{ route('recepcionista.citas') }}" style="text-decoration: none;">
       Agendar cita
     </a>
-    <a class="card" href="#" style="text-decoration: none;">
+    <a class="card" href="{{ route('recepcionista.agenda') }}" style="text-decoration: none;">
       Ver agenda del día
     </a>
   </div>

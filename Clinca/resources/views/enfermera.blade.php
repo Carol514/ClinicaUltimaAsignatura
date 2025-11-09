@@ -1,139 +1,171 @@
+{{-- resources/views/enfermera.blade.php --}}
 @extends('layouts.app')
 
-@section('title','Panel de Enfermería')
+@section('title', 'Panel de Enfermería')
 
 @section('content')
-<main class="dashboard">
   <h2>Panel de Enfermería</h2>
 
-  {{-- ====== CONTEXTO DE PACIENTE ====== --}}
-  <div class="form-container" style="margin-bottom:16px;">
+  {{-- Buscar / seleccionar paciente --}}
+  <div class="form-container" style="margin-bottom:16px">
     <h3>Seleccionar paciente</h3>
-    <label for="pacienteCtx">Paciente</label>
-    <input id="pacienteCtx" placeholder="Ej. Ana Pérez" />
+    <form id="buscarPacienteForm">
+      <label for="buscarPaciente">Buscar (CURP / Nombre / Teléfono):</label>
+      <input id="buscarPaciente" placeholder="Ej. GAXX900101HDF / Ana Pérez / 322..." />
+      <div class="btn-container">
+        <button type="submit" class="confirm-btn">Buscar</button>
+        <button type="button" class="cancel-btn" id="simularSelPaciente">Simular selección</button>
+      </div>
+    </form>
+    <p class="muted" id="pacienteEstado">Paciente no seleccionado.</p>
   </div>
 
-  {{-- ====== SIGNOS VITALES ====== --}}
-  <section class="panel" style="margin-top:10px;">
-    <h3>Registro de Signos Vitales</h3>
+  {{-- Registro de Signos Vitales (paciente autollenado) --}}
+  <div class="form-container" style="margin-bottom:18px">
+    <h3>Registrar signos vitales</h3>
+    <form id="vitalsForm">
+      <label for="sv_paciente">Paciente:</label>
+      <input id="sv_paciente" readonly placeholder="Seleccione un paciente" required />
 
-    <form id="vitalForm">
-      <label for="vitalPaciente">Paciente</label>
-      <input id="vitalPaciente" readonly placeholder="(Se autollenará)" />
+      <label for="sv_fecha">Fecha:</label>
+      <input type="date" id="sv_fecha" required />
 
-      <label for="vitalFecha" style="margin-top:6px;">Fecha</label>
-      <input type="date" id="vitalFecha" required />
+      <label for="sv_temp">Temperatura (°C):</label>
+      <input type="number" step="0.1" id="sv_temp" placeholder="Ej. 36.5" required />
 
-      <label for="vitalTemp" style="margin-top:6px;">Temperatura (°C)</label>
-      <input type="number" id="vitalTemp" step="0.1" placeholder="Ej. 36.6" required />
+      <label for="sv_pa">Presión Arterial (mmHg):</label>
+      <input id="sv_pa" placeholder="Ej. 120/80" required />
 
-      <label for="vitalPA" style="margin-top:6px;">Presión arterial (mmHg)</label>
-      <input id="vitalPA" placeholder="Ej. 120/80" required />
+      <label for="sv_pulso">Pulso (lpm):</label>
+      <input type="number" id="sv_pulso" placeholder="Ej. 75" required />
 
-      <label for="vitalPulso" style="margin-top:6px;">Pulso (lpm)</label>
-      <input type="number" id="vitalPulso" placeholder="Ej. 76" required />
+      <label for="sv_fr">Frecuencia Respiratoria (rpm):</label>
+      <input type="number" id="sv_fr" placeholder="Ej. 16" required />
 
-      <label for="vitalFR" style="margin-top:6px;">Frecuencia respiratoria (rpm)</label>
-      <input type="number" id="vitalFR" placeholder="Ej. 16" required />
+      <label for="sv_spo2">Saturación de Oxígeno (%):</label>
+      <input type="number" id="sv_spo2" placeholder="Ej. 98" required />
 
-      <label for="vitalSpO2" style="margin-top:6px;">Saturación O₂ (%)</label>
-      <input type="number" id="vitalSpO2" placeholder="Ej. 98" required />
-
-      <div class="btn-container" style="margin-top:10px;">
-        <button class="confirm-btn" type="submit">Guardar signos</button>
-        <button class="cancel-btn" type="reset">Cancelar</button>
+      <div class="btn-container">
+        <button type="submit" class="confirm-btn">Guardar</button>
+        <button type="reset" class="cancel-btn" id="sv_reset">Limpiar</button>
       </div>
     </form>
-  </section>
+  </div>
 
-  {{-- ====== REGISTRO DE ADMINISTRACIÓN DE MEDICAMENTO ====== --}}
-  <section class="panel" style="margin-top:16px;">
+  {{-- Registro de administración de medicamentos (NO edita tratamiento) --}}
+  <div class="form-container">
     <h3>Registro de administración de medicamento</h3>
-    <p class="muted">Este módulo NO modifica tratamientos; solo registra la administración (qué, cuándo, vía y quién).</p>
+    <p class="muted" style="margin-top:-6px">
+      Aquí solo se registra la administración (qué, cuánto, vía, cuándo, quién y observaciones).
+    </p>
 
-    <form id="admForm">
-      <label for="admPaciente">Paciente</label>
-      <input id="admPaciente" readonly placeholder="(Se autollenará)" />
+    <form id="adminMedForm">
+      <label for="adm_paciente">Paciente:</label>
+      <input id="adm_paciente" readonly placeholder="Seleccione un paciente" required />
 
-      <label for="admMedicamento" style="margin-top:6px;">Medicamento</label>
-      <input id="admMedicamento" placeholder="Ej. Paracetamol 500 mg" required />
+      <label for="adm_medicamento">Medicamento:</label>
+      <input id="adm_medicamento" placeholder="Ej. Paracetamol" required />
 
-      <label for="admHora" style="margin-top:6px;">Hora de administración</label>
-      <input id="admHora" type="datetime-local" required />
+      <label for="adm_dosis" style="margin-top:8px;">Dosis:</label>
+      <input id="adm_dosis" placeholder="Ej. 500 mg" required />
 
-      <label for="admVia" style="margin-top:6px;">Vía</label>
-      <select id="admVia" required>
-        <option value="" selected disabled>Seleccione…</option>
+      <label for="adm_via" style="margin-top:8px;">Vía:</label>
+      <select id="adm_via" required>
+        <option value="">Seleccione…</option>
         <option>Oral</option>
-        <option>Intravenosa</option>
-        <option>Intramuscular</option>
-        <option>Subcutánea</option>
+        <option>Intravenosa (IV)</option>
+        <option>Intramuscular (IM)</option>
+        <option>Subcutánea (SC)</option>
         <option>Tópica</option>
-        <option>Otra</option>
+        <option>Inhalada</option>
       </select>
 
-      <label for="admQuien" style="margin-top:6px;">Quién la administró</label>
-      <input id="admQuien" placeholder="Ej. Enf. Sofía H." required />
+      <label for="adm_hora" style="margin-top:8px;">Hora de administración:</label>
+      <input type="time" id="adm_hora" required />
 
-      <div class="btn-container" style="margin-top:10px;">
-        <button class="confirm-btn" type="submit">Registrar</button>
-        <button class="cancel-btn" type="reset">Cancelar</button>
+      <label for="adm_quien" style="margin-top:8px;">Quién administró:</label>
+      <input id="adm_quien" placeholder="Nombre de la enfermera(o)" required
+             value="{{ session('userName', '') }}" />
+
+      <label for="adm_obs" style="margin-top:8px;">Observaciones:</label>
+      <textarea id="adm_obs" rows="3" placeholder="Notas adicionales…"></textarea>
+
+      <div class="btn-container" style="margin-top:12px;">
+        <button type="submit" class="confirm-btn">Registrar administración</button>
+        <button type="reset" class="cancel-btn" id="adm_reset">Limpiar</button>
       </div>
     </form>
-  </section>
-</main>
+  </div>
 
-{{-- ====== JS (demo sin backend) ====== --}}
-<script>
-  // 1) Inicializar paciente desde query ?p=Nombre o mantener de sesión simple
-  const urlParams = new URLSearchParams(window.location.search);
-  const pacienteInicial = urlParams.get('p') || '';
+  {{-- JS de página (demo sin backend) --}}
+  <script>
+    // Estado simple de paciente seleccionado
+    let pacienteActual = null; // { nombre, id }
 
-  // Inputs de contexto y campos atados
-  const $ctx = document.getElementById('pacienteCtx');
-  const $vitalPaciente = document.getElementById('vitalPaciente');
-  const $admPaciente   = document.getElementById('admPaciente');
+    const $estado = document.getElementById('pacienteEstado');
+    const $svPaciente  = document.getElementById('sv_paciente');
+    const $admPaciente = document.getElementById('adm_paciente');
 
-  // Quien administra (pre-llenar con un nombre guardado si existiera)
-  const nurseName = (sessionStorage.getItem('nurseName') || localStorage.getItem('nurseName') || 'Enfermería');
-  document.getElementById('admQuien').value = nurseName;
+    function pintarPaciente() {
+      if (pacienteActual?.nombre) {
+        $estado.textContent = 'Paciente seleccionado: ' + pacienteActual.nombre;
+        $svPaciente.value   = pacienteActual.nombre;
+        $admPaciente.value  = pacienteActual.nombre;
+      } else {
+        $estado.textContent = 'Paciente no seleccionado.';
+        $svPaciente.value   = '';
+        $admPaciente.value  = '';
+      }
+    }
 
-  // Sincroniza el nombre del paciente a ambos formularios (solo lectura)
-  function syncPaciente(nombre) {
-    $vitalPaciente.value = nombre || '';
-    $admPaciente.value   = nombre || '';
-  }
+    // Buscar paciente (DEMO)
+    document.getElementById('buscarPacienteForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = document.getElementById('buscarPaciente').value.trim();
+      if (!q) return alert('Ingresa un criterio de búsqueda');
+      // Aquí llamarías al backend. DEMO: si incluye "demo", lo encuentra.
+      if (q.toLowerCase().includes('demo')) {
+        pacienteActual = { nombre: 'Paciente DEMO', id: 'uuid-demo' };
+      } else {
+        alert('No se encontró. Selecciona manualmente o prueba "demo".');
+        pacienteActual = null;
+      }
+      pintarPaciente();
+    });
 
-  // Cambios en el campo de contexto
-  $ctx.addEventListener('input', () => syncPaciente($ctx.value));
+    // Botón de simulación rápida
+    document.getElementById('simularSelPaciente').addEventListener('click', () => {
+      pacienteActual = { nombre: 'Paciente DEMO', id: 'uuid-demo' };
+      pintarPaciente();
+    });
 
-  // Set inicial
-  $ctx.value = pacienteInicial;
-  syncPaciente(pacienteInicial);
+    // Enviar signos vitales
+    document.getElementById('vitalsForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!pacienteActual) return alert('Selecciona primero un paciente.');
+      alert('✅ Signos vitales guardados (demo).');
+      // Aquí harías fetch POST al backend.
+    });
 
-  // 2) Submit signos vitales (demo)
-  document.getElementById('vitalForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (!$vitalPaciente.value.trim()) { alert('Primero indique el paciente.'); return; }
-    alert('✅ Signos vitales registrados (demo).');
-    e.target.reset();
-    // mantener nombre del paciente
-    syncPaciente($ctx.value);
-  });
+    // Reset signos → mantener paciente
+    document.getElementById('sv_reset').addEventListener('click', () => {
+      setTimeout(pintarPaciente, 0);
+    });
 
-  // 3) Submit administración de medicamento (demo)
-  document.getElementById('admForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (!$admPaciente.value.trim()) { alert('Primero indique el paciente.'); return; }
-    const med  = document.getElementById('admMedicamento').value;
-    const hora = document.getElementById('admHora').value;
-    const via  = document.getElementById('admVia').value;
-    const who  = document.getElementById('admQuien').value;
-    alert(`✅ Administración registrada:\n\nPaciente: ${$admPaciente.value}\nMedicamento: ${med}\nHora: ${hora}\nVía: ${via}\nAplicó: ${who}`);
-    e.target.reset();
-    // mantener nombre del paciente
-    syncPaciente($ctx.value);
-    document.getElementById('admQuien').value = nurseName;
-  });
-</script>
+    // Enviar administración de medicamento
+    document.getElementById('adminMedForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!pacienteActual) return alert('Selecciona primero un paciente.');
+      alert('💉 Administración registrada (demo).');
+      // Aquí harías fetch POST al backend.
+    });
+
+    // Reset administración → mantener paciente
+    document.getElementById('adm_reset').addEventListener('click', () => {
+      setTimeout(pintarPaciente, 0);
+    });
+
+    // Init
+    pintarPaciente();
+  </script>
 @endsection

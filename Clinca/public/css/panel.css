@@ -1,0 +1,1438 @@
+* {
+margin: 0;
+font-family: Arial, Helvetica, sans-serif;
+
+}
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #7bc3ab;
+  color: white;
+  padding: 10px 30px; /* thinner header */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.navbar .logo {
+  width: 80px; /* smaller logo */
+  height: auto;
+}
+
+.navbar .greeting {
+  font-size: 1.4em; /* larger font */
+  font-weight: 600;
+}
+
+.navbar .logout-btn {
+  background-color: white;
+  color: #7bc3ab;
+  border: none;
+  padding: 6px 15px; /* slightly smaller padding */
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.navbar .logout-btn:hover {
+  background-color: #e6f3ee;
+}
+
+
+/* Dashboard */
+.dashboard {
+  padding: 40px;
+  text-align: center;
+}
+
+.dashboard h2 {
+  margin-bottom: 30px;
+  color: #333;
+}
+
+/* Cards */
+.card-container {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  width: 250px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #333;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  .card-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card {
+    width: 80%;
+    margin-bottom: 20px;
+  }
+}
+
+  /* Page-specific styling for REGISTAR PACIENTES */
+    .form-container {
+      max-width: 500px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-weight: 600;
+      text-align: left;
+      color: #333;
+    }
+
+    input, select, textarea {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    .btn-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .confirm-btn, .cancel-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .confirm-btn {
+      background-color: #7bc3ab;
+      color: white;
+    }
+
+    .confirm-btn:hover {
+      background-color: #65af96;
+    }
+
+    .cancel-btn {
+      background-color: #e6f3ee;
+      color: #333;
+    }
+
+    .cancel-btn:hover {
+      background-color: #d1ebe0;
+    }
+
+     /* Expediente-Medico */
+    .form-container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      color: #333;
+    }
+
+    input, select {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
+    .btn-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .confirm-btn, .cancel-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .confirm-btn {
+      background-color: #7bc3ab;
+      color: white;
+    }
+
+    .confirm-btn:hover {
+      background-color: #65af96;
+    }
+
+    .cancel-btn {
+      background-color: #e6f3ee;
+      color: #333;
+    }
+
+    .cancel-btn:hover {
+      background-color: #d1ebe0;
+    }
+
+     /* consultar historial */
+    .form-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      color: #333;
+    }
+
+    input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
+    .results {
+      margin-top: 25px;
+      padding: 20px;
+      border-radius: 10px;
+      background: #f8f9fa;
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.05);
+    }
+
+    .btn-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .confirm-btn, .cancel-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .confirm-btn {
+      background-color: #7bc3ab;
+      color: white;
+    }
+
+    .confirm-btn:hover {
+      background-color: #65af96;
+    }
+
+    .cancel-btn {
+      background-color: #e6f3ee;
+      color: #333;
+    }
+
+    .cancel-btn:hover {
+      background-color: #d1ebe0;
+    }
+
+    .no-results {
+      text-align: center;
+      color: #888;
+      margin-top: 15px;
+    }
+
+      /* historial*/
+    body {
+      font-family: "Poppins", sans-serif;
+      background-color: #f5f8f7;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .panel {
+      max-width: 1000px;
+      margin: 50px auto;
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #2a6b5f;
+      margin-bottom: 30px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #7bc3ab;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background-color: #f0f8f5;
+    }
+
+    .btn-container {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .btn-secondary {
+      background-color: #e6f3ee;
+      color: #2a6b5f;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .btn-secondary:hover {
+      background-color: #cde7dd;
+    }
+
+     /* subir docs */
+    body {
+      font-family: "Poppins", sans-serif;
+      background-color: #f5f8f7;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .panel {
+      max-width: 700px;
+      margin: 50px auto;
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #2a6b5f;
+      margin-bottom: 30px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      color: #333;
+      text-align: left;
+    }
+
+    input[type="file"], input[type="text"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 1em;
+    }
+
+    .btn {
+      background-color: #7bc3ab;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+      width: fit-content;
+      align-self: center;
+    }
+
+    .btn:hover {
+      background-color: #65af96;
+    }
+
+    .uploaded-list {
+      margin-top: 30px;
+    }
+
+    .uploaded-item {
+      background-color: #f0f8f5;
+      border-radius: 10px;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-secondary {
+      background-color: #e6f3ee;
+      color: #2a6b5f;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+      display: block;
+      margin: 30px auto 0;
+    }
+
+    .btn-secondary:hover {
+      background-color: #cde7dd;
+    }
+
+     /* registro de alergias */
+    body {
+      font-family: "Poppins", sans-serif;
+      background-color: #f5f8f7;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .panel {
+      max-width: 700px;
+      margin: 50px auto;
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #2a6b5f;
+      margin-bottom: 30px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      text-align: left;
+    }
+
+    input, textarea {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 1em;
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    .btn {
+      background-color: #7bc3ab;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+      width: fit-content;
+      align-self: center;
+    }
+
+    .btn:hover {
+      background-color: #65af96;
+    }
+
+    .btn-secondary {
+      background-color: #e6f3ee;
+      color: #2a6b5f;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+      display: block;
+      margin: 30px auto 0;
+    }
+
+    .btn-secondary:hover {
+      background-color: #cde7dd;
+    }
+
+    .list-container {
+      margin-top: 25px;
+    }
+
+    .list-item {
+      background-color: #f0f8f5;
+      border-radius: 10px;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+    }
+
+    /* filtrar enfermedad */
+    body {
+      font-family: "Poppins", sans-serif;
+      background-color: #f5f8f7;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .panel {
+      max-width: 700px;
+      margin: 50px auto;
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #2a6b5f;
+      margin-bottom: 30px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    select {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 1em;
+    }
+
+    .btn {
+      background-color: #7bc3ab;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+      width: fit-content;
+      align-self: center;
+    }
+
+    .btn:hover {
+      background-color: #65af96;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 25px;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #7bc3ab;
+      color: #fff;
+    }
+
+    tr:hover {
+      background-color: #f0f8f5;
+    }
+
+    .btn-secondary {
+      background-color: #e6f3ee;
+      color: #2a6b5f;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+      display: block;
+      margin: 30px auto 0;
+    }
+
+    .btn-secondary:hover {
+      background-color: #cde7dd;
+    }
+
+     /* signos vitales & editar tratamientos*/
+    .form-container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      text-align: left;
+      color: #333;
+    }
+
+    input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
+    .btn-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .confirm-btn, .cancel-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .confirm-btn {
+      background-color: #7bc3ab;
+      color: white;
+    }
+
+    .confirm-btn:hover {
+      background-color: #65af96;
+    }
+
+    .cancel-btn {
+      background-color: #e6f3ee;
+      color: #333;
+    }
+
+    .cancel-btn:hover {
+      background-color: #d1ebe0;
+    }
+
+
+      /* NEW medicao Panel */
+
+    .search-section {
+      background: #fff;
+      max-width: 900px;
+      margin: 40px auto 20px;
+      padding: 25px 30px;
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    .search-section h3 {
+      color: #2a6b5f;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .search-bar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .search-bar input {
+      width: 70%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 1em;
+    }
+
+    .search-bar button {
+      background-color: #7bc3ab;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .search-bar button:hover {
+      background-color: #65af96;
+    }
+
+    /* Patient Info Section */
+    .patient-info {
+      max-width: 1000px;
+      margin: 20px auto;
+      background: #fff;
+      border-radius: 15px;
+      padding: 25px 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      display: none; /* hidden until search */
+    }
+
+    .patient-info h3 {
+      color: #2a6b5f;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .patient-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    .patient-table th {
+      background-color: #7bc3ab;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      border-radius: 5px 5px 0 0;
+    }
+
+    .patient-table td {
+      padding: 10px 15px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .content-wrapper {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+/* Updated layout for cards */
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  width: 100%;
+}
+
+.card {
+  width: 260px;
+  height: 120px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  text-align: center;
+  color: #2a6b5f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+ /* Patient dashboard*/
+    .dashboard {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .dashboard h2 {
+      color: #2a6b5f;
+      font-size: 1.8em;
+      margin-bottom: 25px;
+    }
+
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 20px;
+      padding: 20px;
+    }
+
+    .card {
+      width: 260px;
+      height: 120px;
+      background-color: #fff;
+      border-radius: 15px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      color: #2a6b5f;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      background-color: #f8fffc;
+    }
+
+    /* Admin Dashboard */
+    
+    .dashboard {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .dashboard h2 {
+      color: #2a6b5f;
+      font-size: 1.8em;
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      color: #2a6b5f;
+      font-size: 1.4em;
+      margin-top: 40px;
+      margin-bottom: 15px;
+    }
+
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 10px;
+      padding: 10px;
+    }
+
+    .card {
+      width: 260px;
+      height: 120px;
+      background-color: #fff;
+      border-radius: 15px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      color: #2a6b5f;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      background-color: #f8fffc;
+    }
+
+    hr {
+      width: 80%;
+      margin: 40px auto;
+      border: none;
+      border-top: 2px solid #7bc3ab;
+      opacity: 0.5;
+    }
+
+    /* ---- Generador de Reportes ---- */
+    .panel-header {
+      text-align: center;
+      margin-bottom: 25px;
+      margin-top: 50px;
+    }
+
+    .panel-header h1 {
+      margin-bottom: 5px;
+      font-size: 26px;
+      color: #2c3e50;
+    }
+
+    .panel-header p {
+      margin: 0;
+      color: #555;
+      font-size: 15px;
+    }
+
+    .form-section {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+      padding: 5%;
+      margin: 50px;
+    }
+
+    .form-section label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    .form-section select,
+    .form-section input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      background-color: #fafafa;
+    }
+
+    .btn-group {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      margin-left: 50px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: #7bc3ab;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #438c74;
+    }
+
+    .btn-secondary {
+      background-color: #e5e7eb;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background-color: #d1d5db;
+    }
+
+    .result-section {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-top: 25px;
+      margin: 50px;
+    }
+
+    .summary-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 15px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .styled-table thead tr {
+      background-color: #7bc3ab;
+      color: #ffffff;
+      text-align: left;
+    }
+
+    .styled-table th,
+    .styled-table td {
+      padding: 12px 15px;
+    }
+
+    .styled-table tbody tr {
+      border-bottom: 1px solid #ddd;
+    }
+
+    .styled-table tbody tr:nth-of-type(even) {
+      background-color: #f3f3f3;
+    }
+
+    .styled-table tbody tr:last-of-type {
+      border-bottom: 2px solid #7bc3ab;
+    }
+
+    .export-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .filtros .filtros-grid{
+  display:grid;
+  gap:12px;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+}
+
+.filtros .span-3{ grid-column: 1 / span 3; }
+
+.filtros .acciones{
+  grid-column: 4 / 5;
+  display:flex;
+  gap:10px;
+  align-items:end;   
+  justify-content:flex-end;
+}
+
+@media (max-width: 980px){
+  .filtros .filtros-grid{
+    grid-template-columns: 1fr 1fr;
+  }
+  .filtros .span-3{ grid-column: 1 / -1; }
+  .filtros .acciones{ grid-column: 1 / -1; justify-content:flex-start; }
+}
+
+@media (max-width: 600px) {
+  /* Cambiar a diseño en una sola columna */
+  .filtros .filtros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros .filtros-grid > div {
+    width: 100%;
+  }
+
+  /* Que los labels queden encima de los inputs */
+  .filtros label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  /* Ajustar separación entre campos */
+  .filtros input,
+  .filtros select {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  /* Botones uno bajo otro, full width */
+  .filtros .acciones {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .filtros .acciones button {
+    width: 100%;
+    padding: 10px 0;
+  }
+}
+
+
+/* ===== Subir documentos: ancho consistente con "Subidos" ===== */
+#doc-context,
+#docs-form {
+  max-width: 900px !important;   /* igual que el panel inferior */
+  width: 100%;
+}
+
+/* Grid de 2 columnas en pantallas >600px */
+@media (min-width: 601px) {
+  #docs-form .grid-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+/* Labels arriba del campo siempre */
+#docs-form label,
+#doc-context label {
+  display: block !important;
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Asegurar que inputs/selects ocupen el ancho del grid */
+#docs-form input,
+#docs-form select,
+#docs-form textarea {
+  width: 100%;
+}
+
+/* Botones alineados y con la misma altura */
+#docs-form .acciones {
+  display: flex;
+  gap: 12px;
+  justify-content: center;   /* centrados horizontalmente */
+  align-items: center;       /* mismo eje vertical */
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+#docs-form .acciones .btn,
+#docs-form .acciones .btn-secondary {
+  padding: 10px 18px !important;   /* mismo padding = misma altura visual */
+  line-height: 1 !important;
+  border-radius: 20px;
+}
+
+/* En móvil, seguir apilando los botones a 100% */
+@media (max-width: 600px) {
+  #docs-form .acciones {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #docs-form .acciones .btn,
+  #docs-form .acciones .btn-secondary {
+    width: 100%;
+  }
+}
+
+/* Editar tratamientos: ancho consistente y botones centrados */
+#trat-context,
+#trat-form {
+  max-width: 700px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#trat-form label { display:block; margin-bottom:6px; font-weight:600; text-align:left; }
+#trat-form input, #trat-form textarea { width:100%; }
+#trat-form .btn-container { justify-content:center; gap:12px; }
+
+
+/* Signos vitales: ancho consistente y labels arriba */
+#sv-context,
+#sv-form,
+#sv-list {
+  max-width: 700px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#sv-form label { display:block; margin-bottom:6px; font-weight:600; text-align:left; }
+#sv-form input { width:100%; }
+
+#sv-form .btn-container { justify-content:center; gap:12px; }
+
+/* En pantallas muy pequeñas, botones en columna (ya usamos este patrón) */
+@media (max-width: 600px){
+  #sv-form .btn-container { flex-direction: column; align-items: stretch; }
+  #sv-form .btn-container .confirm-btn,
+  #sv-form .btn-container .cancel-btn { width:100%; }
+}
+
+
+/* ====== Recepción: forzar layout vertical (como Historial) ====== */
+
+.agendar-cita .fields,
+.agenda-filtros .fields{
+  display: grid !important;
+  grid-template-columns: 1fr !important;   /* SIEMPRE 1 columna */
+  gap: 12px;
+}
+
+.agendar-cita .field,
+.agenda-filtros .field{
+  display: flex;
+  flex-direction: column;                  /* label arriba, input abajo */
+  gap: 6px;
+}
+
+/* Etiquetas consistentes */
+.agendar-cita label,
+.agenda-filtros label{
+  font-weight: 600;
+  margin-bottom: 0;                        /* ya damos gap arriba */
+}
+
+/* Campos a 100% */
+.agendar-cita input,
+.agendar-cita select,
+.agenda-filtros input,
+.agenda-filtros select{
+  width: 100%;
+  display: block;
+}
+
+/* Botonera alineada y pareja */
+.agendar-cita .acciones,
+.agenda-filtros .acciones{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+
+@media (max-width: 700px){
+  .agendar-cita .acciones,
+  .agenda-filtros .acciones{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .agendar-cita .acciones > *,
+  .agenda-filtros .acciones > *{
+    width: 100%;
+  }
+}
+
+/* Ancho agradable del panel (como "Subidos") */
+.recepcion-panel,
+.agenda-panel,
+.agendar-cita,
+.agenda-filtros,
+.panel{
+  max-width: 960px;        /* mismo respiro que Subidos */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* === Unificar formularios con la tabla (sin recuadro interno) === */
+
+/* Quitamos fondo, sombra y borde del contenedor del form */
+.agenda-filtros.form-container,
+.agendar-cita.form-container {
+  background: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Ajustamos el margen inferior para separarlo un poco de la tabla */
+.agenda-filtros + .table-container,
+.agendar-cita + .table-container {
+  margin-top: 24px;
+}
+
+/* Mantiene espacio entre cada campo */
+.agenda-filtros .field,
+.agendar-cita .field {
+  margin-bottom: 10px;
+}
+
+/* Mantiene la botonera separada pero integrada visualmente */
+.agenda-filtros .acciones,
+.agendar-cita .acciones {
+  margin-top: 15px;
+  padding-top: 10px;
+}
+
+/* === Igualar estilo del enlace “Volver” con los botones === */
+
+.btn-container a.cancel-btn,
+.acciones a.cancel-btn {
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  width: 100%;                /* igual que los botones en vista móvil */
+  padding: 10px 0;
+  border-radius: 25px;
+  font-weight: 600;
+  background-color: #e9f4f0;  /* mismo color base que el de los otros */
+  color: #222;
+  transition: background 0.2s ease;
+}
+
+.btn-container a.cancel-btn:hover,
+.acciones a.cancel-btn:hover {
+  background-color: #d7ece6;
+}
+
+
+/* ===== Alta de historial – layout y responsive ===== */
+
+/* Todos los inputs/select/textarea al 100% */
+.form-container input,
+.form-container select,
+.form-container textarea { width: 100%; }
+
+/* Separador de ancho completo dentro del panel */
+.sep{
+  height: 1px;
+  width: 100%;
+  background: #e6eee9;
+  margin: 18px 0;
+  border-radius: 1px;
+}
+
+/* Grid base 2 columnas con gap */
+.grid-2{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.gap16{ gap:16px; }
+/* Espaciado interno del panel de alta */
+.alta-panel{
+  padding: 22px 26px;                 /* aire lateral real */
+}
+
+/* Campos siempre a 100% y sin encogerse raro */
+.alta-panel input,
+.alta-panel select,
+.alta-panel textarea{
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Separador */
+.sep{
+  height: 18px;
+  border-bottom: 1px solid #e8efec;
+  margin: 14px 0;
+}
+
+/* 2 columnas con buen espacio lateral */
+.grid-2{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;                     /* 16 vertical, 24 horizontal */
+}
+
+/* Signos vitales: 3-2-1 columnas según viewport */
+.vitals-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 24px;                     /* 16 vertical, 24 horizontal */
+}
+
+/* Botonera consistente */
+.btn-row{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:flex-start;
+}
+.btn-row .confirm-btn,
+.btn-row .cancel-btn,
+.btn-row .btn-wide{
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border-radius: 20px;
+}
+.btn-row .btn-wide{ width: 220px; }
+
+/* Breakpoints */
+@media (max-width: 980px){
+  .grid-2{ grid-template-columns: 1fr; }
+  .vitals-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px){
+  .vitals-grid{ grid-template-columns: 1fr; }
+  .btn-row{ flex-direction: column; align-items: stretch; }
+  .btn-row .btn-wide,
+  .btn-row .confirm-btn,
+  .btn-row .cancel-btn{ width:100%; }
+}

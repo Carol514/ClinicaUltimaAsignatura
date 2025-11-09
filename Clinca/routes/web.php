@@ -3,13 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
-// Raíz → login
-Route::redirect('/', '/login');
+/* ---------- LOGIN ---------- */
+Route::view('/login', 'login')->name('login');
 
-// Vista de login
-Route::view('/login', 'login')->name('login.view');
-
-// Post del login (redirige por rol; solo UI)
 Route::post('/login', function (Request $request) {
     $name = $request->input('username', 'Usuario');
     $role = $request->input('role');
@@ -18,39 +14,42 @@ Route::post('/login', function (Request $request) {
         return back()->withErrors(['role' => 'Selecciona un rol válido'])->withInput();
     }
 
-    // Guardamos algo mínimo en sesión (placeholder; sin Auth real)
+    // Simulación de sesión (luego será Auth real)
     session([
         'userName' => $name,
         'userRole' => $role,
     ]);
 
     return match ($role) {
-        'admin'        => redirect('/administrador'),
-        'doctor'       => redirect('/medico'),
-        'nurse'        => redirect('/enfermera'),
-        'receptionist' => redirect('/recepcionista'),
-        'patient'      => redirect('/paciente'),
+        'admin'        => redirect()->route('admin.panel'),
+        'doctor'       => redirect()->route('medico.panel'),
+        'nurse'        => redirect()->route('enfermera.panel'),
+        'receptionist' => redirect()->route('recepcionista.panel'),
+        'patient'      => redirect()->route('paciente.panel'),
     };
 })->name('login.post');
 
-// Logout simple (limpia sesión y vuelve al login)
 Route::get('/logout', function () {
     session()->flush();
-    return redirect()->route('login.view');
+    return redirect()->route('login');
 })->name('logout');
 
-// Placeholders de dashboards (solo vistas para que no den 404)
-Route::view('/administrador', 'administrador')->name('administrador');
-Route::view('/medico', 'medico')->name('medico');
-Route::view('/enfermera', 'enfermera')->name('enfermera');
-Route::view('/recepcionista', 'recepcionista')->name('recepcionista');
-Route::view('/paciente', 'paciente')->name('paciente');
+/* ---------- PANELES ---------- */
+// Admin
+Route::view('/administrador', 'administrador')->name('admin.panel');
 
-// ==== MÉDICO ====
+// Médico (ya creadas arriba)
 Route::prefix('medico')->group(function () {
-    Route::view('/', 'medico.panel')->name('medico.panel'); // dashboard simple
-    Route::view('/historial',    'medico.historial')->name('medico.historial');
-    Route::view('/documentos',   'medico.documentos')->name('medico.documentos');
-    Route::view('/tratamientos', 'medico.tratamientos')->name('medico.tratamientos');
+    Route::view('/',            'medico.panel')->name('medico.panel');
+    Route::view('/historial',   'medico.historial')->name('medico.historial');
+    Route::view('/documentos',  'medico.documentos')->name('medico.documentos');
+    Route::view('/tratamientos','medico.tratamientos')->name('medico.tratamientos');
 });
 
+// Placeholders para que no den 404 (se pueden reemplazar luego)
+Route::view('/enfermera',      'enfermera')->name('enfermera.panel');
+Route::view('/recepcionista',  'recepcionista')->name('recepcionista.panel');
+Route::view('/paciente',       'paciente')->name('paciente.panel');
+
+/* Raíz -> login */
+Route::redirect('/', '/login');

@@ -62,6 +62,11 @@ Route::prefix('enfermera')->group(function () {
 
 // Recepcionista
 Route::prefix('recepcionista')->group(function () {
-    Route::view('/', 'recepcionista.panel')->name('recepcionista.panel');
-    Route::view('/registro', 'recepcionista.registro')->name('recepcionista.registro');
+    Route::view('/',          'recepcionista.panel')->name('recepcionista.panel');
+    Route::view('/registro',  'recepcionista.registro')->name('recepcionista.registro');
+
+    // NUEVAS
+    Route::view('/citas',     'recepcionista.citas')->name('recepcionista.citas');
+    Route::view('/agenda',    'recepcionista.agenda')->name('recepcionista.agenda');
 });
+

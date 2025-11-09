@@ -1227,3 +1227,123 @@ font-family: Arial, Helvetica, sans-serif;
   #sv-form .btn-container .confirm-btn,
   #sv-form .btn-container .cancel-btn { width:100%; }
 }
+
+
+/* ====== Recepción: forzar layout vertical (como Historial) ====== */
+
+.agendar-cita .fields,
+.agenda-filtros .fields{
+  display: grid !important;
+  grid-template-columns: 1fr !important;   /* SIEMPRE 1 columna */
+  gap: 12px;
+}
+
+.agendar-cita .field,
+.agenda-filtros .field{
+  display: flex;
+  flex-direction: column;                  /* label arriba, input abajo */
+  gap: 6px;
+}
+
+/* Etiquetas consistentes */
+.agendar-cita label,
+.agenda-filtros label{
+  font-weight: 600;
+  margin-bottom: 0;                        /* ya damos gap arriba */
+}
+
+/* Campos a 100% */
+.agendar-cita input,
+.agendar-cita select,
+.agenda-filtros input,
+.agenda-filtros select{
+  width: 100%;
+  display: block;
+}
+
+/* Botonera alineada y pareja */
+.agendar-cita .acciones,
+.agenda-filtros .acciones{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+
+@media (max-width: 700px){
+  .agendar-cita .acciones,
+  .agenda-filtros .acciones{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .agendar-cita .acciones > *,
+  .agenda-filtros .acciones > *{
+    width: 100%;
+  }
+}
+
+/* Ancho agradable del panel (como "Subidos") */
+.recepcion-panel,
+.agenda-panel,
+.agendar-cita,
+.agenda-filtros,
+.panel{
+  max-width: 960px;        /* mismo respiro que Subidos */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* === Unificar formularios con la tabla (sin recuadro interno) === */
+
+/* Quitamos fondo, sombra y borde del contenedor del form */
+.agenda-filtros.form-container,
+.agendar-cita.form-container {
+  background: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Ajustamos el margen inferior para separarlo un poco de la tabla */
+.agenda-filtros + .table-container,
+.agendar-cita + .table-container {
+  margin-top: 24px;
+}
+
+/* Mantiene espacio entre cada campo */
+.agenda-filtros .field,
+.agendar-cita .field {
+  margin-bottom: 10px;
+}
+
+/* Mantiene la botonera separada pero integrada visualmente */
+.agenda-filtros .acciones,
+.agendar-cita .acciones {
+  margin-top: 15px;
+  padding-top: 10px;
+}
+
+/* === Igualar estilo del enlace “Volver” con los botones === */
+
+.btn-container a.cancel-btn,
+.acciones a.cancel-btn {
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  width: 100%;                /* igual que los botones en vista móvil */
+  padding: 10px 0;
+  border-radius: 25px;
+  font-weight: 600;
+  background-color: #e9f4f0;  /* mismo color base que el de los otros */
+  color: #222;
+  transition: background 0.2s ease;
+}
+
+.btn-container a.cancel-btn:hover,
+.acciones a.cancel-btn:hover {
+  background-color: #d7ece6;
+}
+

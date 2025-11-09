@@ -1347,3 +1347,92 @@ font-family: Arial, Helvetica, sans-serif;
   background-color: #d7ece6;
 }
 
+
+/* ===== Alta de historial – layout y responsive ===== */
+
+/* Todos los inputs/select/textarea al 100% */
+.form-container input,
+.form-container select,
+.form-container textarea { width: 100%; }
+
+/* Separador de ancho completo dentro del panel */
+.sep{
+  height: 1px;
+  width: 100%;
+  background: #e6eee9;
+  margin: 18px 0;
+  border-radius: 1px;
+}
+
+/* Grid base 2 columnas con gap */
+.grid-2{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.gap16{ gap:16px; }
+/* Espaciado interno del panel de alta */
+.alta-panel{
+  padding: 22px 26px;                 /* aire lateral real */
+}
+
+/* Campos siempre a 100% y sin encogerse raro */
+.alta-panel input,
+.alta-panel select,
+.alta-panel textarea{
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Separador */
+.sep{
+  height: 18px;
+  border-bottom: 1px solid #e8efec;
+  margin: 14px 0;
+}
+
+/* 2 columnas con buen espacio lateral */
+.grid-2{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;                     /* 16 vertical, 24 horizontal */
+}
+
+/* Signos vitales: 3-2-1 columnas según viewport */
+.vitals-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 24px;                     /* 16 vertical, 24 horizontal */
+}
+
+/* Botonera consistente */
+.btn-row{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:flex-start;
+}
+.btn-row .confirm-btn,
+.btn-row .cancel-btn,
+.btn-row .btn-wide{
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border-radius: 20px;
+}
+.btn-row .btn-wide{ width: 220px; }
+
+/* Breakpoints */
+@media (max-width: 980px){
+  .grid-2{ grid-template-columns: 1fr; }
+  .vitals-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px){
+  .vitals-grid{ grid-template-columns: 1fr; }
+  .btn-row{ flex-direction: column; align-items: stretch; }
+  .btn-row .btn-wide,
+  .btn-row .confirm-btn,
+  .btn-row .cancel-btn{ width:100%; }
+}

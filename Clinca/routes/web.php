@@ -38,7 +38,7 @@ Route::get('/logout', function () {
 // Admin
 Route::view('/administrador', 'administrador')->name('admin.panel');
 
-// Médico (ya creadas arriba)
+// Médico
 Route::prefix('medico')->group(function () {
     Route::view('/',            'medico.panel')->name('medico.panel');
     Route::view('/historial',   'medico.historial')->name('medico.historial');
@@ -46,27 +46,25 @@ Route::prefix('medico')->group(function () {
     Route::view('/tratamientos','medico.tratamientos')->name('medico.tratamientos');
 });
 
-// Placeholders para que no den 404 (se pueden reemplazar luego)
-Route::view('/enfermera',      'enfermera')->name('enfermera.panel');
-Route::view('/recepcionista',  'recepcionista')->name('recepcionista.panel');
-Route::view('/paciente',       'paciente')->name('paciente.panel');
-
-/* Raíz -> login */
-Route::redirect('/', '/login');
-
 // Enfermera
 Route::prefix('enfermera')->group(function () {
     Route::view('/',       'enfermera.panel')->name('enfermera.panel');
     Route::view('/signos', 'enfermera.signos')->name('enfermera.signos');
 });
 
-// Recepcionista
+// Recepcionista 
 Route::prefix('recepcionista')->group(function () {
-    Route::view('/',          'recepcionista.panel')->name('recepcionista.panel');
-    Route::view('/registro',  'recepcionista.registro')->name('recepcionista.registro');
+    Route::view('/',         'recepcionista.panel')->name('recepcionista.panel');
+    Route::view('/registro', 'recepcionista.registro')->name('recepcionista.registro');
 
-    // NUEVAS
-    Route::view('/citas',     'recepcionista.citas')->name('recepcionista.citas');
-    Route::view('/agenda',    'recepcionista.agenda')->name('recepcionista.agenda');
+    // HU-15
+    Route::view('/citas',    'recepcionista.citas')->name('recepcionista.citas');
+    Route::view('/agenda',   'recepcionista.agenda')->name('recepcionista.agenda');
 });
 
+
+// Paciente
+Route::view('/paciente', 'paciente')->name('paciente.panel');
+
+/* ---------- REDIRECCIÓN RAÍZ ---------- */
+Route::redirect('/', '/login');

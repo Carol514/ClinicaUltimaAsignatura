@@ -3,7 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
-/* ---------- LOGIN ---------- */
+/* ============================================================
+|                        LOGIN / LOGOUT
+============================================================ */
 Route::view('/login', 'login')->name('login');
 
 Route::post('/login', function (Request $request) {
@@ -14,7 +16,7 @@ Route::post('/login', function (Request $request) {
         return back()->withErrors(['role' => 'Selecciona un rol válido'])->withInput();
     }
 
-    // Simulación de sesión (luego será Auth real)
+    // Simulación de sesión temporal (más adelante se reemplazará con Auth real)
     session([
         'userName' => $name,
         'userRole' => $role,
@@ -34,43 +36,56 @@ Route::get('/logout', function () {
     return redirect()->route('login');
 })->name('logout');
 
-/* ---------- PANELES ---------- */
-// Admin
-Route::view('/administrador', 'administrador')->name('admin.panel');
-
-// Médico
-Route::prefix('medico')->group(function () {
-    Route::view('/',            'medico.panel')->name('medico.panel');
-    Route::view('/historial',   'medico.historial')->name('medico.historial');
-    Route::view('/documentos',  'medico.documentos')->name('medico.documentos');
-    Route::view('/tratamientos','medico.tratamientos')->name('medico.tratamientos');
-    Route::view('/alta-historial', 'medico.alta_historial')->name('medico.alta');
+/* ============================================================
+|                        ADMINISTRADOR
+============================================================ */
+Route::prefix('administrador')->group(function () {
+    Route::view('/', 'administrador')->name('admin.panel');
+    Route::view('/usuarios-roles', 'administrador.usuarios_roles')->name('admin.roles');
+    Route::view('/respaldos', 'administrador.respaldos')->name('admin.respaldos');
+    Route::view('/reportes',  'administrador.reportes')->name('admin.reportes');
 });
 
-// Enfermera
+/* ============================================================
+|                        MÉDICO
+============================================================ */
+Route::prefix('medico')->group(function () {
+    Route::view('/',              'medico.panel')->name('medico.panel');
+    Route::view('/historial',     'medico.historial')->name('medico.historial');
+    Route::view('/documentos',    'medico.documentos')->name('medico.documentos');
+    Route::view('/tratamientos',  'medico.tratamientos')->name('medico.tratamientos');
+    Route::view('/alta-historial','medico.alta_historial')->name('medico.alta');
+});
+
+/* ============================================================
+|                        ENFERMERA
+============================================================ */
 Route::prefix('enfermera')->group(function () {
     Route::view('/',       'enfermera.panel')->name('enfermera.panel');
     Route::view('/signos', 'enfermera.signos')->name('enfermera.signos');
 });
 
-// Recepcionista 
+/* ============================================================
+|                        RECEPCIONISTA
+============================================================ */
 Route::prefix('recepcionista')->group(function () {
     Route::view('/',         'recepcionista.panel')->name('recepcionista.panel');
     Route::view('/registro', 'recepcionista.registro')->name('recepcionista.registro');
-
-    // HU-15
     Route::view('/citas',    'recepcionista.citas')->name('recepcionista.citas');
-    //Route::view('/agenda',   'recepcionista.agenda')->name('recepcionista.agenda');
+    // Si en algún momento quieres volver a incluir agenda:
+    // Route::view('/agenda',   'recepcionista.agenda')->name('recepcionista.agenda');
 });
 
-
-// Paciente
+/* ============================================================
+|                        PACIENTE
+============================================================ */
 Route::prefix('paciente')->group(function () {
-    Route::view('/',              'paciente.panel')->name('paciente.panel');          // dashboard
-    Route::view('/historial',     'paciente.historial')->name('paciente.historial');  // consulta historial
-    Route::view('/recordatorios', 'paciente.recordatorios')->name('paciente.recordatorios'); // recordatorios
+    Route::view('/',              'paciente.panel')->name('paciente.panel');
+    Route::view('/historial',     'paciente.historial')->name('paciente.historial');
+    Route::view('/recordatorios', 'paciente.recordatorios')->name('paciente.recordatorios');
 });
 
-
-/* ---------- REDIRECCIÓN RAÍZ ---------- */
+/* ============================================================
+|                        RAÍZ
+============================================================ */
 Route::redirect('/', '/login');

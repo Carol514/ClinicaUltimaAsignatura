@@ -28,17 +28,36 @@
   const btnGenerar = document.getElementById('btnGenerar');
   const msgContainer = document.getElementById('msgContainer');
   const btnDescargar = document.getElementById('btnDescargar');
+  const CSRF = '{{ csrf_token() }}';
 
-  btnGenerar.onclick = () => {
-    // Simulación de generación de respaldo (descarga demo)
+  function api(path, opts = {}){
+    opts.headers = Object.assign({ 'Accept':'application/json', 'Content-Type':'application/json', 'X-CSRF-TOKEN': CSRF }, opts.headers || {});
+    if (opts.body && typeof opts.body !== 'string') opts.body = JSON.stringify(opts.body);
+    return fetch(path, opts).then(async res => {
+      const txt = await res.text(); let json = null;
+      try{ json = txt ? JSON.parse(txt) : null; }catch(e){ json = txt; }
+      if (!res.ok) throw { status: res.status, body: json };
+      return json;
+    });
+  }
+
+    btnGenerar.onclick = () => {
     btnGenerar.disabled = true;
     btnGenerar.textContent = "Generando respaldo...";
-    setTimeout(() => {
-      btnGenerar.disabled = false;
-      btnGenerar.textContent = "Generar respaldo";
-      msgContainer.style.display = "block";
-      btnDescargar.href = "#"; // Diego implementará aquí la ruta real de descarga
-    }, 1500);
+    // default to xlsx
+    api('/administrador/api/backups', { method: 'POST', body: { format: 'xlsx' } })
+      .then(res => {
+        btnGenerar.disabled = false;
+        btnGenerar.textContent = "Generar respaldo";
+        msgContainer.style.display = "block";
+        if (res.download) btnDescargar.href = res.download;
+      })
+      .catch(err => {
+        btnGenerar.disabled = false;
+        btnGenerar.textContent = "Generar respaldo";
+        console.error(err);
+        alert(err.body?.message || 'Error generando respaldo');
+      });
   };
 })();
 </script>

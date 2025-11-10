@@ -127,185 +127,185 @@
 
 <script>
 (() => {
-  // ===== Datos demo =====
-  const samplePermissions = [
-    { key:'ver_expediente',      label:'Ver expediente' },
-    { key:'editar_expediente',   label:'Editar expediente' },
-    { key:'ver_signos',          label:'Ver signos vitales' },
-    { key:'registrar_signos',    label:'Registrar signos vitales' },
-    { key:'gestionar_citas',     label:'Gestionar citas' },
-    { key:'generar_reportes',    label:'Generar reportes' },
-    { key:'respaldo_bd',         label:'Respaldo de base de datos' },
-    { key:'administrar_roles',   label:'Administrar roles / permisos' }
-  ];
-
-  let roles = {
-    'Administrador': { permissions: Object.fromEntries(samplePermissions.map(p=>[p.key,true])) },
-    'Doctor':        { permissions: { ver_expediente:true, editar_expediente:true, ver_signos:true, registrar_signos:false, gestionar_citas:true } },
-    'Enfermera':     { permissions: { ver_expediente:true, ver_signos:true, registrar_signos:true } },
-    'Recepcionista': { permissions: { gestionar_citas:true } },
-    'Paciente':      { permissions: { ver_expediente:true } }
-  };
-
-  let users = [
-    { nombre:'Juan Pérez',   correo:'juan.perez@hospital.local', rol:'Doctor' },
-    { nombre:'Ana López',    correo:'ana.lopez@hospital.local',  rol:'Enfermera' },
-    { nombre:'Carlos Ruiz',  correo:'c.ruiz@hospital.local',     rol:'Recepcionista' },
-    { nombre:'Lucía García', correo:'lucia.garcia@hospital.local', rol:'Paciente' },
-    { nombre:'Roberto Díaz', correo:'roberto@hospital.local',     rol:'Administrador' }
-  ];
-
-  // ===== Helpers DOM =====
+  // Use the lightweight admin API implemented in routes (no CSS or model changes)
   const $ = sel => document.querySelector(sel);
   const usersTbody = $('#usersTbody');
   const rolesTbody = $('#rolesTbody');
   const noUsers = $('#noUsers');
   const noRoles = $('#noRoles');
+  const permModal  = $('#permModal');
+  const permList   = $('#permList');
+  const modalRoleName = $('#modalRoleName');
+  const userModal = $('#userModal');
 
-  // ===== Render usuarios =====
-  function renderUsers(list = users){
+  const CSRF = '{{ csrf_token() }}';
+
+  function api(path, opts = {}){
+    opts.headers = Object.assign({
+      'Accept':'application/json',
+      'Content-Type':'application/json',
+      'X-CSRF-TOKEN': CSRF,
+    }, opts.headers || {});
+    if (opts.body && typeof opts.body !== 'string') opts.body = JSON.stringify(opts.body);
+    return fetch(path, opts).then(async res => {
+      const txt = await res.text();
+      let json = null;
+      try{ json = txt ? JSON.parse(txt) : null; }catch(e){ json = txt; }
+      if (!res.ok) throw { status: res.status, body: json };
+      return json;
+    });
+  }
+
+  function renderUsers(list = []){
     usersTbody.innerHTML = '';
     if (!list.length){ noUsers.style.display='block'; return; }
     noUsers.style.display='none';
     list.forEach(u=>{
+      const rolesStr = (u.roles || []).map(r=>r.name || r.code).join(', ');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${u.nombre}</td>
-        <td>${u.correo}</td>
-        <td>${u.rol}</td>
+        <td>${u.name}</td>
+        <td>${u.email || ''}</td>
+        <td>${rolesStr}</td>
         <td>
-          <button class="confirm-btn" data-action="cambiar" data-id="${u.correo}">Cambiar rol</button>
-          <button class="cancel-btn"  data-action="eliminar" data-id="${u.correo}" style="margin-left:8px;">Eliminar</button>
+          <button class="confirm-btn" data-action="cambiar" data-id="${u.id}">Cambiar rol</button>
+          <button class="cancel-btn"  data-action="eliminar" data-id="${u.id}" style="margin-left:8px;">Eliminar</button>
         </td>
       `;
       usersTbody.appendChild(tr);
     });
   }
 
-  // ===== Render roles =====
   function resumenPermisos(perms){
-    const activos = Object.keys(perms||{}).filter(k=>perms[k]);
+    if(!perms) return 'Sin permisos';
+    const activos = Object.keys(perms).filter(k=>perms[k]);
     if (!activos.length) return 'Sin permisos';
-    const labels = activos.map(k => (samplePermissions.find(p=>p.key===k)||{}).label || k);
-    return labels.slice(0,3).join(', ') + (labels.length>3 ? ` +${labels.length-3} más` : '');
+    return activos.slice(0,3).join(', ') + (activos.length>3 ? ` +${activos.length-3} más` : '');
   }
 
-  function renderRoles(){
+  function renderRoles(list = []){
     rolesTbody.innerHTML='';
-    const names = Object.keys(roles);
-    if(!names.length){ noRoles.style.display='block'; return; }
+    if(!list.length){ noRoles.style.display='block'; return; }
     noRoles.style.display='none';
-    names.forEach(r=>{
+    list.forEach(r=>{
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${r}</td>
-        <td><span class="perm-chip">${resumenPermisos(roles[r].permissions)}</span></td>
+        <td>${r.name}</td>
+        <td><span class="perm-chip">${resumenPermisos(r.permissions)}</span></td>
         <td>
-          <button class="confirm-btn" data-action="permisos" data-role="${r}">Editar permisos</button>
-          <button class="cancel-btn"  data-action="delrole"  data-role="${r}" style="margin-left:8px;">Eliminar rol</button>
+          <button class="confirm-btn" data-action="permisos" data-roleid="${r.id}" data-rolename="${r.name}">Editar permisos</button>
+          <button class="cancel-btn"  data-action="delrole"  data-roleid="${r.id}" style="margin-left:8px;">Eliminar rol</button>
         </td>
       `;
       rolesTbody.appendChild(tr);
     });
   }
 
-  // ===== Buscar / reset =====
+  function loadAll(){
+    Promise.all([
+      api('/administrador/api/roles'),
+      api('/administrador/api/users')
+    ]).then(([roles, users])=>{
+      renderRoles(roles || []);
+      renderUsers(users || []);
+      updateRoleSelect(roles || []);
+    }).catch(err=>{
+      console.error('Error loading admin data', err);
+      alert('Error al cargar datos administrativos. Revisa la consola.');
+    });
+  }
+
   $('#searchUser').addEventListener('input', e=>{
     const q = e.target.value.toLowerCase();
-    renderUsers(users.filter(u =>
-      u.nombre.toLowerCase().includes(q) ||
-      u.correo.toLowerCase().includes(q) ||
-      u.rol.toLowerCase().includes(q)
-    ));
+    const rows = Array.from(usersTbody.querySelectorAll('tr'));
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(q) ? '' : 'none';
+    });
   });
-  $('#btnResetFiltro').onclick = ()=>{ $('#searchUser').value=''; renderUsers(); };
+  $('#btnResetFiltro').onclick = ()=>{ $('#searchUser').value=''; loadAll(); };
 
-  // ===== Eventos tabla usuarios =====
+  rolesTbody.addEventListener('click', e=>{
+    const btn = e.target.closest('button'); if(!btn) return;
+    const action = btn.dataset.action;
+    const roleId = btn.dataset.roleid;
+    const roleName = btn.dataset.rolename;
+    if(action==='delrole'){
+      if(!confirm('¿Eliminar este rol?')) return;
+      api(`/administrador/api/roles/${roleId}`, { method: 'DELETE' })
+        .then(()=> loadAll())
+        .catch(err=> alert(err.body?.message || 'Error eliminando rol'));
+    }
+    if(action==='permisos'){
+      api(`/administrador/api/roles`).then(list=>{
+        const role = list.find(r=>r.id==roleId);
+        if(!role) return alert('Rol no encontrado');
+        modalRoleName.textContent = role.name;
+        // render permission checkboxes from keys
+        permList.innerHTML = Object.keys(role.permissions || {}).map(k=>{
+          const checked = role.permissions[k] ? 'checked' : '';
+          return `<label><input type="checkbox" data-perm="${k}" ${checked}> ${k}</label>`;
+        }).join('') || '<p class="muted">No hay permisos definidos.</p>';
+        permModal.dataset.editingRole = roleId;
+        permModal.style.display='flex';
+      });
+    }
+  });
+  $('#permCancel').onclick = ()=> permModal.style.display='none';
+  $('#permSave').onclick = ()=>{
+    const roleId = permModal.dataset.editingRole;
+    const inputs = Array.from(permList.querySelectorAll('input[data-perm]'));
+    const perms = {};
+    inputs.forEach(i=> perms[i.dataset.perm] = !!i.checked);
+    api(`/administrador/api/roles/${roleId}`, { method: 'PUT', body: { permissions: perms } })
+      .then(()=> { permModal.style.display='none'; loadAll(); })
+      .catch(err=> alert(err.body?.message || 'Error guardando permisos'));
+  };
+
+  $('#btnAgregarRol').onclick = ()=>{
+    const name = $('#newRoleName').value.trim();
+    if(!name) return alert('Ingresa un nombre');
+    api('/administrador/api/roles', { method: 'POST', body: { code: name.toLowerCase().replace(/[^a-z0-9_]+/g,'_'), name } })
+      .then(()=> { $('#newRoleName').value=''; loadAll(); })
+      .catch(err=> alert(err.body?.message || 'Error creando rol'));
+  };
+
   usersTbody.addEventListener('click', e=>{
     const btn = e.target.closest('button'); if(!btn) return;
     const id = btn.dataset.id;
     const action = btn.dataset.action;
     if(action==='eliminar'){
       if(!confirm('¿Eliminar este usuario?')) return;
-      users = users.filter(u=>u.correo!==id);
-      renderUsers();
+      api(`/administrador/api/users/${id}`, { method: 'DELETE' })
+        .then(()=> loadAll())
+        .catch(err=> alert(err.body?.message || 'Error eliminando usuario'));
     }else if(action==='cambiar'){
-      const u = users.find(x=>x.correo===id);
-      const opciones = Object.keys(roles).join(', ');
-      const nuevo = prompt(`Asignar nuevo rol a ${u.nombre}\nOpciones: ${opciones}`, u.rol);
-      if(!nuevo || !roles[nuevo]) return alert('Rol inexistente.');
-      u.rol = nuevo; renderUsers();
-      alert(`Rol actualizado a ${nuevo}.`);
+      const nuevo = prompt('Asignar nuevo rol (nombre o código)');
+      if(!nuevo) return;
+      api(`/administrador/api/users/${id}/role`, { method:'PUT', body: { role: nuevo } })
+        .then(()=> { alert('Rol actualizado.'); loadAll(); })
+        .catch(err=> alert(err.body?.message || 'Error actualizando rol'));
     }
   });
 
-  // ===== Alta de rol =====
-  $('#btnAgregarRol').onclick = ()=>{
-    const name = $('#newRoleName').value.trim();
-    if(!name) return alert('Ingresa un nombre');
-    if(roles[name]) return alert('Ese rol ya existe');
-    roles[name] = { permissions:{} };
-    $('#newRoleName').value='';
-    renderRoles(); updateRoleSelect();
-  };
-
-  // ===== Modales permisos =====
-  const permModal  = $('#permModal');
-  const permList   = $('#permList');
-  const modalRoleName = $('#modalRoleName');
-  let editingRole = null;
-
-  rolesTbody.addEventListener('click', e=>{
-    const btn = e.target.closest('button'); if(!btn) return;
-    const action = btn.dataset.action;
-    const role   = btn.dataset.role;
-    if(action==='delrole'){
-      if(!confirm('¿Eliminar este rol?')) return;
-      delete roles[role];
-      renderRoles(); updateRoleSelect();
-    }
-    if(action==='permisos'){
-      editingRole = role;
-      modalRoleName.textContent = role;
-      permList.innerHTML = samplePermissions.map(p=>{
-        const checked = roles[role]?.permissions?.[p.key] ? 'checked' : '';
-        return `<label><input type="checkbox" id="perm_${p.key}" ${checked}> ${p.label}</label>`;
-      }).join('');
-      permModal.style.display='flex';
-    }
-  });
-  $('#permCancel').onclick = ()=> permModal.style.display='none';
-  $('#permSave').onclick = ()=>{
-    const newPerms = {};
-    samplePermissions.forEach(p=>{
-      newPerms[p.key] = document.getElementById(`perm_${p.key}`).checked;
-    });
-    roles[editingRole].permissions = newPerms;
-    permModal.style.display='none';
-    renderRoles();
-  };
-
-  // ===== Modal nuevo usuario =====
-  const userModal = $('#userModal');
-  function updateRoleSelect(){
+  function updateRoleSelect(list = []){
     const sel = $('#userRol');
-    sel.innerHTML = Object.keys(roles).map(r=>`<option>${r}</option>`).join('');
+    sel.innerHTML = list.map(r=>`<option value="${r.name}">${r.name}</option>`).join('');
   }
-  $('#btnNuevoUsuario').onclick = ()=>{ updateRoleSelect(); $('#userNombre').value=''; $('#userCorreo').value=''; userModal.style.display='flex'; };
+  $('#btnNuevoUsuario').onclick = ()=>{ $('#userNombre').value=''; $('#userCorreo').value=''; userModal.style.display='flex'; };
   $('#userCancel').onclick = ()=> userModal.style.display='none';
   $('#userSave').onclick = ()=>{
     const nombre = $('#userNombre').value.trim();
     const correo = $('#userCorreo').value.trim();
     const rol    = $('#userRol').value;
     if(!nombre || !correo) return alert('Completa todos los campos');
-    if(users.some(u=>u.correo===correo)) return alert('Ya existe un usuario con ese correo');
-    users.push({nombre, correo, rol});
-    renderUsers(); userModal.style.display='none';
+    api('/administrador/api/users', { method:'POST', body: { name: nombre, email: correo, role: rol } })
+      .then(()=> { userModal.style.display='none'; loadAll(); })
+      .catch(err=> alert(err.body?.message || 'Error creando usuario'));
   };
 
-  // ===== Init =====
-  renderUsers();
-  renderRoles();
+  // Init
+  loadAll();
 })();
 </script>
 @endsection

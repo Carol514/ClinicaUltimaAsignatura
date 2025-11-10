@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\BackupController;
 
 /* ============================================================
 |                        LOGIN / LOGOUT
@@ -44,6 +48,28 @@ Route::prefix('administrador')->group(function () {
     Route::view('/usuarios-roles', 'administrador.usuarios_roles')->name('admin.roles');
     Route::view('/respaldos', 'administrador.respaldos')->name('admin.respaldos');
     Route::view('/reportes',  'administrador.reportes')->name('admin.reportes');
+
+    // Lightweight admin JSON API (used by admin frontend JS)
+    Route::prefix('api')->group(function () {
+        // roles
+        Route::get('roles', [RoleController::class, 'index']);
+        Route::post('roles', [RoleController::class, 'store']);
+        Route::put('roles/{role}', [RoleController::class, 'update']);
+        Route::delete('roles/{role}', [RoleController::class, 'destroy']);
+
+        // users
+        Route::get('users', [UserController::class, 'index']);
+        Route::post('users', [UserController::class, 'store']);
+        Route::put('users/{user}/role', [UserController::class, 'updateRole']);
+        Route::delete('users/{user}', [UserController::class, 'destroy']);
+
+        // reports
+        Route::post('reports', [ReportController::class, 'generate']);
+
+        // backups
+        Route::post('backups', [BackupController::class, 'store']);
+        Route::get('backups/{dir}/download', [BackupController::class, 'download'])->name('admin.backup.download');
+    });
 });
 
 /* ============================================================

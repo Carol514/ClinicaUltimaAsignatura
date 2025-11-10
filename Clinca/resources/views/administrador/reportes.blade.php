@@ -59,45 +59,35 @@
   const thead = document.getElementById('thead');
   const tbody = document.getElementById('tbody');
   const noData = document.getElementById('noData');
+  const CSRF = '{{ csrf_token() }}';
 
-  const reportesDemo = {
-    usuarios: {
-      encabezado: ['Rol', 'Cantidad'],
-      datos: [
-        ['Administrador', 1],
-        ['Doctor', 3],
-        ['Enfermera', 2],
-        ['Recepcionista', 1],
-        ['Paciente', 10],
-      ]
-    },
-    citas: {
-      encabezado: ['Fecha', 'Citas programadas'],
-      datos: [
-        ['2025-11-10', 6],
-        ['2025-11-11', 4],
-        ['2025-11-12', 8],
-      ]
-    },
-    tratamientos: {
-      encabezado: ['Tratamiento', 'Aplicaciones'],
-      datos: [
-        ['Antibióticos', 12],
-        ['Vacunas', 5],
-        ['Analgesia', 9],
-      ]
-    }
-  };
+  function api(path, opts = {}){
+    opts.headers = Object.assign({ 'Accept':'application/json', 'Content-Type':'application/json', 'X-CSRF-TOKEN': CSRF }, opts.headers || {});
+    if (opts.body && typeof opts.body !== 'string') opts.body = JSON.stringify(opts.body);
+    return fetch(path, opts).then(async res => {
+      const txt = await res.text(); let json = null;
+      try{ json = txt ? JSON.parse(txt) : null; }catch(e){ json = txt; }
+      if (!res.ok) throw { status: res.status, body: json };
+      return json;
+    });
+  }
 
   document.getElementById('btnGenerar').onclick = (e)=>{
     e.preventDefault();
     const tipo = tipoReporte.value;
     if(!tipo){ alert('Selecciona un tipo de reporte'); return; }
+    const desde = document.getElementById('desde').value || null;
+    const hasta = document.getElementById('hasta').value || null;
 
-    const rpt = reportesDemo[tipo];
-    thead.innerHTML = `<tr>${rpt.encabezado.map(h=>`<th>${h}</th>`).join('')}</tr>`;
-    tbody.innerHTML = rpt.datos.map(row=>`<tr>${row.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
-    noData.style.display = 'none';
+    api('/administrador/api/reports', { method: 'POST', body: { type: tipo, from: desde, to: hasta } })
+      .then(rpt => {
+        const encabezado = rpt.encabezado || (rpt[0] && Object.keys(rpt[0])) || [];
+        const datos = rpt.datos || rpt;
+        thead.innerHTML = `<tr>${encabezado.map(h=>`<th>${h}</th>`).join('')}</tr>`;
+        tbody.innerHTML = (datos || []).map(row=>`<tr>${Object.values(row).map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
+        noData.style.display = 'none';
+      })
+      .catch(err=>{ console.error(err); alert(err.body?.message || 'Error generando reporte'); });
   };
 
   document.getElementById('btnLimpiar').onclick = ()=>{

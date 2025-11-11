@@ -30,15 +30,6 @@
           <label for="showPass">Mostrar contraseña</label>
         </div>
 
-        <select name="role" id="role" required style="width:80%; padding:12px; border:1px solid #bbb; border-radius:20px;">
-          <option value="">Seleccione...</option>
-          <option value="admin"        {{ old('role')==='admin'?'selected':'' }}>Administrador</option>
-          <option value="doctor"       {{ old('role')==='doctor'?'selected':'' }}>Médico</option>
-          <option value="nurse"        {{ old('role')==='nurse'?'selected':'' }}>Enfermera</option>
-          <option value="receptionist" {{ old('role')==='receptionist'?'selected':'' }}>Recepcionista</option>
-          <option value="patient"      {{ old('role')==='patient'?'selected':'' }}>Paciente</option>
-        </select>
-
         <button type="submit">Iniciar Sesión</button>
       </form>
     </div>

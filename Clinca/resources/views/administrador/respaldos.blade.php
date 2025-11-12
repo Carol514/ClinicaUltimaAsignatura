@@ -17,8 +17,8 @@
     </div>
 
     <div id="msgContainer" style="display:none;margin-top:20px;text-align:center;">
-      <p class="muted">✅ Respaldo generado correctamente.</p>
-      <a href="#" class="confirm-btn" id="btnDescargar">Descargar archivo</a>
+      
+      <a href="#" class="confirm-btn" id="btnDescargar" style="text-decoration: none;">Descargar archivo</a>
     </div>
   </section>
 </main>

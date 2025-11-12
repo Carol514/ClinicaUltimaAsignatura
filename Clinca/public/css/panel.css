@@ -1353,7 +1353,7 @@ font-family: Arial, Helvetica, sans-serif;
 /* Todos los inputs/select/textarea al 100% */
 .form-container input,
 .form-container select,
-.form-container textarea { width: 100%; }
+.form-container textarea { width: 80%; }
 
 /* Separador de ancho completo dentro del panel */
 .sep{
@@ -1436,3 +1436,5 @@ font-family: Arial, Helvetica, sans-serif;
   .btn-row .confirm-btn,
   .btn-row .cancel-btn{ width:100%; }
 }
+
+

@@ -51,7 +51,6 @@
         <thead>
           <tr>
             <th>Rol</th>
-            <th>Permisos (resumen)</th>
             <th style="width:220px;">Acciones</th>
           </tr>
         </thead>
@@ -90,7 +89,7 @@
 <div class="modal-backdrop" id="permModal">
   <div class="modal">
     <h4>Editar permisos — <span id="modalRoleName"></span></h4>
-    <div id="permList" style="display:flex;flex-direction:column;gap:8px;margin:8px 0 4px;"></div>
+    <div id="permList" style="display:none;"></div>
     <div class="btn-container" style="justify-content:flex-end;margin-top:12px;">
       <button class="cancel-btn" id="permCancel">Cancelar</button>
       <button class="confirm-btn" id="permSave">Guardar</button>
@@ -106,14 +105,22 @@
       <div class="fields" style="display:grid;grid-template-columns:1fr;gap:10px;">
         <div>
           <label>Nombre</label>
+          <br>
           <input id="userNombre" placeholder="Nombre completo">
         </div>
         <div>
           <label>Correo / ID</label>
+          <br>
           <input id="userCorreo" placeholder="usuario@hospital.local">
         </div>
         <div>
+          <label>Contraseña</label>
+          <br>
+          <input id="userContraseña" placeholder="********">
+        </div>
+        <div>
           <label>Rol</label>
+          <br>
           <select id="userRol"></select>
         </div>
       </div>
@@ -176,12 +183,8 @@
     });
   }
 
-  function resumenPermisos(perms){
-    if(!perms) return 'Sin permisos';
-    const activos = Object.keys(perms).filter(k=>perms[k]);
-    if (!activos.length) return 'Sin permisos';
-    return activos.slice(0,3).join(', ') + (activos.length>3 ? ` +${activos.length-3} más` : '');
-  }
+  
+  
 
   function renderRoles(list = []){
     rolesTbody.innerHTML='';
@@ -191,9 +194,9 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${r.name}</td>
-        <td><span class="perm-chip">${resumenPermisos(r.permissions)}</span></td>
+        
         <td>
-          <button class="confirm-btn" data-action="permisos" data-roleid="${r.id}" data-rolename="${r.name}">Editar permisos</button>
+          
           <button class="cancel-btn"  data-action="delrole"  data-roleid="${r.id}" style="margin-left:8px;">Eliminar rol</button>
         </td>
       `;
@@ -279,13 +282,154 @@
       api(`/administrador/api/users/${id}`, { method: 'DELETE' })
         .then(()=> loadAll())
         .catch(err=> alert(err.body?.message || 'Error eliminando usuario'));
-    }else if(action==='cambiar'){
-      const nuevo = prompt('Asignar nuevo rol (nombre o código)');
-      if(!nuevo) return;
-      api(`/administrador/api/users/${id}/role`, { method:'PUT', body: { role: nuevo } })
-        .then(()=> { alert('Rol actualizado.'); loadAll(); })
-        .catch(err=> alert(err.body?.message || 'Error actualizando rol'));
-    }
+    }else if(action === 'cambiar'){
+  // create popup
+  const popup = document.createElement('div');
+  popup.style.position = 'absolute';
+  popup.style.zIndex = 10000;
+  popup.style.background = '#fff';
+  popup.style.padding = '10px';
+  popup.style.border = '1px solid rgba(0,0,0,0.12)';
+  popup.style.borderRadius = '8px';
+  popup.style.boxShadow = '0 6px 18px rgba(0,0,0,0.12)';
+  popup.style.minWidth = '220px';
+  popup.style.fontSize = '14px';
+
+  // position near clicked button (btn is available in this scope)
+  const rect = btn.getBoundingClientRect();
+  popup.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  popup.style.left = (rect.left + window.scrollX) + 'px';
+
+  // build select and actions
+  const select = document.createElement('select');
+  select.style.width = '100%';
+  select.style.marginBottom = '8px';
+  select.innerHTML = '<option value="">Cargando roles...</option>';
+
+  const actions = document.createElement('div');
+  actions.style.display = 'flex';
+  actions.style.justifyContent = 'flex-end';
+  actions.style.gap = '8px';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.textContent = 'Cancelar';
+  cancelBtn.style.cursor = 'pointer';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.textContent = 'Guardar';
+  saveBtn.style.cursor = 'pointer';
+  saveBtn.style.background = '#007bff';
+  saveBtn.style.color = '#fff';
+  saveBtn.style.border = 'none';
+  saveBtn.style.padding = '6px 10px';
+  saveBtn.style.borderRadius = '4px';
+
+  actions.appendChild(cancelBtn);
+  actions.appendChild(saveBtn);
+  popup.appendChild(select);
+  popup.appendChild(actions);
+  document.body.appendChild(popup);
+
+  // close helper
+  const removePopup = () => {
+    if (popup && popup.parentNode) popup.parentNode.removeChild(popup);
+    document.removeEventListener('click', outsideListener);
+    window.removeEventListener('resize', removePopup);
+    window.removeEventListener('scroll', removePopup, true);
+  };
+  const outsideListener = (ev) => {
+    if (!popup.contains(ev.target) && ev.target !== btn) removePopup();
+  };
+  setTimeout(() => document.addEventListener('click', outsideListener), 0);
+  window.addEventListener('resize', removePopup);
+  window.addEventListener('scroll', removePopup, true);
+
+  // Load roles from your endpoint (use api() if you prefer)
+  // Using fetch here in case api() wraps fetch — change to api(...) if that's your helper.
+  fetch('/administrador/api/roles')
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(roles => {
+      console.log('Roles fetched:', roles);
+      if (!roles || roles.length === 0) {
+        select.innerHTML = '<option value="">No hay roles disponibles</option>';
+        return;
+      }
+
+      select.innerHTML = '<option value="">-- Selecciona un rol --</option>';
+
+      roles.forEach((r, idx) => {
+        const opt = document.createElement('option');
+
+        // If role is primitive (string/number)
+        if (typeof r === 'string' || typeof r === 'number') {
+          opt.value = String(r);
+          opt.textContent = String(r);
+          opt.dataset.roleName = String(r);
+          opt.dataset.roleId = '';
+        } else if (typeof r === 'object' && r !== null) {
+          // Prefer user-friendly text fields, fallback to id or index
+          const name = r.nombre ?? r.name ?? r.rol ?? r.codigo ?? r.label ?? r.displayName ?? null;
+          const idVal = (r.id !== undefined && r.id !== null) ? String(r.id) : '';
+          opt.value = idVal || name || String(idx);
+          opt.textContent = name || idVal || (`Rol ${idx+1}`);
+          opt.dataset.roleId = idVal;
+          opt.dataset.roleName = name || '';
+        } else {
+          opt.value = String(idx);
+          opt.textContent = String(r);
+        }
+
+        select.appendChild(opt);
+      });
+    })
+    .catch(err => {
+      console.error('Error loading roles:', err);
+      removePopup();
+      // fallback: show simple prompt with number list (safe fallback)
+      fetch('/administrador/api/roles')
+        .then(r => r.json())
+        .catch(() => null)
+        .then(roles => {
+          if (!roles || roles.length === 0) {
+            alert('No se pudieron cargar roles.');
+            return;
+          }
+          const opciones = roles.map((r, i) => `${i+1}. ${ (typeof r === 'object') ? (r.nombre ?? r.name ?? r.id ?? String(r)) : String(r) }`).join('\n');
+          const seleccion = prompt(`Seleccione el nuevo rol escribiendo el número:\n${opciones}`);
+          const index = parseInt(seleccion) - 1;
+          if (isNaN(index) || index < 0 || index >= roles.length) { alert('Selección inválida.'); return; }
+          const selRole = roles[index];
+          const newRoleValue = selRole.nombre ?? selRole.name ?? selRole.codigo ?? selRole.id ?? selRole;
+          api(`/administrador/api/users/${id}/role`, { method: 'PUT', body: { role: newRoleValue } })
+            .then(()=> { alert('Rol actualizado.'); loadAll(); })
+            .catch(e => alert(e.body?.message || 'Error actualizando rol'));
+        });
+    });
+
+  // cancel and save handlers
+  cancelBtn.onclick = () => removePopup();
+
+  saveBtn.onclick = () => {
+    const chosen = select.options[select.selectedIndex];
+    if (!chosen || !chosen.value) return alert('Selecciona un rol válido.');
+    // Prefer roleName if available (human readable), otherwise send roleId or value
+    const payloadRole = chosen.dataset.roleName || chosen.dataset.roleId || chosen.value;
+    console.log('Assigning role payload:', payloadRole, 'option dataset:', chosen.dataset);
+    removePopup();
+    api(`/administrador/api/users/${id}/role`, { method:'PUT', body: { role: payloadRole } })
+      .then(()=> { alert('Rol actualizado.'); loadAll(); })
+      .catch(err => {
+        console.error('Error updating role:', err);
+        alert(err.body?.message || 'Error actualizando rol');
+      });
+  };
+}
+
   });
 
   function updateRoleSelect(list = []){

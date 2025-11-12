@@ -153,6 +153,7 @@ font-family: Arial, Helvetica, sans-serif;
     .cancel-btn {
       background-color: #e6f3ee;
       color: #333;
+      text-decoration: none;
     }
 
     .cancel-btn:hover {

@@ -44,14 +44,15 @@ class UserController extends Controller
             'name' => 'required|string',
             'email' => 'required|email|unique:users,email',
             'role' => 'required|string',
+            // password is now mandatory
+            'password' => 'required|string|min:6',
         ]);
 
-        // generate a random password (will be hashed by model)
-        $password = Str::random(12);
+        // Use provided password (the User model will hash it via cast)
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => $password,
+            'password' => $data['password'],
         ]);
 
         $role = Role::where('name', $data['role'])->orWhere('code', $data['role'])->first();

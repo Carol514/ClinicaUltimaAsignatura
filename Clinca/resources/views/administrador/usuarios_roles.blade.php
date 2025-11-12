@@ -85,17 +85,7 @@
   .perm-chip{display:inline-block;background:#f1fbf7;color:#2a6b5f;border-radius:10px;padding:4px 8px;margin:2px 4px 0 0;font-size:.92em;}
 </style>
 
-{{-- Modal: editar permisos --}}
-<div class="modal-backdrop" id="permModal">
-  <div class="modal">
-    <h4>Editar permisos — <span id="modalRoleName"></span></h4>
-    <div id="permList" style="display:none;"></div>
-    <div class="btn-container" style="justify-content:flex-end;margin-top:12px;">
-      <button class="cancel-btn" id="permCancel">Cancelar</button>
-      <button class="confirm-btn" id="permSave">Guardar</button>
-    </div>
-  </div>
-</div>
+{{-- NOTE: The permisos column/feature was removed from the roles table; keep markup minimal and do not show the permisos modal. --}}
 
 {{-- Modal: nuevo usuario --}}
 <div class="modal-backdrop" id="userModal">
@@ -140,9 +130,6 @@
   const rolesTbody = $('#rolesTbody');
   const noUsers = $('#noUsers');
   const noRoles = $('#noRoles');
-  const permModal  = $('#permModal');
-  const permList   = $('#permList');
-  const modalRoleName = $('#modalRoleName');
   const userModal = $('#userModal');
 
   const CSRF = '{{ csrf_token() }}';
@@ -239,31 +226,9 @@
         .then(()=> loadAll())
         .catch(err=> alert(err.body?.message || 'Error eliminando rol'));
     }
-    if(action==='permisos'){
-      api(`/administrador/api/roles`).then(list=>{
-        const role = list.find(r=>r.id==roleId);
-        if(!role) return alert('Rol no encontrado');
-        modalRoleName.textContent = role.name;
-        // render permission checkboxes from keys
-        permList.innerHTML = Object.keys(role.permissions || {}).map(k=>{
-          const checked = role.permissions[k] ? 'checked' : '';
-          return `<label><input type="checkbox" data-perm="${k}" ${checked}> ${k}</label>`;
-        }).join('') || '<p class="muted">No hay permisos definidos.</p>';
-        permModal.dataset.editingRole = roleId;
-        permModal.style.display='flex';
-      });
-    }
+    // permissions UI removed (roles table no longer contains permisos)
   });
-  $('#permCancel').onclick = ()=> permModal.style.display='none';
-  $('#permSave').onclick = ()=>{
-    const roleId = permModal.dataset.editingRole;
-    const inputs = Array.from(permList.querySelectorAll('input[data-perm]'));
-    const perms = {};
-    inputs.forEach(i=> perms[i.dataset.perm] = !!i.checked);
-    api(`/administrador/api/roles/${roleId}`, { method: 'PUT', body: { permissions: perms } })
-      .then(()=> { permModal.style.display='none'; loadAll(); })
-      .catch(err=> alert(err.body?.message || 'Error guardando permisos'));
-  };
+  // permissions UI removed; no handlers for permisos are required
 
   $('#btnAgregarRol').onclick = ()=>{
     const name = $('#newRoleName').value.trim();
@@ -436,15 +401,29 @@
     const sel = $('#userRol');
     sel.innerHTML = list.map(r=>`<option value="${r.name}">${r.name}</option>`).join('');
   }
-  $('#btnNuevoUsuario').onclick = ()=>{ $('#userNombre').value=''; $('#userCorreo').value=''; userModal.style.display='flex'; };
+  $('#btnNuevoUsuario').onclick = ()=>{ 
+    $('#userNombre').value=''; 
+    $('#userCorreo').value=''; 
+    $('#userContraseña').value='';
+    const sel = $('#userRol'); if (sel) sel.selectedIndex = 0;
+    userModal.style.display='flex'; 
+  };
   $('#userCancel').onclick = ()=> userModal.style.display='none';
   $('#userSave').onclick = ()=>{
     const nombre = $('#userNombre').value.trim();
     const correo = $('#userCorreo').value.trim();
     const rol    = $('#userRol').value;
+    const password = ($('#userContraseña').value || '').trim();
     if(!nombre || !correo) return alert('Completa todos los campos');
-    api('/administrador/api/users', { method:'POST', body: { name: nombre, email: correo, role: rol } })
-      .then(()=> { userModal.style.display='none'; loadAll(); })
+    if(!password || password.length < 6) return alert('La contraseña es obligatoria y debe tener al menos 6 caracteres');
+    const body = { name: nombre, email: correo, role: rol, password };
+    api('/administrador/api/users', { method:'POST', body })
+      .then(()=> { 
+        // clear password field so it doesn't persist when creating the next user
+        $('#userContraseña').value = '';
+        userModal.style.display='none'; 
+        loadAll(); 
+      })
       .catch(err=> alert(err.body?.message || 'Error creando usuario'));
   };
 

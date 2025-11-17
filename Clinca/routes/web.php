@@ -43,7 +43,7 @@ Route::post('/login', function (Request $request) {
         ->select('roles.code', 'roles.name')
         ->first();
 
-    $roleCode = $roleRow->code ?? strtolower($roleRow->name ?? 'patient');
+    $roleCode = $roleRow->code ?? strtolower($roleRow->name ?? 'paciente');
 
     // Store useful session values
     session([
@@ -56,7 +56,7 @@ Route::post('/login', function (Request $request) {
         'medico'       => redirect()->route('medico.panel'),
         'enfermera'        => redirect()->route('enfermera.panel'),
         'receptionist' => redirect()->route('recepcionista.panel'),
-        default        => redirect()->route('paciente.panel'),
+        'paciente'        => redirect()->route('paciente.panel'),
     };
 })->name('login.post');
 
@@ -255,7 +255,7 @@ Route::prefix('paciente')->group(function () {
         $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
             ->join('roles','roles.id','=','users_roles.role_id')
             ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
-        if ($role !== 'patient') return redirect()->route('login');
+        if ($role !== 'paciente') return redirect()->route('login');
         return view('paciente.panel');
     })->name('paciente.panel');
 
@@ -263,7 +263,7 @@ Route::prefix('paciente')->group(function () {
         $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
             ->join('roles','roles.id','=','users_roles.role_id')
             ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
-        if ($role !== 'patient') return redirect()->route('login');
+        if ($role !== 'paciente') return redirect()->route('login');
         return view('paciente.historial');
     })->name('paciente.historial');
 
@@ -271,9 +271,16 @@ Route::prefix('paciente')->group(function () {
         $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
             ->join('roles','roles.id','=','users_roles.role_id')
             ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
-        if ($role !== 'patient') return redirect()->route('login');
+        if ($role !== 'paciente') return redirect()->route('login');
         return view('paciente.recordatorios');
     })->name('paciente.recordatorios');
+
+    // Paciente API endpoints used by paciente UI (return data from DB)
+    Route::prefix('api')->group(function () {
+        Route::get('history', [\App\Http\Controllers\Paciente\PatientController::class, 'history']);
+        Route::get('reminders', [\App\Http\Controllers\Paciente\PatientController::class, 'reminders']);
+        Route::post('notifications', [\App\Http\Controllers\Paciente\PatientController::class, 'notifications']);
+    });
 });
 
 /* ============================================================

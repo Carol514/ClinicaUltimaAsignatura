@@ -64,8 +64,21 @@
     notifMethods.style.display  = on ? 'block' : 'none';
     notifications.style.display = on ? 'block' : 'none';
   }
+  // Persist preference (best-effort) and update UI
+  async function persistPrefs(){
+    const payload = {
+      enabled: !!toggleNotif.checked,
+      email: !!document.getElementById('emailNotif').checked,
+      phone: !!document.getElementById('phoneNotif').checked,
+    };
+    try{
+      await fetch('/paciente/api/notifications', { method: 'POST', credentials: 'same-origin', headers: {'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(payload) });
+    }catch(e){ console.warn('Could not persist notification prefs (backend may be missing).', e); }
+  }
 
-  toggleNotif.addEventListener('change', applyVisibility);
+  toggleNotif.addEventListener('change', ()=>{ applyVisibility(); persistPrefs(); });
+  document.getElementById('emailNotif').addEventListener('change', persistPrefs);
+  document.getElementById('phoneNotif').addEventListener('change', persistPrefs);
   applyVisibility(); // inicial
 })();
 </script>

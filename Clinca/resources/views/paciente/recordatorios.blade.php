@@ -54,13 +54,6 @@
   const paciente = params.get('p') || 'Paciente DEMO';
   document.getElementById('f_paciente').value = paciente;
 
-  // Datos DEMO
-  const DATA = [
-    { fecha:'2025-11-10', hora:'09:00', tipo:'Cita',        detalle:'Consulta con Dra. López', estado:'Programada' },
-    { fecha:'2025-11-10', hora:'20:00', tipo:'Medicamento', detalle:'Tomar Metformina 850 mg', estado:'Pendiente'  },
-    { fecha:'2025-11-11', hora:'08:00', tipo:'Estudio',     detalle:'Análisis de sangre',       estado:'Programada' },
-    { fecha:'2025-11-12', hora:'07:30', tipo:'Medicamento', detalle:'Tomar Enalapril 10 mg',    estado:'Pendiente'  },
-  ];
 
   const rows   = document.getElementById('rows');
   const noRows = document.getElementById('noRows');
@@ -86,6 +79,19 @@
       });
   }
 
+  async function fetchRemoteReminders(patientId){
+    try{
+      const res = await fetch(`/paciente/api/reminders?patient_id=${encodeURIComponent(patientId)}`, { credentials:'same-origin', headers:{'Accept':'application/json'} });
+      if (!res.ok) throw new Error('no remote');
+      const json = await res.json();
+      // Expect array of reminders with fecha/hora/tipo/detalle/estado
+      return Array.isArray(json) ? json : [];
+    }catch(e){
+      console.warn('Remote reminders not available, using demo data.', e);
+      return null;
+    }
+  }
+
   function applyFilters(){
     let list = DATA.slice();
     if (fDesde.value) list = list.filter(x => x.fecha >= fDesde.value);
@@ -96,7 +102,22 @@
   document.getElementById('btnBuscar').onclick = (e)=>{ e.preventDefault(); applyFilters(); };
   document.getElementById('btnLimpiar').onclick = ()=>{ fDesde.value = fHasta.value = ''; applyFilters(); };
 
-  applyFilters();
+  // If patient parameter provided, try remote fetch first
+  const params = new URLSearchParams(location.search);
+  const patient = params.get('p');
+  if (patient){
+    fetchRemoteReminders(patient).then(remote => {
+      if (remote) {
+        // normalize remote to expected fields if needed
+        remote.forEach(r => { if (!r.fecha && r.date) r.fecha = r.date; if (!r.hora && r.time) r.hora = r.time; });
+        render(remote);
+      } else {
+        applyFilters();
+      }
+    });
+  } else {
+    applyFilters();
+  }
 })();
 </script>
 @endsection

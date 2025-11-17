@@ -27,11 +27,11 @@
     (function () {
       const btn = document.getElementById('logoutBtn');
       if (btn) {
-        btn.addEventListener('click', () => {
-          // Aquí luego cambiamos por route('logout') cuando haya auth
-          window.location.href = '{{ url('/login') }}';
-        });
-      }
+          btn.addEventListener('click', () => {
+            // Navigate to the logout route so server-side logout runs
+            window.location.href = '{{ route('logout') }}';
+          });
+        }
     })();
   </script>
 </body>

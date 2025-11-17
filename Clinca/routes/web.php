@@ -2,10 +2,14 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\BackupController;
+use App\Models\Role;
+use App\Models\User;
 
 /* ============================================================
 |                        LOGIN / LOGOUT
@@ -13,29 +17,51 @@ use App\Http\Controllers\Admin\BackupController;
 Route::view('/login', 'login')->name('login');
 
 Route::post('/login', function (Request $request) {
-    $name = $request->input('username', 'Usuario');
-    $role = $request->input('role');
+    $username = $request->input('username');
+    $password = $request->input('password');
 
-    if (!in_array($role, ['admin','doctor','nurse','receptionist','patient'])) {
-        return back()->withErrors(['role' => 'Selecciona un rol válido'])->withInput();
+    if (!$username || !$password) {
+        return back()->withErrors(['username' => 'Usuario y contraseña son requeridos'])->withInput();
     }
 
-    // Simulación de sesión temporal (más adelante se reemplazará con Auth real)
+    // Try authenticating by email if the input looks like an email, otherwise by name
+    $credentials = filter_var($username, FILTER_VALIDATE_EMAIL)
+        ? ['email' => $username, 'password' => $password]
+        : ['name' => $username, 'password' => $password];
+
+    if (!Auth::attempt($credentials)) {
+        return back()->withErrors(['username' => 'Credenciales inválidas'])->withInput();
+    }
+
+    // Authentication successful
+    $user = Auth::user();
+
+    // Resolve the user's role from the pivot table (first role if multiple)
+    $roleRow = DB::table('users_roles')
+        ->join('roles', 'roles.id', '=', 'users_roles.role_id')
+        ->where('users_roles.user_id', $user->id)
+        ->select('roles.code', 'roles.name')
+        ->first();
+
+    $roleCode = $roleRow->code ?? strtolower($roleRow->name ?? 'patient');
+
+    // Store useful session values
     session([
-        'userName' => $name,
-        'userRole' => $role,
+        'userName' => $user->name,
+        'userRole' => $roleCode,
     ]);
 
-    return match ($role) {
-        'admin'        => redirect()->route('admin.panel'),
-        'doctor'       => redirect()->route('medico.panel'),
-        'nurse'        => redirect()->route('enfermera.panel'),
+    return match ($roleCode) {
+        'administrador'        => redirect()->route('admin.panel'),
+        'medico'       => redirect()->route('medico.panel'),
+        'enfermera'        => redirect()->route('enfermera.panel'),
         'receptionist' => redirect()->route('recepcionista.panel'),
-        'patient'      => redirect()->route('paciente.panel'),
+        default        => redirect()->route('paciente.panel'),
     };
 })->name('login.post');
 
 Route::get('/logout', function () {
+    Auth::logout();
     session()->flush();
     return redirect()->route('login');
 })->name('logout');
@@ -44,31 +70,83 @@ Route::get('/logout', function () {
 |                        ADMINISTRADOR
 ============================================================ */
 Route::prefix('administrador')->group(function () {
-    Route::view('/', 'administrador')->name('admin.panel');
-    Route::view('/usuarios-roles', 'administrador.usuarios_roles')->name('admin.roles');
-    Route::view('/respaldos', 'administrador.respaldos')->name('admin.respaldos');
-    Route::view('/reportes',  'administrador.reportes')->name('admin.reportes');
+    // Views: protect by role via inline checks (no kernel middleware required)
+    Route::get('/', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles', 'roles.id', '=', 'users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'administrador') return redirect()->route('login');
+        return view('administrador');
+    })->name('admin.panel');
 
-    // Lightweight admin JSON API (used by admin frontend JS)
+    Route::get('/usuarios-roles', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles', 'roles.id', '=', 'users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'administrador') return redirect()->route('login');
+        return view('administrador.usuarios_roles');
+    })->name('admin.roles');
+
+    Route::get('/respaldos', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles', 'roles.id', '=', 'users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'administrador') return redirect()->route('login');
+        return view('administrador.respaldos');
+    })->name('admin.respaldos');
+
+    Route::get('/reportes', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles', 'roles.id', '=', 'users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'administrador') return redirect()->route('login');
+        return view('administrador.reportes');
+    })->name('admin.reportes');
+
+    // Lightweight admin JSON API (used by admin frontend JS) - each route checks role
     Route::prefix('api')->group(function () {
         // roles
-        Route::get('roles', [RoleController::class, 'index']);
-        Route::post('roles', [RoleController::class, 'store']);
-        Route::put('roles/{role}', [RoleController::class, 'update']);
-        Route::delete('roles/{role}', [RoleController::class, 'destroy']);
+        Route::get('roles', function () { if ((session('userRole') ?? null) !== 'administrador') abort(403); return app(RoleController::class)->index(); });
+        Route::post('roles', function () { if ((session('userRole') ?? null) !== 'administrador') abort(403); return app(RoleController::class)->store(request()); });
+        Route::put('roles/{role}', function ($role) {
+            if ((session('userRole') ?? null) !== 'administrador') abort(403);
+            $r = is_numeric($role)
+                ? Role::findOrFail($role)
+                : Role::where('code', $role)->orWhere('name', $role)->firstOrFail();
+            return app(RoleController::class)->update(request(), $r);
+        });
+        Route::delete('roles/{role}', function ($role) {
+            if ((session('userRole') ?? null) !== 'administrador') abort(403);
+            $r = is_numeric($role)
+                ? Role::findOrFail($role)
+                : Role::where('code', $role)->orWhere('name', $role)->firstOrFail();
+            return app(RoleController::class)->destroy($r);
+        });
 
         // users
-        Route::get('users', [UserController::class, 'index']);
-        Route::post('users', [UserController::class, 'store']);
-        Route::put('users/{user}/role', [UserController::class, 'updateRole']);
-        Route::delete('users/{user}', [UserController::class, 'destroy']);
+        Route::get('users', function () { if ((session('userRole') ?? null) !== 'administrador') abort(403); return app(UserController::class)->index(); });
+        Route::post('users', function () { if ((session('userRole') ?? null) !== 'administrador') abort(403); return app(UserController::class)->store(request()); });
+        Route::put('users/{user}/role', function ($user) {
+            if ((session('userRole') ?? null) !== 'administrador') abort(403);
+            $u = is_numeric($user)
+                ? User::findOrFail($user)
+                : User::where('email', $user)->orWhere('name', $user)->firstOrFail();
+            return app(UserController::class)->updateRole(request(), $u);
+        });
+        Route::delete('users/{user}', function ($user) {
+            if ((session('userRole') ?? null) !== 'administrador') abort(403);
+            $u = is_numeric($user)
+                ? User::findOrFail($user)
+                : User::where('email', $user)->orWhere('name', $user)->firstOrFail();
+            return app(UserController::class)->destroy($u);
+        });
 
         // reports
-        Route::post('reports', [ReportController::class, 'generate']);
+        Route::post('reports', function () { if ((session('userRole') ?? null) !== 'administrador') abort(403); return app(ReportController::class)->generate(request()); });
 
         // backups
-        Route::post('backups', [BackupController::class, 'store']);
-        Route::get('backups/{dir}/download', [BackupController::class, 'download'])->name('admin.backup.download');
+        Route::post('backups', function () { if ((session('userRole') ?? null) !== 'administrador') abort(403); return app(BackupController::class)->store(request()); });
+        Route::get('backups/{dir}/download', function ($dir) { if ((session('userRole') ?? null) !== 'administrador') abort(403); return app(BackupController::class)->download($dir); })->name('admin.backup.download');
     });
 });
 
@@ -76,28 +154,95 @@ Route::prefix('administrador')->group(function () {
 |                        MÉDICO
 ============================================================ */
 Route::prefix('medico')->group(function () {
-    Route::view('/',              'medico.panel')->name('medico.panel');
-    Route::view('/historial',     'medico.historial')->name('medico.historial');
-    Route::view('/documentos',    'medico.documentos')->name('medico.documentos');
-    Route::view('/tratamientos',  'medico.tratamientos')->name('medico.tratamientos');
-    Route::view('/alta-historial','medico.alta_historial')->name('medico.alta');
+    Route::get('/', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'medico') return redirect()->route('login');
+        return view('medico.panel');
+    })->name('medico.panel');
+
+    Route::get('/historial', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'medico') return redirect()->route('login');
+        return view('medico.historial');
+    })->name('medico.historial');
+
+    Route::get('/documentos', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'medico') return redirect()->route('login');
+        return view('medico.documentos');
+    })->name('medico.documentos');
+
+    Route::get('/tratamientos', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'medico') return redirect()->route('login');
+        return view('medico.tratamientos');
+    })->name('medico.tratamientos');
+
+    Route::get('/alta-historial', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'medico') return redirect()->route('login');
+        return view('medico.alta_historial');
+    })->name('medico.alta');
 });
 
 /* ============================================================
 |                        ENFERMERA
 ============================================================ */
 Route::prefix('enfermera')->group(function () {
-    Route::view('/',       'enfermera.panel')->name('enfermera.panel');
-    Route::view('/signos', 'enfermera.signos')->name('enfermera.signos');
+    Route::get('/', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'enfermera') return redirect()->route('login');
+        return view('enfermera.panel');
+    })->name('enfermera.panel');
+
+    Route::get('/signos', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'enfermera') return redirect()->route('login');
+        return view('enfermera.signos');
+    })->name('enfermera.signos');
 });
 
 /* ============================================================
 |                        RECEPCIONISTA
 ============================================================ */
 Route::prefix('recepcionista')->group(function () {
-    Route::view('/',         'recepcionista.panel')->name('recepcionista.panel');
-    Route::view('/registro', 'recepcionista.registro')->name('recepcionista.registro');
-    Route::view('/citas',    'recepcionista.citas')->name('recepcionista.citas');
+    Route::get('/', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'receptionist') return redirect()->route('login');
+        return view('recepcionista.panel');
+    })->name('recepcionista.panel');
+
+    Route::get('/registro', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'receptionist') return redirect()->route('login');
+        return view('recepcionista.registro');
+    })->name('recepcionista.registro');
+
+    Route::get('/citas', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'receptionist') return redirect()->route('login');
+        return view('recepcionista.citas');
+    })->name('recepcionista.citas');
     // Si en algún momento quieres volver a incluir agenda:
     // Route::view('/agenda',   'recepcionista.agenda')->name('recepcionista.agenda');
 });
@@ -106,9 +251,29 @@ Route::prefix('recepcionista')->group(function () {
 |                        PACIENTE
 ============================================================ */
 Route::prefix('paciente')->group(function () {
-    Route::view('/',              'paciente.panel')->name('paciente.panel');
-    Route::view('/historial',     'paciente.historial')->name('paciente.historial');
-    Route::view('/recordatorios', 'paciente.recordatorios')->name('paciente.recordatorios');
+    Route::get('/', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'patient') return redirect()->route('login');
+        return view('paciente.panel');
+    })->name('paciente.panel');
+
+    Route::get('/historial', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'patient') return redirect()->route('login');
+        return view('paciente.historial');
+    })->name('paciente.historial');
+
+    Route::get('/recordatorios', function () {
+        $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+            ->join('roles','roles.id','=','users_roles.role_id')
+            ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+        if ($role !== 'patient') return redirect()->route('login');
+        return view('paciente.recordatorios');
+    })->name('paciente.recordatorios');
 });
 
 /* ============================================================

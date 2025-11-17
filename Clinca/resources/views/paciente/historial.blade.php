@@ -26,15 +26,21 @@
 
 <script>
 (() => {
-  const DATA = [
-    {fecha:'2025-11-04', tipo:'Consulta',    detalle:'Valoración general'},
-    {fecha:'2025-11-05', tipo:'Signos',      detalle:'TA 118/76 · Temp 36.8 °C · SpO₂ 98%'},
-    {fecha:'2025-11-06', tipo:'Documento',   detalle:'Radiografía de tórax (PDF)'},
-    {fecha:'2025-11-06', tipo:'Tratamiento', detalle:'Cambio: Amoxicilina → Azitromicina'},
-  ];
 
   const rows   = document.getElementById('rows');
   const noRows = document.getElementById('noRows');
+
+  async function fetchRemote(patientId){
+    try{
+      const res = await fetch(`/paciente/api/history?patient_id=${encodeURIComponent(patientId)}`, { credentials: 'same-origin', headers:{ 'Accept':'application/json' } });
+      if (!res.ok) throw new Error('no remote');
+      const json = await res.json();
+      return Array.isArray(json) ? json : [];
+    }catch(e){
+      console.warn('Remote history not available, using demo data.', e);
+      return null; // signal fallback
+    }
+  }
 
   function render(list){
     rows.innerHTML = '';
@@ -54,7 +60,16 @@
       });
   }
 
-  render(DATA);
+  // If a patient id is provided via ?p= we attempt to fetch server-side history
+  const params = new URLSearchParams(location.search);
+  const patient = params.get('p');
+  if (patient){
+    fetchRemote(patient).then(remote => {
+      render(remote || DATA);
+    });
+  } else {
+    render(DATA);
+  }
 })();
 </script>
 @endsection

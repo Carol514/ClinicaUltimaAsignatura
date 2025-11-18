@@ -247,6 +247,9 @@ class RecepcionistaController extends Controller {
     public function updateAppointment(Request $request, $id){
         $a = Appointment::find($id);
         if (!$a) return response()->json(['error'=>'Cita no encontrada'], 404);
+        
+        $oldStatus = $a->status;
+        
         $validated = $request->validate([
             'scheduled_at' => 'sometimes|required|date',
             'duration_min' => 'nullable|integer',
@@ -257,8 +260,23 @@ class RecepcionistaController extends Controller {
         $a->fill($validated);
         $a->save();
         
-        // Send notification email if appointment was updated
-        $this->sendAppointmentNotification($a, 'updated');
+        // Send appropriate notification email based on status change
+        $newStatus = $a->status;
+        if (isset($validated['status']) && $oldStatus !== $newStatus) {
+            // Status changed - send specific notification
+            if ($newStatus === 'cancelada') {
+                $this->sendAppointmentNotification($a, 'cancelled');
+            } elseif ($newStatus === 'no_asistio') {
+                $this->sendAppointmentNotification($a, 'no_show');
+            } elseif ($newStatus === 'atendida') {
+                $this->sendAppointmentNotification($a, 'completed');
+            } else {
+                $this->sendAppointmentNotification($a, 'updated');
+            }
+        } elseif (isset($validated['scheduled_at']) || isset($validated['reason'])) {
+            // Date/time or reason changed but not status
+            $this->sendAppointmentNotification($a, 'updated');
+        }
         
         return response()->json(['data'=>$a]);
     }
@@ -302,24 +320,68 @@ class RecepcionistaController extends Controller {
                 return;
             }
 
-            $subject = $type === 'created' ? 'Cita Programada' : 'Cita Actualizada';
             $scheduledAt = $appointment->scheduled_at ? \Carbon\Carbon::parse($appointment->scheduled_at) : null;
             $dateStr = $scheduledAt ? $scheduledAt->format('d/m/Y') : 'Fecha por confirmar';
             $timeStr = $scheduledAt ? $scheduledAt->format('H:i') : 'Hora por confirmar';
             
+            // Set subject and message based on notification type
+            $subject = '';
             $message = "Estimado/a {$patient->first_name} {$patient->last_name},\n\n";
             
-            if ($type === 'created') {
-                $message .= "Su cita ha sido programada para el {$dateStr} a las {$timeStr}.\n";
-            } else {
-                $message .= "Su cita ha sido actualizada para el {$dateStr} a las {$timeStr}.\n";
+            switch ($type) {
+                case 'created':
+                    $subject = 'Cita Programada';
+                    $message .= "Su cita ha sido programada para el {$dateStr} a las {$timeStr}.\n";
+                    if ($appointment->reason) {
+                        $message .= "Motivo: {$appointment->reason}\n";
+                    }
+                    $message .= "\nPor favor, llegue 15 minutos antes de su cita.\n\nSaludos,\nClínica";
+                    break;
+                    
+                case 'updated':
+                    $subject = 'Cita Actualizada';
+                    $message .= "Su cita ha sido actualizada para el {$dateStr} a las {$timeStr}.\n";
+                    if ($appointment->reason) {
+                        $message .= "Motivo: {$appointment->reason}\n";
+                    }
+                    $message .= "\nPor favor, llegue 15 minutos antes de su cita.\n\nSaludos,\nClínica";
+                    break;
+                    
+                case 'cancelled':
+                    $subject = 'Cita Cancelada';
+                    $message .= "Le informamos que su cita programada para el {$dateStr} a las {$timeStr} ha sido cancelada.\n";
+                    if ($appointment->reason) {
+                        $message .= "Motivo original: {$appointment->reason}\n";
+                    }
+                    $message .= "\nSi necesita reagendar, por favor contacte con la clínica.\n\nSaludos,\nClínica";
+                    break;
+                    
+                case 'no_show':
+                    $subject = 'Cita - No Asistió';
+                    $message .= "Le informamos que no asistió a su cita programada para el {$dateStr} a las {$timeStr}.\n";
+                    if ($appointment->reason) {
+                        $message .= "Motivo: {$appointment->reason}\n";
+                    }
+                    $message .= "\nSi desea reagendar o tiene alguna consulta, por favor contacte con la clínica.\n\nSaludos,\nClínica";
+                    break;
+                    
+                case 'completed':
+                    $subject = 'Cita Completada';
+                    $message .= "Su cita del {$dateStr} a las {$timeStr} ha sido completada exitosamente.\n";
+                    if ($appointment->reason) {
+                        $message .= "Motivo: {$appointment->reason}\n";
+                    }
+                    $message .= "\nGracias por su visita.\n\nSaludos,\nClínica";
+                    break;
+                    
+                default:
+                    $subject = 'Actualización de Cita';
+                    $message .= "Ha habido una actualización en su cita para el {$dateStr} a las {$timeStr}.\n";
+                    if ($appointment->reason) {
+                        $message .= "Motivo: {$appointment->reason}\n";
+                    }
+                    $message .= "\nSaludos,\nClínica";
             }
-            
-            if ($appointment->reason) {
-                $message .= "Motivo: {$appointment->reason}\n";
-            }
-            
-            $message .= "\nPor favor, llegue 15 minutos antes de su cita.\n\nSaludos,\nClínica";
 
             // Use Laravel's Mail facade to send email
             Log::info('Sending appointment email', [

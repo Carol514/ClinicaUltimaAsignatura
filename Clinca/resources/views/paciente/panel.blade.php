@@ -39,15 +39,10 @@
     {{-- Lista de notificaciones recientes --}}
     <div id="notificationsList">
       <p style="font-weight:600;color:#2a6b5f;margin-bottom:8px;">Notificaciones recientes:</p>
-
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #e5e5e5;">
-        <span style="color:#2a6b5f;">📅</span>
-        <div>Cita programada con Dr. López — <small>30/10/2025, 10:00 AM</small></div>
-      </div>
-
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;">
-        <span style="color:#2a6b5f;">⏰</span>
-        <div>Recordatorio: chequeo anual el 15/11/2025</div>
+      <div id="notificationsContent">
+        <div style="text-align:center;padding:20px;color:#666;">
+          Cargando notificaciones...
+        </div>
       </div>
     </div>
   </section>
@@ -64,6 +59,63 @@
     notifMethods.style.display  = on ? 'block' : 'none';
     notifications.style.display = on ? 'block' : 'none';
   }
+  // Load existing preferences from server
+  async function loadPrefs(){
+    try{
+      const res = await fetch('/paciente/api/notifications', { credentials: 'same-origin', headers: {'Accept':'application/json'} });
+      if (res.ok) {
+        const prefs = await res.json();
+        toggleNotif.checked = !!prefs.enabled;
+        document.getElementById('emailNotif').checked = !!prefs.email;
+        document.getElementById('phoneNotif').checked = !!prefs.phone;
+        applyVisibility();
+      }
+    }catch(e){ console.warn('Could not load notification prefs', e); }
+  }
+
+  // Load recent notifications/appointments
+  async function loadRecentNotifications(){
+    try{
+      const res = await fetch('/paciente/api/reminders', { credentials: 'same-origin', headers: {'Accept':'application/json'} });
+      if (res.ok) {
+        const data = await res.json();
+        renderNotifications(data);
+      } else {
+        renderNotifications([]);
+      }
+    }catch(e){ 
+      console.warn('Could not load recent notifications', e);
+      renderNotifications([]);
+    }
+  }
+
+  // Render the notifications list
+  function renderNotifications(notifications) {
+    const content = document.getElementById('notificationsContent');
+    
+    if (!notifications || notifications.length === 0) {
+      content.innerHTML = '<div style="text-align:center;padding:20px;color:#666;">No hay notificaciones recientes</div>';
+      return;
+    }
+
+    content.innerHTML = '';
+    notifications.slice(0, 5).forEach(notif => { // Show only first 5
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #e5e5e5;';
+      
+      const icon = notif.tipo === 'Cita' ? '📅' : '⏰';
+      const date = notif.fecha || '';
+      const time = notif.hora || '';
+      const timeStr = time ? `, ${time}` : '';
+      
+      div.innerHTML = `
+        <span style="color:#2a6b5f;">${icon}</span>
+        <div>${notif.detalle} — <small>${date}${timeStr}</small></div>
+      `;
+      content.appendChild(div);
+    });
+  }
+
   // Persist preference (best-effort) and update UI
   async function persistPrefs(){
     const payload = {
@@ -72,14 +124,30 @@
       phone: !!document.getElementById('phoneNotif').checked,
     };
     try{
-      await fetch('/paciente/api/notifications', { method: 'POST', credentials: 'same-origin', headers: {'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(payload) });
-    }catch(e){ console.warn('Could not persist notification prefs (backend may be missing).', e); }
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      const res = await fetch('/paciente/api/notifications', { 
+        method: 'POST', 
+        credentials: 'same-origin', 
+        headers: {
+          'Content-Type':'application/json',
+          'Accept':'application/json',
+          'X-CSRF-TOKEN': token || ''
+        }, 
+        body: JSON.stringify(payload) 
+      });
+      if (res.ok) {
+        console.log('Notification preferences saved successfully');
+      }
+    }catch(e){ console.warn('Could not persist notification prefs', e); }
   }
 
   toggleNotif.addEventListener('change', ()=>{ applyVisibility(); persistPrefs(); });
   document.getElementById('emailNotif').addEventListener('change', persistPrefs);
   document.getElementById('phoneNotif').addEventListener('change', persistPrefs);
-  applyVisibility(); // inicial
+  
+  // Load preferences and notifications on page load
+  loadPrefs();
+  loadRecentNotifications();
 })();
 </script>
 @endsection

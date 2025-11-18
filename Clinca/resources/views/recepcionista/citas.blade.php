@@ -17,9 +17,7 @@
           <label for="doctor">Doctor</label>
           <select id="doctor" required>
             <option value="" selected disabled>Seleccione…</option>
-            <option>Dr. Hernández</option>
-            <option>Dra. López</option>
-            <option>Dr. Ramírez</option>
+            <!-- options populated from server: /recepcionista/api/medicos -->
           </select>
         </div>
 
@@ -48,31 +46,90 @@
   </section>
 </main>
 
-<script>
-(() => {
-  // Autorrellenar paciente desde ?p= en la URL, si llega
-  const p = new URLSearchParams(location.search).get('p') || '';
-  if (p) document.getElementById('pac').value = p;
+  <script>
+  (function(){
+    const pParam = new URLSearchParams(location.search).get('p') || '';
+    const pacInput = document.getElementById('pac');
+    if (pParam) pacInput.value = pParam;
 
-  document.getElementById('citaForm').addEventListener('submit', e=>{
-    e.preventDefault();
-    const pac    = document.getElementById('pac').value.trim();
-    const doctor = document.getElementById('doctor').value;
-    const fecha  = document.getElementById('fecha').value;
-    const hora   = document.getElementById('hora').value;
-    const motivo = document.getElementById('motivo').value.trim();
+    async function findPatientByText(text){
+      if (!text) return [];
+      try{
+        const res = await fetch('/recepcionista/api/patients?'+new URLSearchParams({ q: text }), { headers:{ 'Accept':'application/json' }, credentials: 'same-origin' });
+        if (!res.ok){ const txt = await res.text(); console.error('findPatientByText error', res.status, txt); return []; }
+  try{ const body = await res.clone().json(); return body.data || []; }catch(e){ const txt = await res.clone().text(); console.error('Non-JSON findPatientByText', txt); return []; }
+      }catch(e){ console.error(e); return []; }
+    }
 
-    if (!pac)      return alert('Escribe el paciente.');
-    if (!doctor)   return alert('Selecciona el doctor.');
-    if (!fecha)    return alert('Selecciona la fecha.');
-    if (!hora)     return alert('Selecciona la hora.');
+    // populate doctor select from backend
+    async function loadMedicos(){
+      try{
+        const res = await fetch('/recepcionista/api/medicos', { headers:{ 'Accept':'application/json' }, credentials: 'same-origin' });
+        if (!res.ok){ console.error('Failed to load medicos', res.status); return; }
+        const body = await res.clone().json().catch(()=>null);
+        const list = (body && body.data) ? body.data : [];
+        const sel = document.getElementById('doctor');
+        // remove existing options except the placeholder
+        Array.from(sel.querySelectorAll('option')).forEach(o=>{ if (o.value) o.remove(); });
+        list.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.name;
+          sel.appendChild(opt);
+        });
+      }catch(err){ console.error('loadMedicos error', err); }
+    }
 
-    // Aquí iría tu POST real al backend
-    alert(`✅ Cita guardada (demo):\n\nPaciente: ${pac}\nDoctor: ${doctor}\nFecha: ${fecha} ${hora}\nMotivo: ${motivo||'(no especificado)'}`);
+    // call on load
+    loadMedicos();
 
-    e.target.reset();
-    if (p) document.getElementById('pac').value = p; // mantener si venía por URL
-  });
-})();
-</script>
+    document.getElementById('citaForm').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const pac    = pacInput.value.trim();
+      const doctor = document.getElementById('doctor').value;
+      const fecha  = document.getElementById('fecha').value;
+      const hora   = document.getElementById('hora').value;
+      const motivo = document.getElementById('motivo').value.trim();
+
+      if (!pac)      return alert('Escribe el paciente.');
+      if (!doctor)   return alert('Selecciona el doctor.');
+      if (!fecha)    return alert('Selecciona la fecha.');
+      if (!hora)     return alert('Selecciona la hora.');
+
+      // try to resolve patient id by searching
+      const matches = await findPatientByText(pac);
+      if (matches.length === 0) return alert('No se encontró el paciente. Busca por nombre/CURP/teléfono y selecciona el registro correcto.');
+      if (matches.length > 1) return alert('Se encontraron varios pacientes. Precisa más (CURP o teléfono) para identificar al paciente.');
+
+  const patient = matches[0];
+  const scheduled_at = fecha + ' ' + hora;
+  const clinician_id = document.getElementById('doctor').value || null;
+  const payload = { patient_id: patient.id, scheduled_at, reason: motivo, clinician_id };
+
+      try{
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const r = await fetch('/recepcionista/api/appointments', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Accept':'application/json','Content-Type':'application/json', 'X-CSRF-TOKEN': token || '' },
+          body: JSON.stringify(payload)
+        });
+        if (r.ok){
+          alert('✅ Cita creada correctamente');
+          e.target.reset();
+          if (pParam) pacInput.value = pParam;
+          return;
+        }
+        if (r.status === 422){
+          const err = await r.json();
+          const messages = [];
+          for (const k in err.errors || {}) messages.push((err.errors[k]||[]).join(', '));
+          return alert('Errores: ' + messages.join(' • '));
+        }
+        const txt = await r.text();
+        alert('Error al crear cita: '+r.status+' '+txt);
+      }catch(ex){ alert('Error de red: '+ex.message); }
+    });
+  })();
+  </script>
 @endsection

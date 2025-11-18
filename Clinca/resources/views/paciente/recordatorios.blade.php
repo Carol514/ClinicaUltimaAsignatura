@@ -8,9 +8,20 @@
   <section class="panel" style="max-width: 980px;">
     {{-- === Filtros directamente en el panel === --}}
     <div style="display:grid;gap:12px;grid-template-columns:1fr 1fr 1fr; margin-bottom:10px;">
+      @php
+        $patientName = '';
+        $patientIdVal = '';
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            $p = \App\Models\Patient::where('user_id', \Illuminate\Support\Facades\Auth::id())->first();
+            if ($p) {
+                $patientName = trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? ''));
+                $patientIdVal = $p->id;
+            }
+        }
+      @endphp
       <div>
         <label>Paciente</label>
-        <input id="f_paciente" readonly>
+        <input id="f_paciente" readonly value="{{ $patientName }}" data-patient-id="{{ $patientIdVal }}">
       </div>
       <div>
         <label>Desde</label>
@@ -48,13 +59,7 @@
 </main>
 
 <script>
-(() => {
-  // Paciente desde ?p=... o demo
-  const params   = new URLSearchParams(location.search);
-  const paciente = params.get('p') || 'Paciente DEMO';
-  document.getElementById('f_paciente').value = paciente;
-
-
+  (() => {
   const rows   = document.getElementById('rows');
   const noRows = document.getElementById('noRows');
   const fDesde = document.getElementById('f_desde');
@@ -81,7 +86,9 @@
 
   async function fetchRemoteReminders(patientId){
     try{
-      const res = await fetch(`/paciente/api/reminders?patient_id=${encodeURIComponent(patientId)}`, { credentials:'same-origin', headers:{'Accept':'application/json'} });
+      let url = '/paciente/api/reminders';
+      if (patientId) url += '?patient_id=' + encodeURIComponent(patientId);
+      const res = await fetch(url, { credentials:'same-origin', headers:{'Accept':'application/json'} });
       if (!res.ok) throw new Error('no remote');
       const json = await res.json();
       // Expect array of reminders with fecha/hora/tipo/detalle/estado
@@ -102,13 +109,15 @@
   document.getElementById('btnBuscar').onclick = (e)=>{ e.preventDefault(); applyFilters(); };
   document.getElementById('btnLimpiar').onclick = ()=>{ fDesde.value = fHasta.value = ''; applyFilters(); };
 
-  // If patient parameter provided, try remote fetch first
+  // Determine patient id: URL ?p= takes precedence, otherwise use server-rendered patient id (data attribute)
   const params = new URLSearchParams(location.search);
-  const patient = params.get('p');
-  if (patient){
-    fetchRemoteReminders(patient).then(remote => {
+  const patientParam = params.get('p');
+  const patientIdAttr = document.getElementById('f_paciente').dataset.patientId || '';
+  const patientToUse = patientParam || patientIdAttr || '';
+
+  if (patientToUse) {
+    fetchRemoteReminders(patientToUse).then(remote => {
       if (remote) {
-        // normalize remote to expected fields if needed
         remote.forEach(r => { if (!r.fecha && r.date) r.fecha = r.date; if (!r.hora && r.time) r.hora = r.time; });
         render(remote);
       } else {
@@ -116,7 +125,15 @@
       }
     });
   } else {
-    applyFilters();
+    // Try fetching for authenticated patient (no patient_id param)
+    fetchRemoteReminders().then(remote => {
+      if (remote) {
+        remote.forEach(r => { if (!r.fecha && r.date) r.fecha = r.date; if (!r.hora && r.time) r.hora = r.time; });
+        render(remote);
+      } else {
+        applyFilters();
+      }
+    });
   }
 })();
 </script>

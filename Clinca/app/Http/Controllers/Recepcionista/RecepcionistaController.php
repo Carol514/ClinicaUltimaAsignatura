@@ -180,12 +180,18 @@ class RecepcionistaController extends Controller {
         $from = $request->query('from');
         $to   = $request->query('to');
         $q    = trim((string)$request->query('q',''));
+        $clinicianId = $request->query('clinician_id');
 
         $query = Appointment::query()->select(['id','patient_id','scheduled_at','duration_min','reason','status','clinician_id']);
-        if ($from) $query->where('scheduled_at','>=',$from);
-        if ($to) $query->where('scheduled_at','<=',$to);
+        if ($from) $query->where('scheduled_at','>=', $from . ' 00:00:00');
+        if ($to) $query->where('scheduled_at','<=', $to . ' 23:59:59');
+        if ($clinicianId) $query->where('clinician_id', $clinicianId);
         if ($q) $query->where(function($w) use ($q){
-            $w->where('reason','like','%'.$q.'%');
+            $w->where('reason','like','%'.$q.'%')
+              ->orWhereHas('patient', function($p) use ($q) {
+                  $p->where('first_name','like','%'.$q.'%')
+                    ->orWhere('last_name','like','%'.$q.'%');
+              });
         });
         $apps = $query->orderBy('scheduled_at','asc')->limit(500)->get();
 

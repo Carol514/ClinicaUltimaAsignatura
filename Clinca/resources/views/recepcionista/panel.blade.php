@@ -214,15 +214,36 @@
       if (desde.value) params.set('from', desde.value);
       if (hasta.value) params.set('to', hasta.value);
       if (q.value.trim()) params.set('q', q.value.trim());
-      // doc select value is clinician id; API expects clinician filter via q or we already adjusted listAppointments to ignore clinician filter. We'll filter client-side if doc set.
+      
+      // Add doctor filter to the API request
+      const docVal = document.getElementById('doc').value || '';
+      if (docVal) params.set('clinician_id', docVal);
+      
       const res = await fetch('/recepcionista/api/appointments?'+params.toString(), { headers:{ 'Accept':'application/json' }, credentials: 'same-origin' });
-      if (!res.ok){ const txt = await res.clone().text().catch(()=>null); console.error('appointments fetch error', res.status, txt); render([]); return; }
+      if (!res.ok){ 
+        const txt = await res.clone().text().catch(()=>null); 
+        console.error('appointments fetch error', res.status, txt); 
+        render([]); 
+        return; 
+      }
+      
       const body = await res.clone().json().catch(()=>null);
       let list = (body && body.data) ? body.data : [];
-      const docVal = document.getElementById('doc').value || '';
-      if (docVal) list = list.filter(x => (x.clinician_id || '') == docVal);
+      
+      // Debug logging to help troubleshoot filters
+      console.log('Filter values:', {
+        desde: desde.value,
+        hasta: hasta.value,
+        doc: docVal,
+        q: q.value.trim(),
+        resultCount: list.length
+      });
+      
       render(list);
-    }catch(err){ console.error('loadAppointments', err); render([]); }
+    }catch(err){ 
+      console.error('loadAppointments', err); 
+      render([]); 
+    }
   }
 
   document.getElementById('btnBuscar').onclick = loadAppointments;

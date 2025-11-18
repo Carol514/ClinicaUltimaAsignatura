@@ -69,30 +69,30 @@
   const RUTA_SIGNOS = @json(route('enfermera.signos'));
   const RUTA_TRAT   = @json(route('medico.tratamientos'));
 
-  function buscarPaciente() {
+  async function buscarPaciente() {
     const nombre = txtPaciente.value.trim();
     if (!nombre) { alert('Escribe un nombre o ID de paciente.'); return; }
+  try{
+  const res = await fetch(`/enfermera/api/paciente?query=${encodeURIComponent(nombre)}`, { credentials:'same-origin', headers:{'Accept':'application/json'} });
+      if (!res.ok) throw new Error('no remote');
+      const list = await res.json();
+      if (!list || !list.length) throw new Error('no results');
+      const patient = list[0];
 
-    // Datos simulados (demo)
-    const demo = {
-      nombre,
-      edad: '42 años',
-      genero: 'Masculino',
-      dx: 'Diabetes Tipo 2',
-      ultima: '22/10/2025'
-    };
+      hdrPaciente.textContent = `Paciente: ${patient.name}`;
+      pEdad.textContent   = patient.age || '—';
+      pGenero.textContent = patient.gender || '—';
+      pDx.textContent     = '—';
+      pUltima.textContent = patient.last_consult || '—';
 
-    hdrPaciente.textContent = `Paciente: ${demo.nombre}`;
-    pEdad.textContent   = demo.edad;
-    pGenero.textContent = demo.genero;
-    pDx.textContent     = demo.dx;
-    pUltima.textContent = demo.ultima;
-
-    const qp = encodeURIComponent(demo.nombre);
-    lnkSignos.href = `${RUTA_SIGNOS}?p=${qp}`;
-    lnkTrat.href   = `${RUTA_TRAT}?p=${qp}`;
-
-    boxPaciente.style.display = 'block';
+      const qp = encodeURIComponent(patient.id);
+      lnkSignos.href = `${RUTA_SIGNOS}?p=${qp}`;
+      lnkTrat.href   = `${RUTA_TRAT}?p=${qp}&from=enfermera`;
+    }catch(err){
+     
+    } finally {
+      boxPaciente.style.display = 'block';
+    }
   }
 
   btnBuscar.addEventListener('click', buscarPaciente);

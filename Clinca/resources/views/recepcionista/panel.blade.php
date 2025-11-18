@@ -35,9 +35,6 @@
           <label for="doc">Doctor</label>
           <select id="doc">
             <option value="">Todos</option>
-            <option>Dr. Hernández</option>
-            <option>Dra. López</option>
-            <option>Dr. Ramírez</option>
           </select>
         </div>
         <div class="field">
@@ -71,17 +68,35 @@
       <p id="noRows" class="muted" style="text-align:center;margin-top:10px;">Sin resultados.</p>
     </div>
   </section>
+
+  {{-- Modal para reprogramar cita --}}
+  <div id="rescheduleModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:8px; min-width:400px;">
+      <h3 style="margin-top:0;">Reprogramar Cita</h3>
+      
+      <form id="rescheduleForm" class="form-container">
+        <div class="field">
+          <label for="newDate">Nueva Fecha</label>
+          <input type="date" id="newDate" required>
+        </div>
+        
+        <div class="field">
+          <label for="newTime">Nueva Hora</label>
+          <input type="time" id="newTime" required>
+        </div>
+        
+        <div class="btn-container" style="margin-top:16px;">
+          <button type="submit" class="confirm-btn">Guardar Cambios</button>
+          <button type="button" class="cancel-btn" onclick="closeRescheduleModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </main>
 
 <script>
 (() => {
-  // Demo de datos
-  const sample = [
-    {fecha:'2025-11-10', hora:'09:00',  pac:'Ana Pérez',      doc:'Dr. Hernández', motivo:'Control',     estado:'Programada'},
-    {fecha:'2025-11-10', hora:'10:30',  pac:'Luis Mora',      doc:'Dra. López',    motivo:'Resultados',  estado:'Programada'},
-    {fecha:'2025-11-11', hora:'11:00',  pac:'Paciente DEMO',  doc:'Dr. Ramírez',   motivo:'Dolor',       estado:'Reprogramada'},
-  ];
-
+  // Live agenda: fetch appointments from server
   const rows   = document.getElementById('rows');
   const noRows = document.getElementById('noRows');
   const desde  = document.getElementById('desde');
@@ -91,45 +106,180 @@
 
   function render(list){
     rows.innerHTML = '';
-    if (!list.length){ noRows.style.display='block'; return; }
+    if (!list || !list.length){ noRows.style.display='block'; return; }
     noRows.style.display='none';
     list.forEach(it=>{
+      const date = (it.scheduled_at||'').split(' ')[0] || '';
+      const time = (it.scheduled_at||'').split(' ')[1] || '';
       const tr = document.createElement('tr');
+      tr.dataset.appId = it.id;
+      // map DB status values to human labels
+      const statusMap = {
+        'programada':'Programada',
+        'confirmada':'Confirmada',
+        'no_asistio':'No asistió',
+        'cancelada':'Cancelada',
+        'atendida':'Atendida'
+      };
+      const humanStatus = statusMap[(it.status||'') ] || (it.status || '');
+
       tr.innerHTML = `
-        <td>${it.fecha}</td>
-        <td>${it.hora}</td>
-        <td>${it.pac}</td>
-        <td>${it.doc}</td>
-        <td>${it.motivo}</td>
-        <td>${it.estado}</td>
+        <td>${date}</td>
+        <td>${time}</td>
+        <td>${it.patient_name || it.patient_id || ''}</td>
+        <td>${it.clinician_name || ''}</td>
+        <td>${it.reason || ''}</td>
+        <td class="status-cell">${humanStatus}</td>
         <td>
-          <button class="btn-secondary" onclick="alert('Marcar llegada (demo)')">Llegó</button>
-          <button class="btn-secondary" onclick="alert('Reprogramar (demo)')">Reprog.</button>
+          <button class="btn-secondary" onclick="markLlegada('${it.id}', this)">Llegó</button>
+          <button class="btn-secondary" onclick="rescheduleAppointment('${it.id}', '${date}', '${time}')">Reprog.</button>
         </td>
       `;
       rows.appendChild(tr);
     });
   }
 
-  function applyFilters(){
-    let list = sample.slice();
-    if (desde.value) list = list.filter(x => x.fecha >= desde.value);
-    if (hasta.value) list = list.filter(x => x.fecha <= hasta.value);
-    if (doc.value)   list = list.filter(x => x.doc === doc.value);
-    if (q.value.trim()){
-      const s = q.value.toLowerCase();
-      list = list.filter(x => (x.pac + ' ' + x.motivo).toLowerCase().includes(s));
-    }
-    render(list);
+  async function loadMedicosForPanel(){
+    try{
+      const res = await fetch('/recepcionista/api/medicos', { headers:{ 'Accept':'application/json' }, credentials: 'same-origin' });
+      if (!res.ok) return;
+      const body = await res.clone().json().catch(()=>null);
+      const list = (body && body.data) ? body.data : [];
+      const sel = document.getElementById('doc');
+      // keep first 'Todos' option (value='') and remove others
+      Array.from(sel.querySelectorAll('option')).forEach((o,i)=>{ if (i>0) o.remove(); });
+      list.forEach(m=>{
+        const opt = document.createElement('option'); opt.value = m.id; opt.textContent = m.name; sel.appendChild(opt);
+      });
+    }catch(err){ console.error('loadMedicosForPanel', err); }
   }
 
-  document.getElementById('btnBuscar').onclick = applyFilters;
+  async function loadAppointments(){
+    try{
+      const params = new URLSearchParams();
+      if (desde.value) params.set('from', desde.value);
+      if (hasta.value) params.set('to', hasta.value);
+      if (q.value.trim()) params.set('q', q.value.trim());
+      // doc select value is clinician id; API expects clinician filter via q or we already adjusted listAppointments to ignore clinician filter. We'll filter client-side if doc set.
+      const res = await fetch('/recepcionista/api/appointments?'+params.toString(), { headers:{ 'Accept':'application/json' }, credentials: 'same-origin' });
+      if (!res.ok){ const txt = await res.clone().text().catch(()=>null); console.error('appointments fetch error', res.status, txt); render([]); return; }
+      const body = await res.clone().json().catch(()=>null);
+      let list = (body && body.data) ? body.data : [];
+      const docVal = document.getElementById('doc').value || '';
+      if (docVal) list = list.filter(x => (x.clinician_id || '') == docVal);
+      render(list);
+    }catch(err){ console.error('loadAppointments', err); render([]); }
+  }
+
+  document.getElementById('btnBuscar').onclick = loadAppointments;
   document.getElementById('btnLimpiar').onclick = () => {
     desde.value = hasta.value = ''; doc.value = ''; q.value = '';
-    applyFilters();
+    // reload with no filters
+    loadAppointments();
   };
 
-  applyFilters();
+  // populate medicos and load appointments on page ready
+  loadMedicosForPanel().then(()=> loadAppointments());
+
+  // Mark appointment as arrived
+  window.markLlegada = async function(id, btn){
+    if (!confirm('Confirmar: marcar cita como llegada?')) return;
+    try{
+      btn.disabled = true; const orig = btn.textContent; btn.textContent = '...';
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      const res = await fetch('/recepcionista/api/appointments/'+encodeURIComponent(id), {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: { 'Accept':'application/json','Content-Type':'application/json','X-CSRF-TOKEN': token },
+        // send DB enum value
+        body: JSON.stringify({ status: 'atendida' })
+      });
+      if (!res.ok){ const txt = await res.clone().text().catch(()=>null); alert('Error al actualizar: '+res.status+' '+txt); btn.disabled = false; btn.textContent = orig; return; }
+      const body = await res.clone().json().catch(()=>null);
+      const tr = document.querySelector('tr[data-app-id="'+id+'"]');
+  if (tr){ const sc = tr.querySelector('.status-cell'); if (sc) sc.textContent = 'Atendida'; }
+  btn.textContent = 'Atendida'; btn.disabled = true;
+    }catch(err){ console.error(err); alert('Error de red: '+(err.message||err)); btn.disabled = false; }
+  }
+
+  // Reschedule appointment functionality
+  let currentRescheduleId = null;
+
+  window.rescheduleAppointment = function(id, currentDate, currentTime) {
+    currentRescheduleId = id;
+    document.getElementById('newDate').value = currentDate;
+    document.getElementById('newTime').value = currentTime;
+    document.getElementById('rescheduleModal').style.display = 'block';
+  }
+
+  window.closeRescheduleModal = function() {
+    document.getElementById('rescheduleModal').style.display = 'none';
+    currentRescheduleId = null;
+  }
+
+  // Handle reschedule form submission
+  document.getElementById('rescheduleForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!currentRescheduleId) {
+      alert('Error: No hay cita seleccionada');
+      return;
+    }
+
+    const newDate = document.getElementById('newDate').value;
+    const newTime = document.getElementById('newTime').value;
+    
+    if (!newDate || !newTime) {
+      alert('Por favor complete fecha y hora');
+      return;
+    }
+
+    const newScheduledAt = newDate + ' ' + newTime;
+
+    try {
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      const res = await fetch('/recepcionista/api/appointments/' + encodeURIComponent(currentRescheduleId), {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: { 
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': token 
+        },
+        body: JSON.stringify({ scheduled_at: newScheduledAt })
+      });
+
+      if (!res.ok) {
+        const txt = await res.clone().text().catch(() => null);
+        alert('Error al reprogramar: ' + res.status + ' ' + txt);
+        return;
+      }
+
+      const body = await res.clone().json().catch(() => null);
+      
+      // Update the table row with new date/time
+      const tr = document.querySelector('tr[data-app-id="' + currentRescheduleId + '"]');
+      if (tr) {
+        const cells = tr.querySelectorAll('td');
+        cells[0].textContent = newDate; // Date column
+        cells[1].textContent = newTime; // Time column
+      }
+
+      alert('✅ Cita reprogramada exitosamente');
+      closeRescheduleModal();
+      
+    } catch (err) {
+      console.error(err);
+      alert('Error de red: ' + (err.message || err));
+    }
+  });
+
+  // Close modal when clicking outside
+  document.getElementById('rescheduleModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeRescheduleModal();
+    }
+  });
 })();
 </script>
 @endsection

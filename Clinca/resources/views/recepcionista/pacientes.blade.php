@@ -6,7 +6,7 @@
   <h2>Pacientes</h2>
 
   <section class="panel" style="max-width:1000px;">
-    <form class="form-container agenda-filtros" onsubmit="return false;">
+  <form class="form-container agenda-filtros" onsubmit="return false;" id="searchForm">
       <div class="fields">
         <div class="field">
           <label>Buscar</label>
@@ -26,7 +26,7 @@
         <button id="btnBuscar" class="confirm-btn" type="button">Buscar</button>
         <button id="btnLimpiar" class="cancel-btn" type="button">Limpiar</button>
         <a href="{{ route('recepcionista.panel') }}" class="cancel-btn">Volver</a>
-        <a href="{{ route('recepcion.paciente.form') }}" class="confirm-btn" style="margin-left:auto">+ Nuevo</a>
+        <a href="{{ route('recepcionista.registro') }}" class="confirm-btn" style="margin-left:auto">+ Nuevo</a>
       </div>
     </form>
 
@@ -49,60 +49,66 @@
   </section>
 </main>
 
-<script>
-(() => {
-  // Mock de pacientes
-  const data = [
-    { id:'p1', nombre:'Ana Pérez',      curp:'PEAA900101MDF', tel:'322-111-2233', mail:'ana@demo.com', estado:'activo' },
-    { id:'p2', nombre:'Luis Mora',      curp:'MORL850202HDF', tel:'322-222-3344', mail:'luis@demo.com', estado:'activo' },
-    { id:'p3', nombre:'Paciente DEMO',  curp:'DEMO000000XXX', tel:'322-333-4455', mail:'demo@demo.com', estado:'inactivo' },
-  ];
+  <script>
+  (function(){
+    const q       = document.getElementById('q');
+    const estado  = document.getElementById('estado');
+    const rows    = document.getElementById('rows');
+    const noRows  = document.getElementById('noRows');
 
-  const q       = document.getElementById('q');
-  const estado  = document.getElementById('estado');
-  const rows    = document.getElementById('rows');
-  const noRows  = document.getElementById('noRows');
-
-  function render(list){
-    rows.innerHTML = '';
-    if (!list.length){ noRows.style.display='block'; return; }
-    noRows.style.display='none';
-
-    list.forEach(p=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${p.nombre}</td>
-        <td>${p.curp}</td>
-        <td>${p.tel}</td>
-        <td>${p.mail}</td>
-        <td>${p.estado === 'activo' ? 'Activo' : 'Inactivo'}</td>
-        <td>
-          <a class="btn-secondary" href="{{ route('recepcion.paciente.form') }}?id=${p.id}">Editar</a>
-          <button class="btn-secondary" onclick="alert('Abrir historial clínico (demo)')">Historial</button>
-        </td>
-      `;
-      rows.appendChild(tr);
-    });
-  }
-
-  function apply(){
-    let list = data.slice();
-    const s = (q.value||'').toLowerCase();
-    if (s){
-      list = list.filter(p =>
-        (p.nombre+p.curp+p.tel+p.mail).toLowerCase().includes(s)
-      );
+    async function fetchPatients(){
+      const params = new URLSearchParams();
+      if (q.value) params.set('q', q.value);
+      try{
+        const res = await fetch('/recepcionista/api/patients?'+params.toString());
+        if (!res.ok){
+          const txt = await res.text();
+          console.error('fetchPatients error', res.status, txt);
+          return [];
+        }
+        // parse JSON safely using clone to allow text fallback
+        let body;
+        try{ body = await res.clone().json(); }catch(e){
+          const txt = await res.clone().text(); console.error('Non-JSON response', txt); return []; }
+        return body.data || [];
+      }catch(e){ console.error('fetchPatients', e); return [];}
     }
-    if (estado.value){
-      list = list.filter(p => p.estado === estado.value);
+
+    function render(list){
+      rows.innerHTML = '';
+      if (!list.length){ noRows.style.display='block'; return; }
+      noRows.style.display='none';
+
+      list.forEach(p=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.nombre || (p.first_name+' '+p.last_name)}</td>
+          <td>${p.curp||''}</td>
+          <td>${p.phone||''}</td>
+          <td>${p.email||''}</td>
+          <td>${p.estado || ''}</td>
+          <td>
+            <a class="btn-secondary" href="{{ route('recepcionista.registro') }}?id=${p.id}">Editar</a>
+            <a class="btn-secondary" href="{{ route('recepcionista.citas') }}?p=${encodeURIComponent(p.id)}">Agendar</a>
+          </td>
+        `;
+        rows.appendChild(tr);
+      });
     }
-    render(list);
-  }
 
-  document.getElementById('btnBuscar').onclick = apply;
-  document.getElementById('btnLimpiar').onclick = () => { q.value=''; estado.value=''; apply(); };
+    async function apply(){
+      const list = await fetchPatients();
+      // simple client-side state filter if backend doesn't provide
+      const st = (estado.value||'').toLowerCase();
+      const filtered = list.filter(it => { if (!st) return true; return (it.estado||'').toLowerCase() === st; });
+      render(filtered);
+    }
 
-  apply();
-})();
-</script>
+    document.getElementById('btnBuscar').onclick = apply;
+    document.getElementById('btnLimpiar').onclick = () => { q.value=''; estado.value=''; apply(); };
+
+    // load on start
+    apply();
+  })();
+  </script>
 @endsection

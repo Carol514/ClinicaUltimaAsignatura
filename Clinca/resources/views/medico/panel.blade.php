@@ -81,30 +81,56 @@
     const nombre = txtPaciente.value.trim();
     if (!nombre){ alert('Escribe el nombre o ID del paciente.'); return; }
 
-    // Datos DEMO (mientras no hay backend)
-    const demo = {
-      nombre,
-      edad: '35 años',
-      genero: 'Femenino',
-      dx: 'Hipertensión',
-      ultima: '25/10/2025'
-    };
+    // Try backend search to resolve patient id and details
+    (async ()=>{
+      try{
+        const res = await fetch(`/medico/api/patients?query=${encodeURIComponent(nombre)}`, { credentials:'same-origin', headers:{'Accept':'application/json'} });
+        if (res.status === 403) {
+          alert('Acceso denegado: debes iniciar sesión como médico o administrador.');
+          return;
+        }
+        if (res.status === 401) {
+          alert('No autenticado: por favor inicia sesión.');
+          return;
+        }
+        if (!res.ok) {
+          // try to read server response for a helpful message
+          let text = '';
+          try { text = await res.text(); } catch(e){ text = '(no body)'; }
+          console.error('Patient search failed', res.status, text);
+          alert(`Error buscando paciente (status ${res.status}). Revise la consola para más detalles.\nServidor: ${text.slice(0,200)}`);
+          boxPaciente.style.display = 'block';
+          return;
+        }
+        const list = await res.json();
+        if (!list || !list.length) {
+          alert('No se encontró ningún paciente con ese nombre o ID. Prueba menos o más partes del nombre.');
+          boxPaciente.style.display = 'block';
+          return;
+        }
+        const patient = list[0];
 
-    // Pintar ficha
-    hdrPaciente.textContent = `Paciente: ${demo.nombre}`;
-    pEdad.textContent   = demo.edad;
-    pGenero.textContent = demo.genero;
-    pDx.textContent     = demo.dx;
-    pUltima.textContent = demo.ultima;
+        hdrPaciente.textContent = `Paciente: ${patient.name}`;
+        pEdad.textContent   = patient.age || '—';
+        // Map short sex codes to readable labels
+        const genderMap = { 'M':'Masculino', 'F':'Femenino', 'I':'Indefinido' };
+        pGenero.textContent = genderMap[patient.gender] || patient.gender || '—';
+        pDx.textContent     = '—';
+        pUltima.textContent = patient.last_consult || '—';
 
-    // Pasar ?p=Nombre a cada módulo
-    const qp = encodeURIComponent(demo.nombre);
-    lnkHist.href = `${RUTA_HIST}?p=${qp}`;
-    lnkDocs.href = `${RUTA_DOCS}?p=${qp}`;
-    lnkTrat.href = `${RUTA_TRAT}?p=${qp}`;
-    lnkAlta.href = `${RUTA_ALTA}?p=${qp}`;
-
-    boxPaciente.style.display = 'block';
+        // Use patient id when linking to modules
+        const qp = encodeURIComponent(patient.id);
+        lnkHist.href = `${RUTA_HIST}?p=${qp}`;
+        lnkDocs.href = `${RUTA_DOCS}?p=${qp}`;
+        lnkTrat.href = `${RUTA_TRAT}?p=${qp}`;
+        lnkAlta.href = `${RUTA_ALTA}?p=${qp}`;
+      }catch(err){
+        console.error(err);
+        alert('Error buscando paciente. Revisa la conexión y si tu sesión es válida.');
+      } finally {
+        boxPaciente.style.display = 'block';
+      }
+    })();
   }
 
   btnBuscar.addEventListener('click', buscarPaciente);

@@ -10,7 +10,7 @@
   <div class="filtros-grid">
     <div>
       <label>Paciente</label>
-      <input id="f_paciente" value="Paciente DEMO" placeholder="Nombre del paciente">
+      <input id="f_paciente" value="" placeholder="Nombre del paciente">
     </div>
     <div>
       <label>Desde</label>
@@ -69,44 +69,75 @@
 </main>
 
 <script>
-  // Demo de datos
-  const rows = [
-    {ts:'2025-11-08 11:10', tipo:'Tratamiento', detalle:'De Amoxicilina → Azitromicina (observ: faringitis)', autor:'Dr. Hernández', action:'Detalle'},
-    {ts:'2025-11-08 11:00', tipo:'Documento',  detalle:'Radiografía de tórax (PDF)', autor:'Recepción', action:'Ver doc'},
-    {ts:'2025-11-08 10:45', tipo:'Signos',      detalle:'TA 118/76, FC 74, Temp 36.5°C', autor:'Enf. Sofía', action:'Detalle'},
-    {ts:'2025-11-08 10:30', tipo:'Visita',      detalle:'Consulta general', autor:'Dr. Hernández', action:'Detalle'},
-  ];
-
   const tbody = document.getElementById('tbody');
   const count = document.getElementById('count');
 
+  async function resolvePatientInfo(p){
+    if (!p) return null;
+    
+    // If it looks like a UUID, fetch patient info by ID
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(p)) {
+      try{
+        const r = await fetch(`/medico/api/patients?query=${encodeURIComponent(p)}`, { credentials:'same-origin', headers:{'Accept':'application/json'} });
+        if (!r.ok) return null;
+        const list = await r.json();
+        return (list && list.length) ? list[0] : null;
+      }catch(e){ return null; }
+    }
+    
+    // Otherwise, search by name
+    try{
+      const r = await fetch(`/medico/api/patients?query=${encodeURIComponent(p)}`, { credentials:'same-origin', headers:{'Accept':'application/json'} });
+      if (!r.ok) return null;
+      const list = await r.json();
+      return (list && list.length) ? list[0] : null;
+    }catch(e){ return null; }
+  }
+
+  async function fetchRemote(patientId){
+    try{
+      const res = await fetch(`/medico/api/history?patient_id=${encodeURIComponent(patientId)}`, { credentials:'same-origin', headers:{ 'Accept':'application/json' } });
+      if (!res.ok) throw new Error('no remote');
+      const json = await res.json();
+      return Array.isArray(json) ? json : [];
+    }catch(e){
+      console.warn('Remote history not available, using demo data.', e);
+      return null; // signal fallback
+    }
+  }
+
   function render(list){
     tbody.innerHTML = '';
+    if (!list || !list.length){
+      count.textContent = '0 resultados';
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:12px;text-align:center" class="muted">Sin registros</td></tr>';
+      return;
+    }
     list.forEach(r=>{
       const tr = document.createElement('tr');
+      const ts = (r.fecha ? r.fecha : (r.ts || '')) + (r.hora ? (' ' + r.hora) : '');
       tr.innerHTML = `
-        <td style="padding:10px 12px;border-bottom:1px solid #eee;white-space:nowrap">${r.ts}</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #eee">${r.tipo}</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #eee">${r.detalle}</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #eee">${r.autor}</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #eee">
-          <button class="cancel-btn" onclick="alert('${r.action} (demo)')">${r.action}</button>
-        </td>`;
+        <td style="padding:10px 12px;border-bottom:1px solid #eee;white-space:nowrap">${ts}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #eee">${r.tipo || ''}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #eee">${r.detalle || ''}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #eee">${r.autor || '—'}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #eee">&nbsp;</td>`;
       tbody.appendChild(tr);
     });
     count.textContent = `${list.length} resultado${list.length!==1?'s':''}`;
   }
 
-  function filtrar(){
+  // Filters will be applied client-side on the returned dataset
+  function filtrar(list){
     const texto = (document.getElementById('f_texto').value||'').toLowerCase();
     const tipo  = document.getElementById('f_tipo').value;
     const d1    = document.getElementById('f_desde').value;
     const d2    = document.getElementById('f_hasta').value;
 
-    const out = rows.filter(r=>{
-      const okTipo = !tipo || r.tipo===tipo;
-      const okTxt  = !texto || (r.detalle.toLowerCase().includes(texto) || r.autor.toLowerCase().includes(texto));
-      const date   = r.ts.slice(0,10);
+    let out = (list || []).filter(r=>{
+      const okTipo = !tipo || (r.tipo && r.tipo===tipo);
+      const okTxt  = !texto || ((r.detalle||'').toLowerCase().includes(texto) || (r.autor||'').toLowerCase().includes(texto));
+      const date   = (r.fecha || '').slice(0,10);
       const okD1   = !d1 || date >= d1;
       const okD2   = !d2 || date <= d2;
       return okTipo && okTxt && okD1 && okD2;
@@ -115,15 +146,46 @@
     render(out);
   }
 
-  document.getElementById('btnBuscar').onclick = filtrar;
+  document.getElementById('btnBuscar').onclick = async ()=>{
+    const p = new URLSearchParams(location.search).get('p');
+    const patientInfo = await resolvePatientInfo(p);
+    const remote = patientInfo ? await fetchRemote(patientInfo.id) : null;
+    filtrar(remote);
+  };
   document.getElementById('btnLimpiar').onclick = ()=>{
     ['f_texto','f_paciente'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('f_tipo').value='';
     document.getElementById('f_desde').value='';
     document.getElementById('f_hasta').value='';
-    render(rows);
+    // Try to render remote again if possible
+    (async ()=>{
+      const p = new URLSearchParams(location.search).get('p');
+      const patientInfo = await resolvePatientInfo(p);
+      const remote = patientInfo ? await fetchRemote(patientInfo.id) : null;
+      if (remote) render(remote); else render([]);
+    })();
   };
 
-  render(rows);
+  // On load, attempt remote if ?p= provided
+  (async ()=>{
+    const p = new URLSearchParams(location.search).get('p');
+    if (p){
+      const patientInfo = await resolvePatientInfo(p);
+      if (patientInfo) {
+        // Set the patient's full name in the filter textbox
+        const fullName = patientInfo.name || '';
+        document.getElementById('f_paciente').value = fullName;
+        
+        const remote = await fetchRemote(patientInfo.id);
+        if (remote) render(remote); else render([]);
+      } else {
+        // If we can't resolve patient info, just show the parameter as-is
+        document.getElementById('f_paciente').value = p;
+        render([]);
+      }
+    } else {
+      render([]);
+    }
+  })();
 </script>
 @endsection

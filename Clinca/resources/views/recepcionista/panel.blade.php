@@ -2,6 +2,30 @@
 @section('title', 'Panel de Recepción')
 
 @section('content')
+<style>
+.btn-warning {
+  background-color: #ffc107 !important;
+  color: #212529 !important;
+  border-color: #ffc107 !important;
+}
+.btn-warning:hover {
+  background-color: #ffca2c !important;
+  border-color: #ffc720 !important;
+}
+.btn-danger {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border-color: #dc3545 !important;
+}
+.btn-danger:hover {
+  background-color: #c82333 !important;
+  border-color: #bd2130 !important;
+}
+.text-muted {
+  color: #6c757d !important;
+  font-style: italic;
+}
+</style>
 <main class="dashboard">
   <h2>Panel de Recepción</h2>
   <p class="muted">Selecciona una acción para comenzar.</p>
@@ -122,6 +146,37 @@
         'atendida':'Atendida'
       };
       const humanStatus = statusMap[(it.status||'') ] || (it.status || '');
+      
+      // Generate buttons based on current status
+      let buttonsHtml = '';
+      const currentStatus = it.status || 'programada';
+      
+      if (currentStatus === 'atendida' || currentStatus === 'cancelada' || currentStatus === 'no_asistio') {
+        // No buttons for final states (completed, cancelled, or no-show)
+        const finalStateLabels = {
+          'atendida': 'Finalizada',
+          'cancelada': 'Cancelada',
+          'no_asistio': 'No Asistió'
+        };
+        buttonsHtml = `<span class="text-muted">${finalStateLabels[currentStatus]}</span>`;
+      } else {
+        // Show action buttons for active appointments (programada, confirmada)
+        const buttons = [];
+        
+        // Active appointments can be marked as attended
+        buttons.push(`<button class="btn-secondary" onclick="updateAppointmentStatus('${it.id}', 'atendida', this)">Llegó</button>`);
+        
+        // Active appointments can be marked as no-show or cancelled
+        buttons.push(`<button class="btn-secondary btn-warning" onclick="updateAppointmentStatus('${it.id}', 'no_asistio', this)">No Asistió</button>`);
+        buttons.push(`<button class="btn-secondary btn-danger" onclick="updateAppointmentStatus('${it.id}', 'cancelada', this)">Cancelar</button>`);
+        
+        // Reschedule button (only for programada and confirmada)
+        if (currentStatus === 'programada' || currentStatus === 'confirmada') {
+          buttons.push(`<button class="btn-secondary" onclick="rescheduleAppointment('${it.id}', '${date}', '${time}')">Reprog.</button>`);
+        }
+        
+        buttonsHtml = buttons.join(' ');
+      }
 
       tr.innerHTML = `
         <td>${date}</td>
@@ -131,8 +186,7 @@
         <td>${it.reason || ''}</td>
         <td class="status-cell">${humanStatus}</td>
         <td>
-          <button class="btn-secondary" onclick="markLlegada('${it.id}', this)">Llegó</button>
-          <button class="btn-secondary" onclick="rescheduleAppointment('${it.id}', '${date}', '${time}')">Reprog.</button>
+          ${buttonsHtml}
         </td>
       `;
       rows.appendChild(tr);
@@ -181,25 +235,71 @@
   // populate medicos and load appointments on page ready
   loadMedicosForPanel().then(()=> loadAppointments());
 
-  // Mark appointment as arrived
-  window.markLlegada = async function(id, btn){
-    if (!confirm('Confirmar: marcar cita como llegada?')) return;
+  // Update appointment status
+  window.updateAppointmentStatus = async function(id, newStatus, btn){
+    const statusMessages = {
+      'atendida': '¿Confirmar que el paciente llegó y fue atendido?',
+      'no_asistio': '¿Confirmar que el paciente no asistió a la cita?', 
+      'cancelada': '¿Confirmar que desea cancelar esta cita?'
+    };
+    
+    const statusLabels = {
+      'atendida': 'Atendida',
+      'no_asistio': 'No asistió',
+      'cancelada': 'Cancelada'
+    };
+    
+    if (!confirm(statusMessages[newStatus] || 'Confirmar cambio de estado?')) return;
+    
     try{
-      btn.disabled = true; const orig = btn.textContent; btn.textContent = '...';
+      btn.disabled = true; 
+      const orig = btn.textContent; 
+      btn.textContent = '...';
+      
       const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
       const res = await fetch('/recepcionista/api/appointments/'+encodeURIComponent(id), {
         method: 'PUT',
         credentials: 'same-origin',
         headers: { 'Accept':'application/json','Content-Type':'application/json','X-CSRF-TOKEN': token },
-        // send DB enum value
-        body: JSON.stringify({ status: 'atendida' })
+        body: JSON.stringify({ status: newStatus })
       });
-      if (!res.ok){ const txt = await res.clone().text().catch(()=>null); alert('Error al actualizar: '+res.status+' '+txt); btn.disabled = false; btn.textContent = orig; return; }
+      
+      if (!res.ok){ 
+        const txt = await res.clone().text().catch(()=>null); 
+        alert('Error al actualizar: '+res.status+' '+txt); 
+        btn.disabled = false; 
+        btn.textContent = orig; 
+        return; 
+      }
+      
       const body = await res.clone().json().catch(()=>null);
+      
+      // Update the row status and buttons
       const tr = document.querySelector('tr[data-app-id="'+id+'"]');
-  if (tr){ const sc = tr.querySelector('.status-cell'); if (sc) sc.textContent = 'Atendida'; }
-  btn.textContent = 'Atendida'; btn.disabled = true;
-    }catch(err){ console.error(err); alert('Error de red: '+(err.message||err)); btn.disabled = false; }
+      if (tr){ 
+        const sc = tr.querySelector('.status-cell'); 
+        if (sc) sc.textContent = statusLabels[newStatus];
+        
+        // If marked as final state (attended, cancelled, or no-show), remove all buttons
+        if (newStatus === 'atendida' || newStatus === 'cancelada' || newStatus === 'no_asistio') {
+          const actionCell = tr.querySelector('td:last-child');
+          const finalStateLabels = {
+            'atendida': 'Finalizada',
+            'cancelada': 'Cancelada', 
+            'no_asistio': 'No Asistió'
+          };
+          if (actionCell) actionCell.innerHTML = `<span class="text-muted">${finalStateLabels[newStatus]}</span>`;
+        }
+      }
+      
+      alert('✅ Estado de la cita actualizado exitosamente');
+      
+    }catch(err){ 
+      console.error(err); 
+      alert('Error de red: '+(err.message||err)); 
+      btn.disabled = false; 
+      btn.textContent = orig;
+    }
   }
 
   // Reschedule appointment functionality

@@ -135,6 +135,25 @@ class PatientController extends Controller
         return response()->json(['saved'=>true]);
     }
 
+    // Get notification preferences for the authenticated patient
+    public function getNotifications(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) return response()->json(['error'=>'Unauthenticated'], 403);
+
+        $patient = Patient::where('user_id', $user->id)->first();
+        if (!$patient) return response()->json(['error'=>'Patient not found'], 404);
+
+        $key = 'patient_notifications_' . $patient->id;
+        $prefs = Cache::get($key, [
+            'enabled' => true,
+            'email' => true,
+            'phone' => false
+        ]);
+
+        return response()->json($prefs);
+    }
+
     protected function resolvePatient(Request $request)
     {
         $pid = $request->query('patient_id') ?? $request->input('patient_id') ?? null;

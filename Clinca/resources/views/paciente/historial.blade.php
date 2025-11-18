@@ -32,13 +32,14 @@
 
   async function fetchRemote(patientId){
     try{
-      const res = await fetch(`/paciente/api/history?patient_id=${encodeURIComponent(patientId)}`, { credentials: 'same-origin', headers:{ 'Accept':'application/json' } });
+      const url = patientId ? `/paciente/api/history?patient_id=${encodeURIComponent(patientId)}` : '/paciente/api/history';
+      const res = await fetch(url, { credentials: 'same-origin', headers:{ 'Accept':'application/json' } });
       if (!res.ok) throw new Error('no remote');
       const json = await res.json();
       return Array.isArray(json) ? json : [];
     }catch(e){
-      console.warn('Remote history not available, using demo data.', e);
-      return null; // signal fallback
+      console.warn('Remote history not available', e);
+      return [];
     }
   }
 
@@ -61,15 +62,13 @@
   }
 
   // If a patient id is provided via ?p= we attempt to fetch server-side history
+  // Otherwise, fetch history for the currently authenticated patient
   const params = new URLSearchParams(location.search);
   const patient = params.get('p');
-  if (patient){
-    fetchRemote(patient).then(remote => {
-      render(remote || DATA);
-    });
-  } else {
-    render(DATA);
-  }
+  
+  fetchRemote(patient).then(remote => {
+    render(remote || []);
+  });
 })();
 </script>
 @endsection

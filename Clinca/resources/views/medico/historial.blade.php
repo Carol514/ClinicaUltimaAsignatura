@@ -64,6 +64,7 @@
         </thead>
         <tbody id="tbody"></tbody>
       </table>
+      <a class="btn-secondary" id="volverBtn" href="{{ route('medico.panel') }}">Volver</a>
     </div>
   </section>
 </main>

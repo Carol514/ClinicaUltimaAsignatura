@@ -31,9 +31,6 @@
       <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
         <input type="checkbox" id="emailNotif" style="accent-color:#2a6b5f;"> Correo electrónico
       </label>
-      <label style="display:flex;align-items:center;gap:8px;">
-        <input type="checkbox" id="phoneNotif" style="accent-color:#2a6b5f;"> Teléfono (SMS o llamada)
-      </label>
     </div>
 
     {{-- Lista de notificaciones recientes --}}

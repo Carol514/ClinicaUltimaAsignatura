@@ -13,7 +13,7 @@
   </div>
 
   {{-- FORMULARIO --}}
-  <form id="docs-form" class="form-container form-docs" enctype="multipart/form-data">
+  <form id="docs-form" class="form-container panel" method="POST" enctype="multipart/form-data">
     {{-- Fila: Tipo / Título --}}
     <div class="grid-2">
       <div>
@@ -50,7 +50,7 @@
 
     {{-- ACCIONES --}}
     <div class="acciones" style="margin-top:12px;">
-      <button class="btn" type="submit">Subir documentos</button>
+      <button style="background-color:#7bc3ab; color:white;" class="btn-secondary" type="submit">Subir documentos</button>
       <button class="btn-secondary" type="button" id="btnReset">Limpiar</button>
       <a class="btn-secondary" id="volverBtn" href="{{ route('medico.panel') }}">Volver</a>
     </div>

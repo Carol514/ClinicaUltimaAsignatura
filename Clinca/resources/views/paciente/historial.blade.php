@@ -20,6 +20,7 @@
       <p id="noRows" class="muted" style="text-align:center;margin-top:10px;">
         Sin registros en el historial.
       </p>
+      <a class="btn-secondary" id="volverBtn" href="{{ route('paciente.panel') }}">Volver</a>
     </div>
   </section>
 </main>

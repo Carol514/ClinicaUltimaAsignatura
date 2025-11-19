@@ -20,7 +20,9 @@ class BackupController extends Controller
         Storage::makeDirectory($dir);
 
     // Accept tables list and format. Default to xlsx per request.
-    $tables = $request->input('tables', ['users', 'patients', 'appointments']);
+    // If no specific tables requested, get all tables from database
+    $defaultTables = $this->getAllDatabaseTables();
+    $tables = $request->input('tables', $defaultTables);
     $format = $request->input('format', 'xlsx');
 
         $created = [];
@@ -93,12 +95,25 @@ class BackupController extends Controller
             }
 
             // create index and return
-            $index = ['created_at' => now()->toDateTimeString(), 'format' => $format, 'files' => $created];
+            $index = [
+                'created_at' => now()->toDateTimeString(), 
+                'format' => $format, 
+                'files' => $created,
+                'tables_backed_up' => array_keys($sheets),
+                'total_tables' => count($sheets)
+            ];
             if (isset($indexWarning)) $index['warning'] = $indexWarning;
             $indexPath = "{$dir}/index.json";
             Storage::put($indexPath, json_encode($index, JSON_PRETTY_PRINT));
 
-            return response()->json(['ok' => true, 'index' => $index, 'download' => $downloadRoute]);
+            return response()->json([
+                'ok' => true, 
+                'index' => $index, 
+                'download' => $downloadRoute,
+                'tables_count' => count($sheets),
+                'tables' => array_keys($sheets),
+                'files' => $created
+            ]);
         }
         foreach ($tables as $t) {
             if (!DB::getSchemaBuilder()->hasTable($t)) {
@@ -137,11 +152,24 @@ class BackupController extends Controller
         }
 
         // Create a small index file
-        $index = ['created_at' => now()->toDateTimeString(), 'format' => $format, 'files' => $created];
+        $index = [
+            'created_at' => now()->toDateTimeString(), 
+            'format' => $format, 
+            'files' => $created,
+            'tables_backed_up' => $tables,
+            'total_tables' => count($tables)
+        ];
         $indexPath = "{$dir}/index.json";
         Storage::put($indexPath, json_encode($index, JSON_PRETTY_PRINT));
 
-        return response()->json(['ok' => true, 'index' => $index, 'download' => route('admin.backup.download', ['dir' => $timestamp])]);
+        return response()->json([
+            'ok' => true, 
+            'index' => $index, 
+            'download' => route('admin.backup.download', ['dir' => $timestamp]),
+            'tables_count' => count($tables),
+            'tables' => $tables,
+            'files' => $created
+        ]);
     }
 
     public function download(string $dir)
@@ -161,5 +189,33 @@ class BackupController extends Controller
         }
 
         return Storage::download("{$base}/index.json", "backup_{$dir}_index.json");
+    }
+
+    /**
+     * Get all tables from the current database
+     */
+    private function getAllDatabaseTables()
+    {
+        try {
+            // Get the database name from config
+            $database = config('database.connections.' . config('database.default') . '.database');
+            
+            // Query to get all tables from the current database
+            $tables = DB::select("SELECT table_name as `table_name` FROM information_schema.tables WHERE table_schema = ?", [$database]);
+            
+            // Extract table names and filter out system tables we might not want to backup
+            $tableNames = collect($tables)->pluck('table_name')->toArray();
+            
+            // Filter out Laravel migration and cache tables (optional)
+            $excludeTables = ['migrations', 'failed_jobs', 'cache', 'cache_locks', 'sessions'];
+            $tableNames = array_diff($tableNames, $excludeTables);
+            
+            return array_values($tableNames);
+            
+        } catch (\Throwable $e) {
+            // Fallback to original tables if there's an error
+            logger()->warning('Failed to get all database tables: ' . $e->getMessage());
+            return ['users', 'patients', 'appointments'];
+        }
     }
 }

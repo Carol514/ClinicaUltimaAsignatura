@@ -71,7 +71,19 @@ class RecepcionistaController extends Controller {
     // Create patient
     public function storePatient(Request $request){
         // Normalize input and map human-friendly sex values to DB enum (M,F,I)
-        $data = $request->only(['curp','first_name','last_name','dob','sex','phone','email','address']);
+        $data = $request->only(['curp','first_name','last_name','dob','sex','phone','email','address','age']);
+
+        // Convert age to date of birth if age is provided instead of dob
+        if (!empty($data['age']) && empty($data['dob'])) {
+            $age = (int)$data['age'];
+            if ($age > 0 && $age <= 120) {
+                // Calculate approximate birth year (current year - age)
+                $birthYear = now()->year - $age;
+                // Use January 1st as approximate birth date
+                $data['dob'] = $birthYear . '-01-01';
+            }
+            unset($data['age']); // Remove age field as it's not stored in DB
+        }
 
         // map common spanish labels to enum values expected by DB
         if (!empty($data['sex'])){
@@ -99,6 +111,7 @@ class RecepcionistaController extends Controller {
             'phone'      => 'nullable|string|max:40',
             'email'      => 'nullable|email|max:200',
             'address'    => 'nullable|string|max:400',
+            'age'        => 'nullable|integer|min:0|max:120', // Accept age for conversion to dob
         ])->validate();
 
         $patient = Patient::create($validated);

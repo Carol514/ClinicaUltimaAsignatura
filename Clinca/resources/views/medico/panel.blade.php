@@ -115,7 +115,7 @@
         // Map short sex codes to readable labels
         const genderMap = { 'M':'Masculino', 'F':'Femenino', 'I':'Indefinido' };
         pGenero.textContent = genderMap[patient.gender] || patient.gender || '—';
-        pDx.textContent     = '—';
+        pDx.textContent = patient.diagnosis || '—';
         pUltima.textContent = patient.last_consult || '—';
 
         // Use patient id when linking to modules

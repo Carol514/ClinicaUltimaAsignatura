@@ -87,12 +87,23 @@ class MedicoController extends Controller
                 $lastEnc = Encounter::where('record_id', $p->record->id)->orderByDesc('encounter_dt')->value('encounter_dt');
             }
             $last = $lastAppt ?: $lastEnc ?: null;
+            
+            // Get most recent diagnosis from medical_histories
+            $diagnosis = null;
+            if ($p->record && $p->record->id) {
+                $recentHistory = \App\Models\MedicalHistory::where('record_id', $p->record->id)
+                    ->orderByDesc('recorded_at')
+                    ->first();
+                $diagnosis = $recentHistory ? $recentHistory->condition : null;
+            }
+            
             $fullName = trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? ''));
             return [
                 'id' => $p->id,
                 'name' => $fullName ?: null,
                 'gender' => $p->sex ?? null,
                 'age' => $age,
+                'diagnosis' => $diagnosis,
                 'last_consult' => $last ? substr($last,0,10) : null,
             ];
         });

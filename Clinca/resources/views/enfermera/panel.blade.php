@@ -81,15 +81,18 @@
 
       hdrPaciente.textContent = `Paciente: ${patient.name}`;
       pEdad.textContent   = patient.age || '—';
-      pGenero.textContent = patient.gender || '—';
-      pDx.textContent     = '—';
+      // Map short sex codes to readable labels
+      const genderMap = { 'M':'Masculino', 'F':'Femenino', 'I':'Indefinido' };
+      pGenero.textContent = genderMap[patient.gender] || patient.gender || '—';
+      pDx.textContent = patient.diagnosis || '—';
       pUltima.textContent = patient.last_consult || '—';
 
       const qp = encodeURIComponent(patient.id);
       lnkSignos.href = `${RUTA_SIGNOS}?p=${qp}`;
       lnkTrat.href   = `${RUTA_TRAT}?p=${qp}&from=enfermera`;
     }catch(err){
-     
+      console.error('Error searching patient:', err);
+      alert('No se encontró ningún paciente con ese nombre o ID. Prueba con otro término de búsqueda.');
     } finally {
       boxPaciente.style.display = 'block';
     }

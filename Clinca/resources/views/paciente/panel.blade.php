@@ -27,9 +27,7 @@
 
     {{-- Métodos de notificación --}}
     <div id="notifMethods" style="margin-bottom:20px;">
-      <p style="font-weight:600;color:#2a6b5f;margin-bottom:6px;">Seleccione el método de notificación:</p>
       <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <input type="checkbox" id="emailNotif" style="accent-color:#2a6b5f;"> Correo electrónico
       </label>
     </div>
 

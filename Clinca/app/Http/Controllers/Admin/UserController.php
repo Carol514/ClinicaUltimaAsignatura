@@ -15,11 +15,32 @@ class UserController extends Controller
     public function index()
     {
         // Build users + roles without relying on a User::roles relationship (models are final)
-        $users = DB::table('users')->select('id', 'name', 'email')->get()->map(function($u){
+        // Exclude patients from the user management interface
+        $patientRoleIds = DB::table('roles')
+            ->whereIn('code', ['paciente', 'patient'])
+            ->orWhereIn('name', ['Paciente', 'Patient'])
+            ->pluck('id')
+            ->toArray();
+
+        $patientUserIds = [];
+        if (!empty($patientRoleIds)) {
+            $patientUserIds = DB::table('users_roles')
+                ->whereIn('role_id', $patientRoleIds)
+                ->pluck('user_id')
+                ->toArray();
+        }
+
+        // Get all users except those with patient roles
+        $usersQuery = DB::table('users')->select('id', 'name', 'email');
+        if (!empty($patientUserIds)) {
+            $usersQuery->whereNotIn('id', $patientUserIds);
+        }
+        
+        $users = $usersQuery->get()->map(function($u){
             return (array) $u;
         })->toArray();
 
-        // Fetch pivot roles and attach to users
+        // Fetch pivot roles and attach to users (only for non-patient users)
         $roleRows = DB::table('users_roles')
             ->join('roles', 'users_roles.role_id', '=', 'roles.id')
             ->select('users_roles.user_id', 'roles.id as role_id', 'roles.name', 'roles.code')

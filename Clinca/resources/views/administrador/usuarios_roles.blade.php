@@ -8,16 +8,17 @@
 
   {{-- ====== Sección: Usuarios ====== --}}
   <section class="panel" style="max-width:1100px;">
-    <h3 style="margin-top:0;">Usuarios</h3>
+    <h3 style="margin-top:0;">Usuarios del Personal</h3>
+    <p class="muted" style="margin-bottom:12px;">Gestiona usuarios del personal médico y administrativo. Los pacientes no se muestran en esta tabla.</p>
 
     <div style="text-align:center;margin-bottom:12px;">
-      <button class="confirm-btn" id="btnNuevoUsuario">Agregar nuevo usuario</button>
+      <button class="confirm-btn" id="btnNuevoUsuario">Agregar nuevo usuario del personal</button>
     </div>
 
     <form class="form-container" onsubmit="return false;">
       <div class="fields" style="display:grid;grid-template-columns:1fr auto;gap:10px;">
         <div>
-          <label>Filtrar usuarios por nombre/correo/rol</label>
+          <label>Filtrar personal por nombre/correo/rol</label>
           <input id="searchUser" placeholder="Ej. Ana, doctor, @hospital.local">
         </div>
         <div class="btn-container" style="align-self:end;">
@@ -30,7 +31,7 @@
       <table>
         <thead>
           <tr>
-            <th>Usuario</th>
+            <th>Personal</th>
             <th>Correo / ID</th>
             <th>Rol actual</th>
             <th style="width:220px;">Acciones</th>
@@ -38,7 +39,7 @@
         </thead>
         <tbody id="usersTbody"></tbody>
       </table>
-      <p id="noUsers" class="muted" style="text-align:center;margin-top:10px;display:none;">Sin usuarios.</p>
+      <p id="noUsers" class="muted" style="text-align:center;margin-top:10px;display:none;">Sin personal registrado.</p>
     </div>
   </section>
 
@@ -90,7 +91,7 @@
 {{-- Modal: nuevo usuario --}}
 <div class="modal-backdrop" id="userModal">
   <div class="modal">
-    <h4>Agregar nuevo usuario</h4>
+    <h4>Agregar nuevo usuario del personal</h4>
     <div class="form-container">
       <div class="fields" style="display:grid;grid-template-columns:1fr;gap:10px;">
         <div>

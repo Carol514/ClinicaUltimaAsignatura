@@ -43,35 +43,9 @@
     </div>
   </section>
 
-  {{-- ====== Sección: Roles y permisos ====== --}}
-  <section class="panel" style="max-width:1100px;">
-    <h3 style="margin-top:0;">Roles y permisos</h3>
+  
 
-    <div class="table-container" style="margin-top:12px;">
-      <table>
-        <thead>
-          <tr>
-            <th>Rol</th>
-            <th style="width:220px;">Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="rolesTbody"></tbody>
-      </table>
-      <p id="noRoles" class="muted" style="text-align:center;margin-top:10px;display:none;">Sin roles.</p>
-    </div>
 
-    <form class="form-container" onsubmit="return false;" style="margin-top:14px;">
-      <div class="fields" style="display:grid;grid-template-columns:1fr auto;gap:10px;">
-        <div>
-          <label>Nombre de nuevo rol</label>
-          <input id="newRoleName" placeholder="Ej. Coordinador">
-        </div>
-        <div class="btn-container" style="align-self:end;">
-          <button class="confirm-btn" id="btnAgregarRol" type="button">Agregar rol</button>
-        </div>
-      </div>
-    </form>
-  </section>
 
   <div style="max-width:1100px;margin:8px auto 40px;text-align:center;">
     <a href="{{ route('admin.panel') }}" class="cancel-btn">Volver al panel</a>

@@ -148,9 +148,23 @@
   }
 
   document.getElementById('btnBuscar').onclick = async ()=>{
-    const p = new URLSearchParams(location.search).get('p');
+    // Prefer the patient field value, fallback to ?p= in URL
+    const inputVal = (document.getElementById('f_paciente').value || '').trim();
+    const p = inputVal || new URLSearchParams(location.search).get('p');
+    if (!p) { alert('Indica un paciente (nombre o ID) en el campo "Paciente".'); return; }
     const patientInfo = await resolvePatientInfo(p);
     const remote = patientInfo ? await fetchRemote(patientInfo.id) : null;
+    // If we resolved a patient, update the Volver link to preserve context
+    if (patientInfo) {
+      try{
+        const vb = document.getElementById('volverBtn');
+        const url = new URL(vb.href, location.origin);
+        url.searchParams.set('p', patientInfo.id);
+        vb.href = url.toString();
+        // Normalize display name in the patient filter
+        document.getElementById('f_paciente').value = patientInfo.name || p;
+      }catch(e){ /* ignore */ }
+    }
     filtrar(remote);
   };
   document.getElementById('btnLimpiar').onclick = ()=>{
@@ -176,6 +190,13 @@
         // Set the patient's full name in the filter textbox
         const fullName = patientInfo.name || '';
         document.getElementById('f_paciente').value = fullName;
+        // Update Volver link to include patient context
+        try{
+          const vb = document.getElementById('volverBtn');
+          const url = new URL(vb.href, location.origin);
+          url.searchParams.set('p', patientInfo.id);
+          vb.href = url.toString();
+        }catch(e){ /* ignore */ }
         
         const remote = await fetchRemote(patientInfo.id);
         if (remote) render(remote); else render([]);

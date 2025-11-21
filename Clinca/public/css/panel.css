@@ -22,6 +22,7 @@ font-family: Arial, Helvetica, sans-serif;
 .navbar .greeting {
   font-size: 1.4em; /* larger font */
   font-weight: 600;
+  font-size: 35px;
 }
 
 .navbar .logout-btn {
@@ -42,7 +43,7 @@ font-family: Arial, Helvetica, sans-serif;
 
 /* Dashboard */
 .dashboard {
-  padding: 40px;
+  padding: 0px;
   text-align: center;
 }
 
@@ -151,13 +152,13 @@ font-family: Arial, Helvetica, sans-serif;
     }
 
     .cancel-btn {
-      background-color: #e6f3ee;
+      background-color: #f85e8c;
       color: #333;
       text-decoration: none;
     }
 
     .cancel-btn:hover {
-      background-color: #d1ebe0;
+      background-color: #d74772;
     }
 
      /* Expediente-Medico */
@@ -213,12 +214,12 @@ font-family: Arial, Helvetica, sans-serif;
     }
 
     .cancel-btn {
-      background-color: #e6f3ee;
+      background-color: #f85e8c;
       color: #333;
     }
 
     .cancel-btn:hover {
-      background-color: #d1ebe0;
+      background-color: #d74772;
     }
 
      /* consultar historial */
@@ -282,12 +283,12 @@ font-family: Arial, Helvetica, sans-serif;
     }
 
     .cancel-btn {
-      background-color: #e6f3ee;
+      background-color: #f85e8c;
       color: #333;
     }
 
     .cancel-btn:hover {
-      background-color: #d1ebe0;
+      background-color: #d74772;
     }
 
     .no-results {
@@ -698,12 +699,12 @@ font-family: Arial, Helvetica, sans-serif;
     }
 
     .cancel-btn {
-      background-color: #e6f3ee;
+      background-color: #f89d27;
       color: #333;
     }
 
     .cancel-btn:hover {
-      background-color: #d1ebe0;
+      background-color: #cc8221;
     }
 
 
@@ -1338,14 +1339,14 @@ font-family: Arial, Helvetica, sans-serif;
   padding: 10px 0;
   border-radius: 25px;
   font-weight: 600;
-  background-color: #e9f4f0;  /* mismo color base que el de los otros */
+  background-color: #f85e8c;  /* mismo color base que el de los otros */
   color: #222;
   transition: background 0.2s ease;
 }
 
 .btn-container a.cancel-btn:hover,
 .acciones a.cancel-btn:hover {
-  background-color: #d7ece6;
+  background-color: #f85e8c;
 }
 
 
@@ -1439,3 +1440,252 @@ font-family: Arial, Helvetica, sans-serif;
 }
 
 
+
+
+/* ===== BOTONES DE FILTRAR / LIMPIAR / VOLVER (Paciente) ===== */
+
+.filtros .acciones button,
+.filtros .acciones a {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    width: auto !important;
+    display: inline-block;
+}
+
+.filtros .acciones .btn-filtrar {
+    background-color: #00a2ff;
+    color: white;
+}
+.filtros .acciones .btn-filtrar:hover {
+    background-color: #0085d1;
+}
+
+.filtros .acciones .btn-limpiar {
+    background-color: #ffdd57;
+    color: white;
+}
+.filtros .acciones .btn-limpiar:hover {
+    background-color: #e6c645;
+}
+
+.filtros .acciones .btn-volver,
+.btn-container a.cancel-btn {
+    background-color: #ff5b5b !important;
+    color: white !important;
+    width: auto !important;
+    padding: 10px 20px;
+}
+.filtros .acciones .btn-volver:hover,
+.btn-container a.cancel-btn:hover {
+    background-color: #d84747 !important;
+}
+
+
+.btn-filtrar img,
+.btn-limpiar img,
+.btn-volver img {
+    display: block;
+    margin: auto;
+    filter: brightness(0) invert(1); /* hace los íconos blancos si eran negros */
+}
+
+/* ======== PANEL DEL PACIENTE (HISTORIAL + NOTIFICACIONES) ======== */
+
+/* Layout general: 2 columnas (2fr izquierda / 1fr derecha) */
+.patient-layout {
+  max-width: 1100px;
+  margin: 40px auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* Tarjetas grandes */
+.patient-card {
+  background: #ffffff;
+  border-radius: 26px;
+  padding: 24px 28px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.patient-card h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #2a6b5f;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Tarjeta derecha un poco más compacta */
+.patient-card--notifs {
+  padding: 20px 22px;
+}
+
+/* Toggle de notificaciones */
+.notif-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+.toggle {
+  position: relative;
+  width: 42px;
+  height: 22px;
+  display: inline-block;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #d1d5db;
+  border-radius: 999px;
+  transition: 0.2s;
+}
+
+.toggle-slider:before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  top: 3px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+.toggle input:checked + .toggle-slider {
+  background-color: #7bc3ab;
+}
+
+.toggle input:checked + .toggle-slider:before {
+  transform: translateX(18px);
+}
+
+/* ===== Tarjetas de notificaciones ===== */
+
+.reminders-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reminder-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+}
+
+.reminder-card--info {
+  border-color: #7bc3ab;
+  background-color: #f1faf6;
+}
+
+.reminder-card--danger {
+  border-color: #f5b5b5;
+  background-color: #fde8e8;
+}
+
+.reminder-icon {
+  font-size: 1.3rem;
+}
+
+.reminder-content {
+  flex: 1;
+}
+
+.reminder-text {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.reminder-meta {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .patient-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Layout general 2fr / 1fr */
+.patient-layout {
+  max-width: 1100px;
+  margin: 32px auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* Columna derecha: info arriba + recordatorios abajo */
+.patient-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Tarjeta resumen paciente */
+.patient-card--summary {
+  padding: 18px 22px;
+  text-align: center;
+}
+
+.patient-summary-name {
+  font-weight: 600;
+  color: #2a6b5f;
+  margin-bottom: 4px;
+}
+
+.patient-summary-date {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Ya tienes .patient-card y .patient-card--notifs definidos,
+   se siguen usando igual para que todo combine. */
+
+/* Responsive */
+@media (max-width: 900px) {
+  .patient-layout {
+    grid-template-columns: 1fr;
+  }
+  .patient-side {
+    flex-direction: column;
+  }
+}
+
+/* Fuerza el color rojo del botón de logout */
+.navbar .logout-btn {
+    background-color: #ff6b6b !important;
+}
+
+.navbar .logout-btn img {
+    filter: brightness(0) invert(1); /* blanco */
+}

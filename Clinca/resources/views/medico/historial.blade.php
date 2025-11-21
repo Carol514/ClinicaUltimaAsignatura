@@ -7,20 +7,34 @@
   <h2>Consulta de historial</h2>
 
 <section class="panel filtros" style="max-width:980px;margin-inline:auto;">
-  <div class="filtros-grid">
-    <div>
+
+  <div style="
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1.2fr 1f;
+      gap:12px;
+      align-items:end;
+  ">
+
+    <!-- Paciente -->
+    <div style="display:flex;flex-direction:column;gap:4px;">
       <label>Paciente</label>
-      <input id="f_paciente" value="" placeholder="Nombre del paciente">
+      <input id="f_paciente" placeholder="Nombre del paciente">
     </div>
-    <div>
+
+    <!-- Desde -->
+    <div style="display:flex;flex-direction:column;gap:4px;">
       <label>Desde</label>
       <input id="f_desde" type="date">
     </div>
-    <div>
+
+    <!-- Hasta -->
+    <div style="display:flex;flex-direction:column;gap:4px;">
       <label>Hasta</label>
       <input id="f_hasta" type="date">
     </div>
-    <div>
+
+    <!-- Tipo -->
+    <div style="display:flex;flex-direction:column;gap:4px;">
       <label>Tipo</label>
       <select id="f_tipo">
         <option value="">Todos</option>
@@ -31,17 +45,26 @@
       </select>
     </div>
 
-    <!-- fila 2: buscador + botones (todo dentro del mismo panel) -->
-    <div class="span-3">
+    <!-- Buscar texto -->
+    <div style="display:flex;flex-direction:column;gap:4px;">
       <label>Buscar (texto)</label>
       <input id="f_texto" placeholder="Ej. tórax / TA 120/80 / Azitro">
     </div>
-    <div class="acciones">
-      <button id="btnBuscar" class="confirm-btn" type="button">Buscar</button>
-      <button id="btnLimpiar" class="cancel-btn" type="button">Limpiar</button>
+
+    <!-- Botones -->
+    <div class="acciones" style="display:flex;gap:10px;">
+      <button id="btnBuscar" class="confirm-btn">
+        <img src="/img/filtrar.png" width="22" height="22">
+      </button>
+
+      <button id="btnLimpiar" class="cancel-btn">
+        <img src="/img/limpiar.png" width="22" height="22">
+      </button>
     </div>
+
   </div>
 </section>
+
 
 
   {{-- RESULTADOS --}}
@@ -64,7 +87,7 @@
         </thead>
         <tbody id="tbody"></tbody>
       </table>
-      <a class="btn-secondary" id="volverBtn" href="{{ route('medico.panel') }}">Volver</a>
+      <a class="btn-secondary" id="volverBtn" href="{{ route('medico.panel') }}"><img src="/img/volver.png" alt="Volver" width="22" height="22"></a>
     </div>
   </section>
 </main>

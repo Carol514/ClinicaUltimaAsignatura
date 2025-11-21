@@ -10,11 +10,19 @@
 <body>
   <header class="navbar">
     <div class="logo-container">
-      <img src="{{ asset('img/templogo.jpg') }}" alt="Hospital Logo" class="logo">
+        <img src="{{ asset('img/templogo.jpg') }}" alt="Hospital Logo" class="logo">
     </div>
+
     <div class="greeting">@yield('greeting','Bienvenid@')</div>
-    <button class="logout-btn" id="logoutBtn">Cerrar Sesión</button>
-  </header>
+
+    <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+        @csrf
+        <button type="submit" class="cancel-btn btn-volver logout-btn">
+            <img src="/img/logout.png" width="22">
+        </button>
+    </form>
+</header>
+
 
   <main class="dashboard">
     @yield('content')

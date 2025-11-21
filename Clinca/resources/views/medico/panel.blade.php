@@ -10,7 +10,7 @@
   <form id="frmBuscar" class="form-container" onsubmit="return false;" style="max-width:600px; margin:0 auto 20px;">
     <div class="fields" style="display:grid; gap:10px; grid-template-columns:1fr auto;">
       <input id="txtPaciente" placeholder="Nombre / ID del paciente">
-      <button id="btnBuscar" class="confirm-btn" type="button">Buscar</button>
+      <button id="btnBuscar" class="confirm-btn" type="button"><img src="/img/buscar.png" alt="Limpiar" width="22" height="22"></button>
     </div>
   </form>
 

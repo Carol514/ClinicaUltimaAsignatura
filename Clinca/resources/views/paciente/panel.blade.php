@@ -2,147 +2,209 @@
 @section('title','Panel del Paciente')
 
 @section('content')
-<main class="dashboard">
+<main class="dashboard patient-dashboard">
   <h2>Panel del Paciente</h2>
 
-  {{-- Botones directos, sin contenedor de fondo --}}
-  <div class="card-container" style="margin-top:16px;">
-    <a class="card" href="{{ route('paciente.historial') }}" style="text-decoration:none;">
-      Consultar historial
-    </a>
-    <a class="card" href="{{ route('paciente.recordatorios') }}" style="text-decoration:none;">
-      Recordatorios
-    </a>
-  </div>
+  {{-- CONTENEDOR 2 COLUMNAS: HISTORIAL (2fr) + NOTIFICACIONES (1fr) --}}
+  @php
+    $user = \Illuminate\Support\Facades\Auth::user();
+    $patientName = $user?->name ?? 'Paciente';
+    $today = \Carbon\Carbon::now()->format('d/m/Y');
+@endphp
 
-  {{-- Bloque de notificaciones limpio --}}
-  <section class="panel" style="max-width:900px; margin-top:24px;">
-    <h3 style="text-align:center;margin-bottom:14px;">Recibir Notificaciones de Cita</h3>
+<section class="patient-layout">
+    
+    {{-- IZQUIERDA: HISTORIAL --}}
+    <div class="patient-card patient-card--history">
+        <h3>Historial</h3>
 
-    {{-- Toggle principal --}}
-    <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:18px;">
-      <label for="toggleNotif" style="font-weight:500;">¿Desea recibir notificaciones?</label>
-      <input type="checkbox" id="toggleNotif" style="transform:scale(1.3);accent-color:#2a6b5f;" checked>
-    </div>
-
-    {{-- Métodos de notificación --}}
-    <div id="notifMethods" style="margin-bottom:20px;">
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-      </label>
-    </div>
-
-    {{-- Lista de notificaciones recientes --}}
-    <div id="notificationsList">
-      <p style="font-weight:600;color:#2a6b5f;margin-bottom:8px;">Notificaciones recientes:</p>
-      <div id="notificationsContent">
-        <div style="text-align:center;padding:20px;color:#666;">
-          Cargando notificaciones...
+        <div class="table-container" style="margin-top:10px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Evento</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody id="historyRows"></tbody>
+            </table>
+            <p id="noHistoryRows" class="muted" style="text-align:center;margin-top:10px;">
+                Sin registros en el historial.
+            </p>
         </div>
-      </div>
     </div>
-  </section>
+
+    {{-- DERECHA: COLUMNA CON INFO + RECORDATORIOS --}}
+    <div class="patient-side">
+
+        {{-- TARJETA SUPERIOR: INFO DEL PACIENTE --}}
+        <div class="patient-card patient-card--summary">
+            <div class="patient-summary-name">Bienvenido, {{ $patientName }}</div>
+            <div class="patient-summary-date">{{ $today }}</div>
+        </div>
+
+        {{-- TARJETA INFERIOR: RECORDATORIOS --}}
+        <div class="patient-card patient-card--notifs">
+            <h3>Recordatorios</h3>
+
+            <div class="reminders-list">
+
+                <div class="reminder-card reminder-card--info">
+                    <div class="reminder-icon">
+                        <img src="/img/calendario.png" width="22">
+                    </div>
+                    <div class="reminder-content">
+                        <div class="reminder-text">
+                            Cita con Dr. Abraham el 25/11/2025 a las 12:00 PM
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reminder-card reminder-card--info">
+                    <div class="reminder-icon">
+                        <img src="/img/calendario.png" width="22">
+                    </div>
+                    <div class="reminder-content">
+                        <div class="reminder-text">
+                            Cita con Dr. Gomez el 26/11/2025 a las 2:00 AM
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reminder-card reminder-card--danger">
+                    <div class="reminder-icon">✖</div>
+                    <div class="reminder-content">
+                        <div class="reminder-text">
+                            Faltaste a tu cita con Dr. Gomez el 20/11/2025
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
 </main>
 
 <script>
 (() => {
-  const toggleNotif   = document.getElementById('toggleNotif');
-  const notifMethods  = document.getElementById('notifMethods');
-  const notifications = document.getElementById('notificationsList');
+  // === HISTORIAL ===
+  const historyRows   = document.getElementById('historyRows');
+  const noHistoryRows = document.getElementById('noHistoryRows');
 
-  function applyVisibility(){
-    const on = toggleNotif.checked;
-    notifMethods.style.display  = on ? 'block' : 'none';
-    notifications.style.display = on ? 'block' : 'none';
-  }
-  // Load existing preferences from server
-  async function loadPrefs(){
-    try{
-      const res = await fetch('/paciente/api/notifications', { credentials: 'same-origin', headers: {'Accept':'application/json'} });
-      if (res.ok) {
-        const prefs = await res.json();
-        toggleNotif.checked = !!prefs.enabled;
-        document.getElementById('emailNotif').checked = !!prefs.email;
-        document.getElementById('phoneNotif').checked = !!prefs.phone;
-        applyVisibility();
-      }
-    }catch(e){ console.warn('Could not load notification prefs', e); }
-  }
-
-  // Load recent notifications/appointments
-  async function loadRecentNotifications(){
-    try{
-      const res = await fetch('/paciente/api/reminders', { credentials: 'same-origin', headers: {'Accept':'application/json'} });
-      if (res.ok) {
-        const data = await res.json();
-        renderNotifications(data);
-      } else {
-        renderNotifications([]);
-      }
-    }catch(e){ 
-      console.warn('Could not load recent notifications', e);
-      renderNotifications([]);
+  async function fetchHistory() {
+    try {
+      const res = await fetch('/paciente/api/history', {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error('history error');
+      const json = await res.json();
+      return Array.isArray(json) ? json : [];
+    } catch (e) {
+      console.warn('No se pudo cargar historial remoto', e);
+      return [];
     }
   }
 
-  // Render the notifications list
-  function renderNotifications(notifications) {
-    const content = document.getElementById('notificationsContent');
-    
-    if (!notifications || notifications.length === 0) {
-      content.innerHTML = '<div style="text-align:center;padding:20px;color:#666;">No hay notificaciones recientes</div>';
+  function renderHistory(list) {
+    historyRows.innerHTML = '';
+    if (!list.length) {
+      noHistoryRows.style.display = 'block';
+      return;
+    }
+    noHistoryRows.style.display = 'none';
+
+    list
+      .sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''))
+      .forEach(it => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${it.fecha || ''}</td>
+          <td>${it.tipo || it.evento || ''}</td>
+          <td>${it.detalle || ''}</td>
+        `;
+        historyRows.appendChild(tr);
+      });
+  }
+
+  // === NOTIFICACIONES ===
+  const notifEnabled   = document.getElementById('notifEnabled');
+  const remindersList  = document.getElementById('remindersList');
+  const remindersEmpty = document.getElementById('remindersEmpty');
+
+  async function fetchReminders() {
+    try {
+      const res = await fetch('/paciente/api/reminders', {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error('reminders error');
+      const json = await res.json();
+      return Array.isArray(json) ? json : [];
+    } catch (e) {
+      console.warn('No se pudieron cargar recordatorios, usando demo.', e);
+      const hoy = new Date().toISOString().slice(0,10);
+      const mañana = new Date(Date.now() + 86400000).toISOString().slice(0,10);
+      // Fallback de ejemplo
+      return [
+        { tipo:'Cita', detalle:'Tienes una cita HOY con tu médico.', fecha:hoy, estado:'Próxima' },
+        { tipo:'Cita', detalle:'Tienes una cita programada para mañana.', fecha:mañana, estado:'Próxima' },
+        { tipo:'Cita', detalle:'Faltaste a tu cita anterior.', fecha:hoy, estado:'No asistió' },
+      ];
+    }
+  }
+
+  function renderReminders(list) {
+    remindersList.innerHTML = '';
+
+    if (!list.length) {
+      remindersEmpty.textContent = 'No hay notificaciones recientes.';
+      remindersEmpty.style.display = 'block';
       return;
     }
 
-    content.innerHTML = '';
-    notifications.slice(0, 5).forEach(notif => { // Show only first 5
-      const div = document.createElement('div');
-      div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #e5e5e5;';
-      
-      const icon = notif.tipo === 'Cita' ? '📅' : '⏰';
-      const date = notif.fecha || '';
-      const time = notif.hora || '';
-      const timeStr = time ? `, ${time}` : '';
-      
-      div.innerHTML = `
-        <span style="color:#2a6b5f;">${icon}</span>
-        <div>${notif.detalle} — <small>${date}${timeStr}</small></div>
+    remindersEmpty.style.display = 'none';
+
+    list.slice(0, 5).forEach(it => {
+      const card = document.createElement('div');
+
+      let cardClass = 'reminder-card';
+      const estado = (it.estado || '').toLowerCase();
+      if (estado.includes('no asist') || estado.includes('falt')) {
+        cardClass += ' reminder-card--danger';
+      } else {
+        cardClass += ' reminder-card--info';
+      }
+
+      const date = it.fecha || '';
+      const time = it.hora || '';
+      const timeStr = time ? ` • ${time}` : '';
+
+      card.className = cardClass;
+      card.innerHTML = `
+        <div class="reminder-icon">${estado.includes('no asist') || estado.includes('falt') ? '✖' : '📅'}</div>
+        <div class="reminder-content">
+          <div class="reminder-text">${it.detalle || ''}</div>
+          <div class="reminder-meta">${date}${timeStr}</div>
+        </div>
       `;
-      content.appendChild(div);
+      remindersList.appendChild(card);
     });
   }
 
-  // Persist preference (best-effort) and update UI
-  async function persistPrefs(){
-    const payload = {
-      enabled: !!toggleNotif.checked,
-      email: !!document.getElementById('emailNotif').checked,
-      phone: !!document.getElementById('phoneNotif').checked,
-    };
-    try{
-      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const res = await fetch('/paciente/api/notifications', { 
-        method: 'POST', 
-        credentials: 'same-origin', 
-        headers: {
-          'Content-Type':'application/json',
-          'Accept':'application/json',
-          'X-CSRF-TOKEN': token || ''
-        }, 
-        body: JSON.stringify(payload) 
-      });
-      if (res.ok) {
-        console.log('Notification preferences saved successfully');
-      }
-    }catch(e){ console.warn('Could not persist notification prefs', e); }
-  }
+  notifEnabled.addEventListener('change', () => {
+    const on = notifEnabled.checked;
+    remindersList.style.opacity = on ? '1' : '0.4';
+    remindersList.style.pointerEvents = on ? 'auto' : 'none';
+  });
 
-  toggleNotif.addEventListener('change', ()=>{ applyVisibility(); persistPrefs(); });
-  document.getElementById('emailNotif').addEventListener('change', persistPrefs);
-  document.getElementById('phoneNotif').addEventListener('change', persistPrefs);
-  
-  // Load preferences and notifications on page load
-  loadPrefs();
-  loadRecentNotifications();
+  // Cargar datos al entrar
+  fetchHistory().then(renderHistory);
+  fetchReminders().then(renderReminders);
 })();
 </script>
 @endsection

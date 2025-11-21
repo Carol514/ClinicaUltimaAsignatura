@@ -6,40 +6,56 @@
   <h2>Recordatorios y citas</h2>
 
   <section class="panel" style="max-width: 980px;">
-    {{-- === Filtros directamente en el panel === --}}
-    <div style="display:grid;gap:12px;grid-template-columns:1fr 1fr 1fr; margin-bottom:10px;">
-      @php
-        $patientName = '';
-        $patientIdVal = '';
-        if (\Illuminate\Support\Facades\Auth::check()) {
-            $p = \App\Models\Patient::where('user_id', \Illuminate\Support\Facades\Auth::id())->first();
-            if ($p) {
-                $patientName = trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? ''));
-                $patientIdVal = $p->id;
-            }
-        }
-      @endphp
-      <div>
-        <label>Paciente</label>
-        <input id="f_paciente" readonly value="{{ $patientName }}" data-patient-id="{{ $patientIdVal }}">
-      </div>
-      <div>
-        <label>Desde</label>
-        <input id="f_desde" type="date">
-      </div>
-      <div>
-        <label>Hasta</label>
-        <input id="f_hasta" type="date">
-      </div>
+
+  <div style="
+      display:grid;
+      gap:12px;
+      grid-template-columns:1fr 1fr 1fr auto;
+      align-items:end;
+      margin-bottom:10px;
+  ">
+    @php
+      $patientName = '';
+      $patientIdVal = '';
+      if (\Illuminate\Support\Facades\Auth::check()) {
+          $p = \App\Models\Patient::where('user_id', \Illuminate\Support\Facades\Auth::id())->first();
+          if ($p) {
+              $patientName = trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? ''));
+              $patientIdVal = $p->id;
+          }
+      }
+    @endphp
+
+    <!-- PACIENTE -->
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <label>Paciente</label>
+      <input id="f_paciente" readonly
+             value="{{ $patientName }}"
+             data-patient-id="{{ $patientIdVal }}">
     </div>
 
-    <div class="btn-container" style="margin-top:12px;margin-bottom:16px;">
-      <button class="confirm-btn" id="btnBuscar">Filtrar</button>
-      <button class="cancel-btn" type="reset" id="btnLimpiar">Limpiar</button>
-      <a class="cancel-btn" href="{{ route('paciente.panel') }}">Volver</a>
+    <!-- DESDE -->
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <label>Desde</label>
+      <input id="f_desde" type="date">
     </div>
 
-    {{-- === Tabla de recordatorios/citas === --}}
+    <!-- HASTA -->
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <label>Hasta</label>
+      <input id="f_hasta" type="date">
+    </div>
+
+    <!-- BOTONES -->
+    <div class="btn-container" style="display:flex; gap:10px;">
+      <button class="confirm-btn btn-filtrar" id="btnBuscar"><img src="/img/filtrar.png" alt="Filtrar" width="22" height="22"></button>
+      <button class="cancel-btn btn-limpiar" type="reset" id="btnLimpiar"><img src="/img/limpiar.png" alt="Limpiar" width="22" height="22"></button>
+      <a class="cancel-btn btn-volver" href="{{ route('paciente.panel') }}"><img src="/img/volver.png" alt="Volver" width="22" height="22"></a>
+    </div>
+
+  </div>
+
+    <!-- Tabla de recordatorios -->
     <div class="table-container">
       <table>
         <thead>

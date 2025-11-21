@@ -17,9 +17,10 @@
 
     <form method="POST" action="{{ route('logout') }}" style="margin:0;">
         @csrf
-        <button type="submit" class="cancel-btn btn-volver logout-btn">
-            <img src="/img/logout.png" width="22">
-        </button>
+        <a href="{{ route('logout') }}" class="cancel-btn btn-volver logout-btn">
+          <img src="/img/logout.png" width="22">
+        </a>
+
     </form>
 </header>
 

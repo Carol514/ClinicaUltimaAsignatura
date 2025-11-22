@@ -31,8 +31,8 @@
       <input id="phone" type="tel" placeholder="Ej. 3221234567">
 
       <div class="btn-container">
-        <button type="submit" class="confirm-btn">Guardar paciente</button>
-        <a href="{{ route('recepcionista.panel') }}" class="cancel-btn">Volver</a>
+        <button type="submit" class="confirm-btn"><img src="/img/guardar.png" width="22" height="22"></button>
+        <a href="{{ route('recepcionista.panel') }}" class="cancel-btn"><img src="/img/volver.png" width="22" height="22"></a>
       </div>
     </form>
     <p id="registroMsg" class="muted" style="margin-top:8px;"></p>

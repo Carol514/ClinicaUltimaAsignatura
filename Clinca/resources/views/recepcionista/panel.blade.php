@@ -1,406 +1,448 @@
+{{-- resources/views/recepcionista/panel.blade.php --}}
 @extends('layouts.app')
 @section('title', 'Panel de Recepción')
 
 @section('content')
-<style>
-.btn-warning {
-  background-color: #ffc107 !important;
-  color: #212529 !important;
-  border-color: #ffc107 !important;
-}
-.btn-warning:hover {
-  background-color: #ffca2c !important;
-  border-color: #ffc720 !important;
-}
-.btn-danger {
-  background-color: #dc3545 !important;
-  color: white !important;
-  border-color: #dc3545 !important;
-}
-.btn-danger:hover {
-  background-color: #c82333 !important;
-  border-color: #bd2130 !important;
-}
-.text-muted {
-  color: #6c757d !important;
-  font-style: italic;
-}
-</style>
-<main class="dashboard">
-  <h2>Panel de Recepción</h2>
-  <p class="muted">Selecciona una acción para comenzar.</p>
+<main class="recep-layout">
 
-  {{-- Acciones rápidas --}}
-  <div class="card-container">
-    <a class="card" href="{{ route('recepcionista.registro') }}" style="text-decoration:none;">
-      Registrar paciente
-    </a>
-    <a class="card" href="{{ route('recepcionista.citas') }}" style="text-decoration:none;">
-      Agendar cita
-    </a>
-  </div>
+    {{-- ====== HEADER ====== --}}
+    <header class="recep-header">
+        <h1 class="recep-page-title">Bienvenid@, Recepcionista</h1>
+    </header>
 
-  {{-- ===== Agenda embebida ===== --}}
-  <section class="panel" style="max-width:1000px; margin-top:18px;">
-    <h3 style="margin-top:0;">Agenda</h3>
+    {{-- ====== GRID PRINCIPAL ====== --}}
+    <section class="recep-main-grid">
 
-    {{-- Filtros --}}
-    <form class="form-container agenda-filtros" onsubmit="return false;">
-      <div class="fields" style="display:grid; gap:12px; grid-template-columns:1fr 1fr 1fr 1fr;">
-        <div class="field">
-          <label for="desde">Desde</label>
-          <input type="date" id="desde">
+        {{-- ========== IZQUIERDA: AGENDA MENSUAL ========== --}}
+        <div class="recep-card recep-card--agenda">
+
+            <div class="recep-card-header">
+                <h2 class="recep-card-title">Agenda mensual</h2>
+
+                <div class="recep-month-controls">
+                    <div class="recep-control">
+                        <label for="monthSelect">Mes</label>
+                        <select id="monthSelect"></select>
+                    </div>
+
+                    <div class="recep-control">
+                        <label for="yearSelect">Año</label>
+                        <select id="yearSelect"></select>
+                    </div>
+
+                    <div class="recep-control">
+                        <label for="doctorSelect">Doctor</label>
+                        <select id="doctorSelect">
+                            <option value="">Todos</option>
+                            <option>Dr. Hernández</option>
+                            <option>Dra. Gómez</option>
+                            <option>Dr. López</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {{-- CALENDARIO MENSUAL --}}
+            <div id="calendarGrid" class="calendar-grid">
+                {{-- Se rellena por JS --}}
+            </div>
+
+            <p class="recep-hint">
+                * Los días con punto verde tienen citas agendadas.  
+                * Haz clic en un día para ver o agregar citas.
+            </p>
         </div>
-        <div class="field">
-          <label for="hasta">Hasta</label>
-          <input type="date" id="hasta">
-        </div>
-        <div class="field">
-          <label for="doc">Doctor</label>
-          <select id="doc">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="q">Paciente</label>
-          <input id="q" placeholder="Nombre / motivo">
-        </div>
-      </div>
 
-      <div class="btn-container acciones" style="margin-top:12px;">
-        <button id="btnBuscar" class="confirm-btn" type="button">Buscar</button>
-        <button id="btnLimpiar" class="cancel-btn" type="button">Limpiar</button>
-      </div>
-    </form>
+        {{-- ========== DERECHA: ACCIONES ========== --}}
+        <div class="recep-column-right">
 
-    {{-- Tabla --}}
-    <div class="table-container" style="margin-top:16px;">
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Hora</th>
-            <th>Paciente</th>
-            <th>Doctor</th>
-            <th>Motivo</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
-      <p id="noRows" class="muted" style="text-align:center;margin-top:10px;">Sin resultados.</p>
+            {{-- Registrar paciente --}}
+            <div class="recep-card recep-card--side recep-card--spaced">
+                <h2 class="recep-card-title">Paciente</h2>
+                <p class="recep-muted">Registra un nuevo paciente antes de agendar su cita.</p>
+                <button type="button" id="btnOpenPaciente" class="recep-btn recep-btn--primary">
+                    Registrar nuevo paciente
+                </button>
+            </div>
+        </div>
+
+    </section>
+
+
+    {{-- ========== MODAL: CITAS DEL DÍA ========== --}}
+    <div id="modalCitasDia" class="modal hidden">
+        <div class="modal-content modal-lg">
+            <h3 id="modalDiaTitulo" class="modal-title">Citas del día</h3>
+
+            <div id="listaCitasDia" class="day-appointments">
+                {{-- Se llena por JS --}}
+            </div>
+
+            <div class="btn-container" style="margin-top:15px;">
+                {{-- Botón agregar cita (+) --}}
+                <button id="btnAgregarCitaDia" type="button" class="confirm-btn">
+                    <img src="/img/agregar.png" alt="Agregar" style="width:20px; height:20px;">
+                </button>
+
+                {{-- Cerrar --}}
+                <button id="btnCerrarCitasDia" type="button" class="modal-cancel-btn">
+                    <img src="/img/cancelar.png" alt="Cerrar" width="24" height="24">
+                </button>
+            </div>
+        </div>
     </div>
-  </section>
 
-  {{-- Modal para reprogramar cita --}}
-  <div id="rescheduleModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:8px; min-width:400px;">
-      <h3 style="margin-top:0;">Reprogramar Cita</h3>
-      
-      <form id="rescheduleForm" class="form-container">
-        <div class="field">
-          <label for="newDate">Nueva Fecha</label>
-          <input type="date" id="newDate" required>
+    {{-- ========== MODAL: AGENDAR CITA ========== --}}
+    <div id="modalAgendar" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="modal-title">Agendar cita</h3>
+
+            <p id="modalInfo"></p>
+
+            <label>Paciente</label>
+            <input type="text" class="modal-input" placeholder="Nombre del paciente">
+
+            <label>Hora</label>
+            <input type="time" class="modal-input" id="modalHora">
+
+            <label>Motivo</label>
+            <input type="text" class="modal-input" placeholder="Motivo de consulta">
+
+            <div class="modal-actions" style="margin-top: 15px;">
+                <button class="confirm-btn" type="button">
+                    <img src="/img/guardar.png" style="width:24px; height:24px;">
+                </button>
+
+                <button id="cerrarModalAgendar" class="cancel-btn modal-cancel-btn" type="button">
+                    <img src="/img/cancelar.png" width="15" height="15" alt="Cancelar">
+                </button>
+            </div>
         </div>
-        
-        <div class="field">
-          <label for="newTime">Nueva Hora</label>
-          <input type="time" id="newTime" required>
-        </div>
-        
-        <div class="btn-container" style="margin-top:16px;">
-          <button type="submit" class="confirm-btn">Guardar Cambios</button>
-          <button type="button" class="cancel-btn" onclick="closeRescheduleModal()">Cancelar</button>
-        </div>
-      </form>
     </div>
-  </div>
+
+    {{-- ========== MODAL: REGISTRAR PACIENTE ========== --}}
+    <div id="modalPaciente" class="modal hidden">
+        <div class="modal-content modal-lg">
+            <h3 class="modal-title">Registrar nuevo paciente</h3>
+
+            <form id="paciente-form" class="form-container">
+
+                <div class="trat-section">
+                    <h4 class="trat-section-title">Datos personales</h4>
+
+                    <div class="trat-grid">
+                        <div class="field">
+                            <label for="p_nombre">Nombre(s)</label>
+                            <input id="p_nombre" type="text" placeholder="Ej. Hugo Abraham">
+                        </div>
+
+                        <div class="field">
+                            <label for="p_apellidos">Apellidos</label>
+                            <input id="p_apellidos" type="text" placeholder="Ej. García Tovar">
+                        </div>
+
+                        <div class="field">
+                            <label for="p_fecha_nac">Fecha de nacimiento</label>
+                            <input id="p_fecha_nac" type="date">
+                        </div>
+
+                        <div class="field">
+                            <label for="p_fecha_nac">Edad</label>
+                            <input id="p_apellidos" type="text" placeholder="18">
+                        </div>
+
+                        <div class="field">
+                            <label for="p_genero">Género</label>
+                            <select id="p_genero">
+                                <option value="">Seleccione...</option>
+                                <option>Masculino</option>
+                                <option>Femenino</option>
+                                <option>Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="section-divider">
+
+                <div class="trat-section">
+                    <h4 class="trat-section-title">Contacto</h4>
+
+                    <div class="trat-grid">
+                        <div class="field">
+                            <label for="p_telefono">Teléfono</label>
+                            <input id="p_telefono" type="tel" placeholder="Ej. 3111234567">
+                        </div>
+
+                        <div class="field">
+                            <label for="p_email">Correo electrónico</label>
+                            <input id="p_email" type="email" placeholder="Ej. paciente@correo.com">
+                        </div>
+
+                        <div class="field">
+                            <label for="p_direccion">Dirección</label>
+                            <input id="p_direccion" type="text" placeholder="Calle, número, colonia">
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="btn-container" style="margin-top:12px;">
+                    <button class="confirm-btn" type="submit">
+                        <img src="/img/guardar.png" class="btn-icon" alt="Guardar" style="width:24px; height:24px;">
+                    </button>
+                    <button type="button" class="modal-cancel-btn" id="cerrarModalPaciente">
+                        <img src="/img/cancelar.png" class="btn-icon" alt="Cancelar">
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </main>
 
+
+{{-- ================= JS ================= --}}
 <script>
-(() => {
-  // Live agenda: fetch appointments from server
-  const rows   = document.getElementById('rows');
-  const noRows = document.getElementById('noRows');
-  const desde  = document.getElementById('desde');
-  const hasta  = document.getElementById('hasta');
-  const doc    = document.getElementById('doc');
-  const q      = document.getElementById('q');
+document.addEventListener("DOMContentLoaded", () => {
 
-  function render(list){
-    rows.innerHTML = '';
-    if (!list || !list.length){ noRows.style.display='block'; return; }
-    noRows.style.display='none';
-    list.forEach(it=>{
-      const date = (it.scheduled_at||'').split(' ')[0] || '';
-      const time = (it.scheduled_at||'').split(' ')[1] || '';
-      const tr = document.createElement('tr');
-      tr.dataset.appId = it.id;
-      // map DB status values to human labels
-      const statusMap = {
-        'programada':'Programada',
-        'confirmada':'Confirmada',
-        'no_asistio':'No asistió',
-        'cancelada':'Cancelada',
-        'atendida':'Atendida'
-      };
-      const humanStatus = statusMap[(it.status||'') ] || (it.status || '');
-      
-      // Generate buttons based on current status
-      let buttonsHtml = '';
-      const currentStatus = it.status || 'programada';
-      
-      if (currentStatus === 'atendida' || currentStatus === 'cancelada' || currentStatus === 'no_asistio') {
-        // No buttons for final states (completed, cancelled, or no-show)
-        const finalStateLabels = {
-          'atendida': 'Finalizada',
-          'cancelada': 'Cancelada',
-          'no_asistio': 'No Asistió'
-        };
-        buttonsHtml = `<span class="text-muted">${finalStateLabels[currentStatus]}</span>`;
-      } else {
-        // Show action buttons for active appointments (programada, confirmada)
-        const buttons = [];
-        
-        // Active appointments can be marked as attended
-        buttons.push(`<button class="btn-secondary" onclick="updateAppointmentStatus('${it.id}', 'atendida', this)">Llegó</button>`);
-        
-        // Active appointments can be marked as no-show or cancelled
-        buttons.push(`<button class="btn-secondary btn-warning" onclick="updateAppointmentStatus('${it.id}', 'no_asistio', this)">No Asistió</button>`);
-        buttons.push(`<button class="btn-secondary btn-danger" onclick="updateAppointmentStatus('${it.id}', 'cancelada', this)">Cancelar</button>`);
-        
-        // Reschedule button (only for programada and confirmada)
-        if (currentStatus === 'programada' || currentStatus === 'confirmada') {
-          buttons.push(`<button class="btn-secondary" onclick="rescheduleAppointment('${it.id}', '${date}', '${time}')">Reprog.</button>`);
-        }
-        
-        buttonsHtml = buttons.join(' ');
-      }
+    const calendarGrid      = document.getElementById("calendarGrid");
+    const monthSelect       = document.getElementById("monthSelect");
+    const yearSelect        = document.getElementById("yearSelect");
+    const doctorSelect      = document.getElementById("doctorSelect");
 
-      tr.innerHTML = `
-        <td>${date}</td>
-        <td>${time}</td>
-        <td>${it.patient_name || it.patient_id || ''}</td>
-        <td>${it.clinician_name || ''}</td>
-        <td>${it.reason || ''}</td>
-        <td class="status-cell">${humanStatus}</td>
-        <td>
-          ${buttonsHtml}
-        </td>
-      `;
-      rows.appendChild(tr);
+    const modalCitasDia     = document.getElementById("modalCitasDia");
+    const modalDiaTitulo    = document.getElementById("modalDiaTitulo");
+    const listaCitasDia     = document.getElementById("listaCitasDia");
+    const btnCerrarCitasDia = document.getElementById("btnCerrarCitasDia");
+    const btnAgregarCitaDia = document.getElementById("btnAgregarCitaDia");
+
+    const modalAgendar      = document.getElementById("modalAgendar");
+    const modalInfo         = document.getElementById("modalInfo");
+    const cerrarModalAgendar= document.getElementById("cerrarModalAgendar");
+
+    // --- nuevo: modal paciente ---
+    const btnOpenPaciente   = document.getElementById("btnOpenPaciente");
+    const modalPaciente     = document.getElementById("modalPaciente");
+    const pacienteForm      = document.getElementById("paciente-form");
+    const cerrarModalPaciente = document.getElementById("cerrarModalPaciente");
+
+    let fechaSeleccionada   = null; // para pasarla al modal de agendar
+
+    const meses = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
+    // Llenar select de meses
+    meses.forEach((m, i) => {
+        const op = document.createElement("option");
+        op.value = i;
+        op.textContent = m;
+        monthSelect.appendChild(op);
     });
-  }
 
-  async function loadMedicosForPanel(){
-    try{
-      const res = await fetch('/recepcionista/api/medicos', { headers:{ 'Accept':'application/json' }, credentials: 'same-origin' });
-      if (!res.ok) return;
-      const body = await res.clone().json().catch(()=>null);
-      const list = (body && body.data) ? body.data : [];
-      const sel = document.getElementById('doc');
-      // keep first 'Todos' option (value='') and remove others
-      Array.from(sel.querySelectorAll('option')).forEach((o,i)=>{ if (i>0) o.remove(); });
-      list.forEach(m=>{
-        const opt = document.createElement('option'); opt.value = m.id; opt.textContent = m.name; sel.appendChild(opt);
-      });
-    }catch(err){ console.error('loadMedicosForPanel', err); }
-  }
+    const hoy = new Date();
+    const añoActual = hoy.getFullYear();
 
-  async function loadAppointments(){
-    try{
-      const params = new URLSearchParams();
-      if (desde.value) params.set('from', desde.value);
-      if (hasta.value) params.set('to', hasta.value);
-      if (q.value.trim()) params.set('q', q.value.trim());
-      
-      // Add doctor filter to the API request
-      const docVal = document.getElementById('doc').value || '';
-      if (docVal) params.set('clinician_id', docVal);
-      
-      const res = await fetch('/recepcionista/api/appointments?'+params.toString(), { headers:{ 'Accept':'application/json' }, credentials: 'same-origin' });
-      if (!res.ok){ 
-        const txt = await res.clone().text().catch(()=>null); 
-        console.error('appointments fetch error', res.status, txt); 
-        render([]); 
-        return; 
-      }
-      
-      const body = await res.clone().json().catch(()=>null);
-      let list = (body && body.data) ? body.data : [];
-      
-      // Debug logging to help troubleshoot filters
-      console.log('Filter values:', {
-        desde: desde.value,
-        hasta: hasta.value,
-        doc: docVal,
-        q: q.value.trim(),
-        resultCount: list.length
-      });
-      
-      render(list);
-    }catch(err){ 
-      console.error('loadAppointments', err); 
-      render([]); 
-    }
-  }
-
-  document.getElementById('btnBuscar').onclick = loadAppointments;
-  document.getElementById('btnLimpiar').onclick = () => {
-    desde.value = hasta.value = ''; doc.value = ''; q.value = '';
-    // reload with no filters
-    loadAppointments();
-  };
-
-  // populate medicos and load appointments on page ready
-  loadMedicosForPanel().then(()=> loadAppointments());
-
-  // Update appointment status
-  window.updateAppointmentStatus = async function(id, newStatus, btn){
-    const statusMessages = {
-      'atendida': '¿Confirmar que el paciente llegó y fue atendido?',
-      'no_asistio': '¿Confirmar que el paciente no asistió a la cita?', 
-      'cancelada': '¿Confirmar que desea cancelar esta cita?'
-    };
-    
-    const statusLabels = {
-      'atendida': 'Atendida',
-      'no_asistio': 'No asistió',
-      'cancelada': 'Cancelada'
-    };
-    
-    if (!confirm(statusMessages[newStatus] || 'Confirmar cambio de estado?')) return;
-    
-    try{
-      btn.disabled = true; 
-      const orig = btn.textContent; 
-      btn.textContent = '...';
-      
-      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-      const res = await fetch('/recepcionista/api/appointments/'+encodeURIComponent(id), {
-        method: 'PUT',
-        credentials: 'same-origin',
-        headers: { 'Accept':'application/json','Content-Type':'application/json','X-CSRF-TOKEN': token },
-        body: JSON.stringify({ status: newStatus })
-      });
-      
-      if (!res.ok){ 
-        const txt = await res.clone().text().catch(()=>null); 
-        alert('Error al actualizar: '+res.status+' '+txt); 
-        btn.disabled = false; 
-        btn.textContent = orig; 
-        return; 
-      }
-      
-      const body = await res.clone().json().catch(()=>null);
-      
-      // Update the row status and buttons
-      const tr = document.querySelector('tr[data-app-id="'+id+'"]');
-      if (tr){ 
-        const sc = tr.querySelector('.status-cell'); 
-        if (sc) sc.textContent = statusLabels[newStatus];
-        
-        // If marked as final state (attended, cancelled, or no-show), remove all buttons
-        if (newStatus === 'atendida' || newStatus === 'cancelada' || newStatus === 'no_asistio') {
-          const actionCell = tr.querySelector('td:last-child');
-          const finalStateLabels = {
-            'atendida': 'Finalizada',
-            'cancelada': 'Cancelada', 
-            'no_asistio': 'No Asistió'
-          };
-          if (actionCell) actionCell.innerHTML = `<span class="text-muted">${finalStateLabels[newStatus]}</span>`;
-        }
-      }
-      
-      alert('✅ Estado de la cita actualizado exitosamente');
-      
-    }catch(err){ 
-      console.error(err); 
-      alert('Error de red: '+(err.message||err)); 
-      btn.disabled = false; 
-      btn.textContent = orig;
-    }
-  }
-
-  // Reschedule appointment functionality
-  let currentRescheduleId = null;
-
-  window.rescheduleAppointment = function(id, currentDate, currentTime) {
-    currentRescheduleId = id;
-    document.getElementById('newDate').value = currentDate;
-    document.getElementById('newTime').value = currentTime;
-    document.getElementById('rescheduleModal').style.display = 'block';
-  }
-
-  window.closeRescheduleModal = function() {
-    document.getElementById('rescheduleModal').style.display = 'none';
-    currentRescheduleId = null;
-  }
-
-  // Handle reschedule form submission
-  document.getElementById('rescheduleForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    if (!currentRescheduleId) {
-      alert('Error: No hay cita seleccionada');
-      return;
+    // Llenar select de años (+/- 3 años)
+    for (let y = añoActual - 3; y <= añoActual + 3; y++) {
+        const op = document.createElement("option");
+        op.value = y;
+        op.textContent = y;
+        yearSelect.appendChild(op);
     }
 
-    const newDate = document.getElementById('newDate').value;
-    const newTime = document.getElementById('newTime').value;
-    
-    if (!newDate || !newTime) {
-      alert('Por favor complete fecha y hora');
-      return;
-    }
+    // Valores por defecto
+    monthSelect.value = hoy.getMonth();
+    yearSelect.value  = añoActual;
 
-    const newScheduledAt = newDate + ' ' + newTime;
-
-    try {
-      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-      const res = await fetch('/recepcionista/api/appointments/' + encodeURIComponent(currentRescheduleId), {
-        method: 'PUT',
-        credentials: 'same-origin',
-        headers: { 
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': token 
+    // --------------------------
+    // DEMO: citas de ejemplo
+    // --------------------------
+    const CITAS = [
+        {
+            fecha:"2025-11-01",
+            hora:"09:00",
+            paciente:"Ana López",
+            motivo:"Dolor abdominal",
+            doctor:"Dr. Hernández"
         },
-        body: JSON.stringify({ scheduled_at: newScheduledAt })
-      });
+        {
+            fecha:"2025-11-24",
+            hora:"11:00",
+            paciente:"Juan Pérez",
+            motivo:"Control de seguimiento",
+            doctor:"Dr. Hernández"
+        },
+        {
+            fecha:"2025-11-28",
+            hora:"10:30",
+            paciente:"María Gómez",
+            motivo:"Entrega de resultados",
+            doctor:"Dra. Gómez"
+        }
+    ];
 
-      if (!res.ok) {
-        const txt = await res.clone().text().catch(() => null);
-        alert('Error al reprogramar: ' + res.status + ' ' + txt);
-        return;
-      }
+    // --------------------------
+    // Renderizar calendario
+    // --------------------------
+    function renderCalendar() {
+        calendarGrid.innerHTML = "";
 
-      const body = await res.clone().json().catch(() => null);
-      
-      // Update the table row with new date/time
-      const tr = document.querySelector('tr[data-app-id="' + currentRescheduleId + '"]');
-      if (tr) {
-        const cells = tr.querySelectorAll('td');
-        cells[0].textContent = newDate; // Date column
-        cells[1].textContent = newTime; // Time column
-      }
+        const mes = parseInt(monthSelect.value, 10);
+        const año = parseInt(yearSelect.value, 10);
 
-      alert('✅ Cita reprogramada exitosamente');
-      closeRescheduleModal();
-      
-    } catch (err) {
-      console.error(err);
-      alert('Error de red: ' + (err.message || err));
+        const primerDia = new Date(año, mes, 1).getDay(); // 0 = Domingo
+        const diasEnMes = new Date(año, mes + 1, 0).getDate();
+
+        // Ajuste para que la semana empiece en Lunes
+        const offset = (primerDia === 0 ? 6 : primerDia - 1);
+
+        // Encabezados (Lun - Dom)
+        ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].forEach(d => {
+            const h = document.createElement("div");
+            h.className = "calendar-header";
+            h.textContent = d;
+            calendarGrid.appendChild(h);
+        });
+
+        // Celdas vacías antes del primer día
+        for (let i = 0; i < offset; i++) {
+            const empty = document.createElement("div");
+            empty.className = "calendar-cell calendar-cell--empty";
+            calendarGrid.appendChild(empty);
+        }
+
+        // Celdas de los días del mes
+        for (let dia = 1; dia <= diasEnMes; dia++) {
+
+            const fechaStr = `${año}-${String(mes + 1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+
+            // Revisar si hay citas ese día (con filtro de doctor)
+            const hasEvents = CITAS.some(c =>
+                c.fecha === fechaStr &&
+                (doctorSelect.value === "" || c.doctor === doctorSelect.value)
+            );
+
+            const cell = document.createElement("div");
+            cell.className = "calendar-cell calendar-cell--day";
+            if (hasEvents) {
+                cell.classList.add("calendar-cell--has-events");
+            }
+            cell.dataset.fecha = fechaStr;
+
+            cell.innerHTML = `
+                <div class="day-number">${dia}</div>
+                ${hasEvents ? `<div class="day-dot"></div>` : ``}
+            `;
+
+            cell.addEventListener("click", () => openDayModal(fechaStr));
+            calendarGrid.appendChild(cell);
+        }
     }
-  });
 
-  // Close modal when clicking outside
-  document.getElementById('rescheduleModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeRescheduleModal();
+    // --------------------------
+    // Modal: citas del día
+    // --------------------------
+    function openDayModal(fechaStr) {
+        fechaSeleccionada = fechaStr;
+
+        const citas = CITAS.filter(c =>
+            c.fecha === fechaStr &&
+            (doctorSelect.value === "" || c.doctor === doctorSelect.value)
+        );
+
+        modalDiaTitulo.textContent = `Citas del ${fechaStr}`;
+        listaCitasDia.innerHTML = "";
+
+        if (!citas.length) {
+            listaCitasDia.innerHTML = `<p class="muted">No hay citas para este día.</p>`;
+        } else {
+            citas
+              .sort((a,b)=> (a.hora||'').localeCompare(b.hora||''))
+
+              .forEach(c => {
+                const div = document.createElement("div");
+                div.className = "cita-item";
+                div.innerHTML = `
+                    <div class="cita-main">
+                        <span class="cita-hora"><strong>${c.hora}</strong></span>
+                        <span class="cita-paciente">${c.paciente}</span>
+                    </div>
+                    <div class="cita-motivo">${c.motivo}</div>
+                    <div class="cita-doctor">${c.doctor}</div>
+                `;
+                listaCitasDia.appendChild(div);
+            });
+        }
+
+        modalCitasDia.classList.remove("hidden");
     }
-  });
-})();
+
+    function closeDayModal() {
+        modalCitasDia.classList.add("hidden");
+    }
+
+    btnCerrarCitasDia.addEventListener("click", closeDayModal);
+
+    modalCitasDia.addEventListener("click", (e) => {
+        if (e.target === modalCitasDia) closeDayModal();
+    });
+
+    // --------------------------
+    // Abrir modal de agendar desde el día
+    // --------------------------
+    btnAgregarCitaDia.addEventListener("click", () => {
+        if (!fechaSeleccionada) return;
+        modalInfo.textContent = `Fecha seleccionada: ${fechaSeleccionada}`;
+        modalAgendar.classList.remove("hidden");
+    });
+
+    function closeAgendarModal() {
+        modalAgendar.classList.add("hidden");
+    }
+
+    cerrarModalAgendar.addEventListener("click", closeAgendarModal);
+    modalAgendar.addEventListener("click", (e)=>{
+        if (e.target === modalAgendar) closeAgendarModal();
+    });
+
+    // --------------------------
+    // Modal: registrar paciente
+    // --------------------------
+    function openPacienteModal() {
+        modalPaciente.classList.remove("hidden");
+    }
+
+    function closePacienteModal() {
+        modalPaciente.classList.add("hidden");
+        pacienteForm.reset();
+    }
+
+    btnOpenPaciente.addEventListener("click", openPacienteModal);
+    cerrarModalPaciente.addEventListener("click", closePacienteModal);
+
+    modalPaciente.addEventListener("click", (e) => {
+        if (e.target === modalPaciente) closePacienteModal();
+    });
+
+    pacienteForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        // Aquí luego haces POST al backend. Por ahora, solo demo:
+        alert('✅ Paciente registrado (demo, solo maquetado).');
+        closePacienteModal();
+    });
+
+    // --------------------------
+    // Eventos de cambio en filtros
+    // --------------------------
+    monthSelect.addEventListener("change", renderCalendar);
+    yearSelect.addEventListener("change", renderCalendar);
+    doctorSelect.addEventListener("change", renderCalendar);
+
+    // Primer render
+    renderCalendar();
+});
 </script>
 @endsection

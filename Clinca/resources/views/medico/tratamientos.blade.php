@@ -5,23 +5,89 @@
 <main class="dashboard">
   <h2>Editar tratamientos</h2>
 
-  {{-- Contexto de paciente (desde ?p=Nombre) --}}
-  <div id="trat-context" class="form-container" style="margin-bottom:10px;">
-    <label>Paciente</label>
-    <input id="tratPaciente" readonly placeholder="(de ?p=)">
-    <p class="muted" style="margin:6px 0 0;">Pasamos el paciente por URL con <code>?p=Nombre</code>.</p>
-  </div>
-
-  {{-- Formulario: solo 3 campos (actual, nuevo, observaciones) --}}
+    {{-- Formulario de tratamiento --}}
   <form id="trat-form" class="form-container">
-    <label for="t_actual">Tratamiento actual</label>
-    <input id="t_actual" placeholder="Ej. Amoxicilina 500 mg c/8h" required>
 
-    <label for="t_nuevo" style="margin-top:8px;">Tratamiento nuevo</label>
-    <input id="t_nuevo" placeholder="Ej. Azitromicina 500 mg c/24h x 3d" required>
+    {{-- Tratamiento actual --}}
+    <div class="trat-section">
+      <label for="t_actual">Tratamiento actual</label>
+      <textarea id="t_actual" rows="2" placeholder="Ej. Amoxicilina 500 mg c/8h" required></textarea>
+    </div>
 
-    <label for="t_notas" style="margin-top:8px;">Observaciones</label>
-    <textarea id="t_notas" rows="3" placeholder="Motivo del cambio, indicaciones, etc."></textarea>
+    {{-- Nuevo tratamiento: detalles estructurados --}}
+    <div class="trat-section">
+      <h3 class="trat-section-title">Nuevo tratamiento</h3>
+
+      <div class="trat-grid">
+        <div class="field">
+          <label for="med_name">Medicamento</label>
+          <input id="med_name" placeholder="Ej. Amoxicilina" />
+        </div>
+
+        <div class="field">
+          <label for="med_dose">Dosis</label>
+          <input id="med_dose" placeholder="Ej. 500" />
+        </div>
+
+        <div class="field">
+          <label for="med_unit">Unidad</label>
+          <select id="med_unit">
+            <option value="">Seleccione...</option>
+            <option>mg</option>
+            <option>ml</option>
+            <option>g</option>
+            <option>UI</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="med_freq">Frecuencia</label>
+          <input id="med_freq" placeholder="Ej. cada 8 horas" />
+        </div>
+
+        <div class="field">
+          <label for="med_day">Día de inicio</label>
+          <input type="date" id="med_day" />
+        </div>
+
+        <div class="field">
+          <label for="med_time">Hora</label>
+          <input type="time" id="med_time" />
+        </div>
+      </div>
+
+      <label for="t_nuevo" style="margin-top:10px;">Resumen del tratamiento nuevo</label>
+      <textarea id="t_nuevo" rows="2"
+        placeholder="Ej. Amoxicilina 500 mg c/8h por 7 días"></textarea>
+    </div>
+
+    {{-- Resultados relacionados (lab, rayos X, etc.) --}}
+    <div class="trat-section">
+      <h3 class="trat-section-title">Resultados relacionados</h3>
+
+      <div class="trat-grid">
+        <div class="field">
+          <label for="tipo_resultado">Tipo de resultado</label>
+          <select id="tipo_resultado">
+            <option value="">Seleccione...</option>
+            <option>Laboratorio</option>
+            <option>Rayos X</option>
+            <option>Ultrasonido</option>
+            <option>Tomografía</option>
+            <option>Otro</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="fecha_resultado">Fecha del estudio</label>
+          <input type="date" id="fecha_resultado" />
+        </div>
+      </div>
+
+      <label for="t_notas" style="margin-top:10px;">Notas / interpretación de resultados</label>
+      <textarea id="t_notas" rows="3"
+        placeholder="Ej. Neumonía en Rx, leucocitos elevados, etc."></textarea>
+    </div>
 
     <div class="btn-container" style="margin-top:12px;">
       <button class="confirm-btn" type="submit">Guardar cambio</button>
@@ -29,13 +95,6 @@
     </div>
   </form>
 
-  {{-- Bitácora (demo) --}}
-  <section class="panel" style="margin-top:16px;">
-    <h3>Bitácora de cambios</h3>
-    <div id="bitacora" class="list-container">
-      <p class="muted">Aún no hay cambios registrados.</p>
-    </div>
-  </section>
 </main>
 
 <script>

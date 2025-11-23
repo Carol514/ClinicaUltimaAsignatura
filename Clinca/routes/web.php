@@ -361,6 +361,30 @@ Route::prefix('enfermera')->group(function () {
             if (!in_array($role, ['enfermera','administrador'])) abort(403);
             return app(\App\Http\Controllers\Enfermera\EnfermeraController::class)->storeVital(request());
         });
+
+        Route::get('treatments', function () {
+            $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+                ->join('roles','roles.id','=','users_roles.role_id')
+                ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+            if (!in_array($role, ['enfermera','administrador'])) abort(403);
+            return app(\App\Http\Controllers\Enfermera\EnfermeraController::class)->treatments(request());
+        });
+
+        Route::post('treatments', function () {
+            $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+                ->join('roles','roles.id','=','users_roles.role_id')
+                ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+            if (!in_array($role, ['enfermera','administrador'])) abort(403);
+            return app(\App\Http\Controllers\Enfermera\EnfermeraController::class)->storeTreatment(request());
+        });
+
+        Route::put('treatments/{id}', function ($id) {
+            $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+                ->join('roles','roles.id','=','users_roles.role_id')
+                ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+            if (!in_array($role, ['enfermera','administrador'])) abort(403);
+            return app(\App\Http\Controllers\Enfermera\EnfermeraController::class)->updateTreatment(request(), $id);
+        });
     });
 
     // Temporary debug route for enfermera to inspect patient rows (only enfermera or admin)
@@ -548,6 +572,7 @@ Route::prefix('paciente')->group(function () {
         Route::get('reminders', [\App\Http\Controllers\Paciente\PatientController::class, 'reminders']);
         Route::get('notifications', [\App\Http\Controllers\Paciente\PatientController::class, 'getNotifications']);
         Route::post('notifications', [\App\Http\Controllers\Paciente\PatientController::class, 'notifications']);
+        Route::get('documents/{id}/download', [\App\Http\Controllers\Paciente\PatientController::class, 'downloadDocument']);
     });
 });
 

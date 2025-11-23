@@ -2,6 +2,44 @@
 @section('title','Panel de Enfermería')
 
 @section('content')
+<style>
+    .suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+    }
+    
+    .suggestion-item {
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .suggestion-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+    
+    .search-row {
+        position: relative;
+    }
+    
+    .hidden {
+        display: none;
+    }
+</style>
+
 <main class="dashboard">
 
   <h2>Panel de Enfermería</h2>
@@ -13,8 +51,9 @@
 
   <form id="frmBuscar" class="form-container" onsubmit="return false;">
     <div class="search-row">
-      <input id="txtPaciente" placeholder="Ingrese el nombre o ID del paciente">
-      <button id="btnBuscar" class="confirm-btn" type="button"><img src="/img/buscar.png" alt="Limpiar" width="22" height="22" ></button>
+      <input id="txtPaciente" placeholder="Ingrese el nombre o ID del paciente" autocomplete="off">
+      <div id="patient-suggestions" class="suggestions-dropdown hidden"></div>
+      <button id="btnBuscar" class="confirm-btn" type="button"><img src="/img/buscar.png" alt="Buscar" width="22" height="22" ></button>
     </div>
   </form>
 
@@ -66,7 +105,7 @@
               <th>Altura (cm)</th>
             </tr>
             </thead>
-            <tbody>
+            <tbody id="vitalsTableBody">
             <tr>
               <td colspan="8" class="empty-cell">Sin registros.</td>
             </tr>
@@ -92,6 +131,7 @@
         </div>
 
         {{-- Tratamientos de ejemplo (clicables) --}}
+        <div id="treatmentsContainer">
         <div class="treat-card treatment-item"
              data-date="21/11/2025"
              data-summary="Amoxicilina 500 mg c/8h por 7 días.">
@@ -135,6 +175,7 @@
               Ibuprofeno 400 mg c/8h.
             </p>
           </div>
+        </div>
         </div>
       </div>
 
@@ -350,6 +391,7 @@
 
   const txtPaciente = $('txtPaciente');
   const btnBuscar   = $('btnBuscar');
+  const patientSuggestions = $('patient-suggestions');
   const nurseLayout = $('nurse-layout');
   const hdrPaciente = $('hdrPaciente');
 
@@ -358,6 +400,12 @@
   const pDx     = $('pDx');
   const pUltima = $('pUltima');
 
+  const vitalsTableBody = $('vitalsTableBody');
+  const treatmentsContainer = $('treatmentsContainer');
+
+  let currentPatientId = null;
+  let selectedPatient = null;
+
   const lnkSignos = $('lnkSignos');
   const lnkTrat   = $('lnkTrat');
 
@@ -365,6 +413,106 @@
 
   function pacienteSeleccionado() {
     return !(hdrPaciente.textContent.endsWith('—'));
+  }
+
+  // ==========================
+  //    DYNAMIC PATIENT SEARCH
+  // ==========================
+  async function searchPatients(query) {
+    if (query.length < 2) {
+      patientSuggestions.classList.add('hidden');
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/enfermera/api/paciente?query=${encodeURIComponent(query)}`, {
+        credentials: 'same-origin',
+        headers: {'Accept': 'application/json'}
+      });
+      
+      if (!res.ok) throw new Error('Search failed');
+      
+      const patients = await res.json();
+      displayPatientSuggestions(patients);
+    } catch(err) {
+      console.error('Error searching patients:', err);
+    }
+  }
+  
+  function displayPatientSuggestions(patients) {
+    patientSuggestions.innerHTML = '';
+    
+    if (patients.length === 0) {
+      patientSuggestions.innerHTML = '<div class="suggestion-item">No se encontraron pacientes</div>';
+    } else {
+      patients.slice(0, 5).forEach(patient => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.innerHTML = `
+          <strong>${patient.name}</strong><br>
+          <small>Edad: ${patient.age || 'N/A'} | Género: ${patient.gender || 'N/A'}</small>
+        `;
+        div.addEventListener('click', () => selectPatient(patient));
+        patientSuggestions.appendChild(div);
+      });
+    }
+    
+    patientSuggestions.classList.remove('hidden');
+  }
+  
+  async function selectPatient(patient) {
+    selectedPatient = patient;
+    txtPaciente.value = patient.name;
+    patientSuggestions.classList.add('hidden');
+    
+    // Immediately load patient data
+    await loadPatientData(patient);
+  }
+  
+  // Clear search field function
+  function clearSearch() {
+    txtPaciente.value = '';
+    selectedPatient = null;
+    patientSuggestions.classList.add('hidden');
+  }
+  
+  // Hide suggestions when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!txtPaciente.contains(e.target) && !patientSuggestions.contains(e.target)) {
+      patientSuggestions.classList.add('hidden');
+    }
+  });
+  
+  // Real-time search as user types
+  txtPaciente.addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+    searchPatients(query);
+  });
+
+  // ==========================
+  //    LOAD PATIENT DATA
+  // ==========================
+  async function loadPatientData(patient) {
+    try {
+      currentPatientId = patient.id;
+      hdrPaciente.textContent = `Paciente: ${patient.name}`;
+      pEdad.textContent   = patient.age || '—';
+
+      const genderMap = { 'M':'Masculino', 'F':'Femenino', 'I':'Indefinido' };
+      pGenero.textContent = genderMap[patient.gender] || patient.gender || '—';
+
+      pDx.textContent = patient.diagnosis || '—';
+      pUltima.textContent = patient.last_consult || '—';
+
+      // Load patient data
+      await loadVitals(currentPatientId);
+      await loadTreatments(currentPatientId);
+
+      nurseLayout.style.display = 'grid';
+    } catch(err) {
+      console.error('Error loading patient data:', err);
+      alert('Error al cargar los datos del paciente.');
+    }
   }
 
   // ==========================
@@ -385,6 +533,7 @@
       if (!list || !list.length) throw new Error('no results');
       const patient = list[0];
 
+      currentPatientId = patient.id;
       hdrPaciente.textContent = `Paciente: ${patient.name}`;
       pEdad.textContent   = patient.age || '—';
 
@@ -394,12 +543,112 @@
       pDx.textContent = patient.diagnosis || '—';
       pUltima.textContent = patient.last_consult || '—';
 
+      // Load patient data
+      await loadVitals(currentPatientId);
+      await loadTreatments(currentPatientId);
+
     } catch(err) {
       console.error(err);
       alert('No se encontró ningún paciente.');
     } finally {
       nurseLayout.style.display = 'grid';
     }
+  }
+
+  // Load vitals from API
+  async function loadVitals(patientId) {
+    try {
+      const res = await fetch(`/enfermera/api/vitals?patient_id=${patientId}`, {
+        credentials: 'same-origin',
+        headers: {'Accept': 'application/json'}
+      });
+      if (!res.ok) throw new Error('Failed to load vitals');
+      const vitals = await res.json();
+      renderVitals(vitals);
+    } catch(err) {
+      console.error('Error loading vitals:', err);
+    }
+  }
+
+  // Render vitals table
+  function renderVitals(vitals) {
+    if (!vitals || vitals.length === 0) {
+      vitalsTableBody.innerHTML = '<tr><td colspan="8" class="empty-cell">Sin registros.</td></tr>';
+      return;
+    }
+
+    vitalsTableBody.innerHTML = '';
+    vitals.forEach(v => {
+      const fecha = v.fecha || '—';
+      const temp = v.temp ? v.temp + ' °C' : '—';
+      const ta = (v.sbp && v.dbp) ? `${v.sbp}/${v.dbp}` : '—';
+      const pulso = v.pulso ? v.pulso + ' lpm' : '—';
+      const fr = v.fr ? v.fr + ' rpm' : '—';
+      const spo2 = v.spo2 ? v.spo2 + ' %' : '—';
+      const peso = v.peso ? v.peso + ' kg' : '—';
+      const altura = v.altura ? v.altura + ' cm' : '—';
+      
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${fecha}</td>
+        <td>${temp}</td>
+        <td>${ta}</td>
+        <td>${pulso}</td>
+        <td>${fr}</td>
+        <td>${spo2}</td>
+        <td>${peso}</td>
+        <td>${altura}</td>
+      `;
+      vitalsTableBody.appendChild(tr);
+    });
+  }
+
+  // Load treatments from API
+  async function loadTreatments(patientId) {
+    try {
+      const res = await fetch(`/enfermera/api/treatments?patient_id=${patientId}`, {
+        credentials: 'same-origin',
+        headers: {'Accept': 'application/json'}
+      });
+      if (!res.ok) throw new Error('Failed to load treatments');
+      const treatments = await res.json();
+      renderTreatments(treatments);
+    } catch(err) {
+      console.error('Error loading treatments:', err);
+    }
+  }
+
+  // Render treatments
+  function renderTreatments(treatments) {
+    if (!treatments || treatments.length === 0) {
+      treatmentsContainer.innerHTML = '<p class="muted" style="padding: 20px; text-align: center;">Sin tratamientos registrados</p>';
+      return;
+    }
+
+    treatmentsContainer.innerHTML = '';
+    treatments.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'treat-card treatment-item';
+      div.dataset.treatmentId = t.id;
+      div.dataset.date = t.start_dt || '';
+      div.dataset.summary = t.summary || '';
+      div.dataset.name = t.name || '';
+      div.dataset.dose = t.dose || '';
+      div.dataset.instructions = t.instructions || '';
+      
+      div.innerHTML = `
+        <div class="treat-icon">
+          <img src="/img/medicina.png" alt="med">
+        </div>
+        <div class="treat-content">
+          <p class="treat-title">Tratamiento del ${t.start_dt || 'Sin fecha'}</p>
+          <p class="treat-desc">${t.summary || t.name || 'Sin descripción'}</p>
+        </div>
+      `;
+      
+      div.addEventListener('click', () => openTratModalFromCard(div));
+      treatmentsContainer.appendChild(div);
+    });
   }
 
   btnBuscar.addEventListener('click', buscarPaciente);
@@ -419,6 +668,8 @@
 
   const tActual      = $('t_actual');
   const tNuevo       = $('t_nuevo');
+
+  let currentTreatmentId = null;
 
   const allTratFields = tratForm.querySelectorAll('input, textarea, select');
 
@@ -464,6 +715,7 @@
       return;
     }
     tratForm.reset();
+    currentTreatmentId = null;
     setModeEdit();   // solo Guardar + Cancelar
     tratModal.classList.remove('hidden');
   }
@@ -477,9 +729,16 @@
 
     const fecha   = card.dataset.date   || '';
     const summary = card.dataset.summary || card.querySelector('.treat-desc')?.textContent || '';
+    const name = card.dataset.name || '';
+    const dose = card.dataset.dose || '';
+    const instructions = card.dataset.instructions || '';
+
+    currentTreatmentId = card.dataset.treatmentId || null;
 
     tActual.value = `Tratamiento del ${fecha}: ${summary}`;
     tNuevo.value  = summary;
+    $('med_name').value = name;
+    $('med_dose').value = dose;
 
     setModeView();  // solo Editar + Cancelar
     tratModal.classList.remove('hidden');
@@ -496,10 +755,6 @@
     openTratModalCreate();
   });
 
-  treatmentItems.forEach(card => {
-    card.addEventListener('click', () => openTratModalFromCard(card));
-  });
-
   tratEditBtn.addEventListener('click', () => {
     setModeEdit();
   });
@@ -510,10 +765,65 @@
     if (e.target === tratModal) closeTratModal();
   });
 
-  tratForm.addEventListener('submit', (e) => {
+  tratForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    alert('✅ Tratamiento guardado (demo, solo maquetado).');
-    closeTratModal();
+    
+    const name = $('med_name').value.trim() || tNuevo.value.trim();
+    const dose = $('med_dose').value.trim();
+    const unit = $('med_unit').value;
+    const instructions = tNuevo.value.trim();
+    const startDate = $('med_day').value;
+    
+    if (!name) {
+      alert('Por favor ingresa el nombre del medicamento o tratamiento.');
+      return;
+    }
+    
+    const treatmentData = {
+      patient_id: currentPatientId,
+      name: name,
+      dose: dose && unit ? `${dose} ${unit}` : dose,
+      instructions: instructions,
+      start_dt: startDate || new Date().toISOString().split('T')[0],
+    };
+    
+    try {
+      let response;
+      if (currentTreatmentId) {
+        // Update existing treatment
+        response = await fetch(`/enfermera/api/treatments/${currentTreatmentId}`, {
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+          },
+          body: JSON.stringify(treatmentData)
+        });
+      } else {
+        // Create new treatment
+        response = await fetch('/enfermera/api/treatments', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+          },
+          body: JSON.stringify(treatmentData)
+        });
+      }
+      
+      if (!response.ok) throw new Error('Failed to save treatment');
+      
+      alert('✅ Tratamiento guardado exitosamente.');
+      closeTratModal();
+      await loadTreatments(currentPatientId);
+    } catch(err) {
+      console.error('Error saving treatment:', err);
+      alert('❌ Error al guardar el tratamiento.');
+    }
   });
 
   // ==========================
@@ -552,10 +862,63 @@
     if (e.target === vitalsModal) closeVitalsModal();
   });
 
-  vitalsForm.addEventListener('submit', (e) => {
+  vitalsForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    alert('✅ Signos vitales registrados (demo, solo maquetado).');
-    closeVitalsModal();
+    
+    const fecha = $('v_fecha').value;
+    const temp = $('v_temp').value;
+    const press = $('v_press').value;
+    const pulse = $('v_pulse').value;
+    const resp = $('v_resp').value;
+    const spo2 = $('v_spo2').value;
+    const peso = $('v_peso').value;
+    const altura = $('v_altura').value;
+    
+    if (!press) {
+      alert('La presión arterial es obligatoria.');
+      return;
+    }
+    
+    // Validate blood pressure format (e.g., 120/80, 95/60, 140/100)
+    const bpPattern = /^\d{2,3}\/\d{2,3}$/;
+    if (!bpPattern.test(press)) {
+      alert('La presión arterial debe seguir el formato: XX/XX o XXX/XXX (Ej. 120/80, 95/60)');
+      return;
+    }
+    
+    const vitalData = {
+      patient_id: currentPatientId,
+      taken_at: fecha || new Date().toISOString().split('T')[0],
+      temp: temp || null,
+      ta: press,
+      pulso: pulse || null,
+      fr: resp || null,
+      spo2: spo2 || null,
+      peso: peso || null,
+      altura: altura || null,
+    };
+    
+    try {
+      const response = await fetch('/enfermera/api/vitals', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        },
+        body: JSON.stringify(vitalData)
+      });
+      
+      if (!response.ok) throw new Error('Failed to save vitals');
+      
+      alert('✅ Signos vitales registrados exitosamente.');
+      closeVitalsModal();
+      await loadVitals(currentPatientId);
+    } catch(err) {
+      console.error('Error saving vitals:', err);
+      alert('❌ Error al registrar signos vitales.');
+    }
   });
 
 })();

@@ -11,6 +11,7 @@ use App\Models\Appointment;
 use App\Models\Encounter;
 use App\Models\MedicalRecord;
 use App\Models\VitalSign;
+use App\Models\Treatment;
 
 class EnfermeraController extends Controller
 {
@@ -131,6 +132,8 @@ class EnfermeraController extends Controller
                 'pulso'=> $s->hr,
                 'fr'   => $s->rr,
                 'spo2' => $s->spo2,
+                'peso' => $s->weight_kg,
+                'altura' => $s->height_cm,
                 'nurse_id' => $s->nurse_id,
                 'nurse_name' => $s->nurse_id && isset($nurseMap[$s->nurse_id]) ? $nurseMap[$s->nurse_id] : null,
             ];
@@ -150,10 +153,12 @@ class EnfermeraController extends Controller
             'patient_id' => 'required',
             'taken_at' => 'nullable|date',
             'temp' => 'nullable|numeric',
-            'ta' => 'required|string',
+            'ta' => 'required|string|regex:/^\d{2,3}\/\d{2,3}$/',
             'pulso' => 'nullable|integer',
             'fr' => 'nullable|integer',
             'spo2' => 'nullable|integer',
+            'peso' => 'nullable|numeric',
+            'altura' => 'nullable|numeric',
         ]);
 
         $patient = Patient::find($data['patient_id']);
@@ -183,9 +188,109 @@ class EnfermeraController extends Controller
             'hr'  => $data['pulso'] ?? null,
             'rr'  => $data['fr'] ?? null,
             'spo2'=> $data['spo2'] ?? null,
+            'weight_kg' => $data['peso'] ?? null,
+            'height_cm' => $data['altura'] ?? null,
             'nurse_id' => Auth::id(),
         ]);
 
         return response()->json(['created'=>true,'id'=>$vs->id]);
+    }
+
+    // GET treatments for a patient
+    public function treatments(Request $request)
+    {
+        $this->ensureEnfermeraOrAdmin();
+        $pid = $request->query('patient_id') ?? $request->input('patient_id');
+        if (!$pid) return response()->json(['error'=>'patient_id requerido'], 400);
+
+        $patient = Patient::find($pid);
+        if (!$patient || !$patient->record) return response()->json([], 200);
+
+        $recordId = $patient->record->id;
+        $treatments = Treatment::where('record_id', $recordId)
+            ->orderByDesc('start_dt')
+            ->limit(20)
+            ->get();
+
+        $out = $treatments->map(function($t) {
+            $startDate = $t->start_dt ? \Carbon\Carbon::parse($t->start_dt)->format('d/m/Y') : null;
+            $endDate = $t->end_dt ? \Carbon\Carbon::parse($t->end_dt)->format('d/m/Y') : null;
+            
+            return [
+                'id' => $t->id,
+                'name' => $t->name,
+                'dose' => $t->dose,
+                'instructions' => $t->instructions,
+                'start_dt' => $startDate,
+                'end_dt' => $endDate,
+                'summary' => ($t->name ?? 'Tratamiento') . ' ' . ($t->dose ?? '') . ($t->instructions ? ' - ' . $t->instructions : ''),
+                'created_at' => $t->created_at ? $t->created_at->format('Y-m-d H:i:s') : null,
+            ];
+        });
+
+        return response()->json($out->values()->all());
+    }
+
+    // POST create a new treatment
+    public function storeTreatment(Request $request)
+    {
+        $this->ensureEnfermeraOrAdmin();
+
+        $data = $request->validate([
+            'patient_id' => 'required',
+            'name' => 'required|string|max:255',
+            'dose' => 'nullable|string|max:255',
+            'instructions' => 'nullable|string',
+            'start_dt' => 'nullable|date',
+            'end_dt' => 'nullable|date',
+        ]);
+
+        $patient = Patient::find($data['patient_id']);
+        if (!$patient) return response()->json(['error'=>'patient not found'], 404);
+        
+        $recordId = $patient->record ? $patient->record->id : null;
+        if (!$recordId) {
+            $mr = MedicalRecord::create(['patient_id'=>$patient->id, 'status'=>'activo']);
+            $recordId = $mr->id;
+        }
+
+        $treatment = Treatment::create([
+            'record_id' => $recordId,
+            'name' => $data['name'],
+            'dose' => $data['dose'] ?? null,
+            'instructions' => $data['instructions'] ?? null,
+            'start_dt' => $data['start_dt'] ?? now(),
+            'end_dt' => $data['end_dt'] ?? null,
+            'prescribed_by' => Auth::id(),
+        ]);
+
+        return response()->json(['created'=>true,'id'=>$treatment->id, 'treatment' => $treatment]);
+    }
+
+    // PUT update an existing treatment
+    public function updateTreatment(Request $request, $id)
+    {
+        $this->ensureEnfermeraOrAdmin();
+
+        $treatment = Treatment::find($id);
+        if (!$treatment) return response()->json(['error'=>'treatment not found'], 404);
+
+        $data = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'dose' => 'nullable|string|max:255',
+            'instructions' => 'nullable|string',
+            'start_dt' => 'nullable|date',
+            'end_dt' => 'nullable|date',
+        ]);
+
+        if (isset($data['name'])) $treatment->name = $data['name'];
+        if (isset($data['dose'])) $treatment->dose = $data['dose'];
+        if (isset($data['instructions'])) $treatment->instructions = $data['instructions'];
+        if (isset($data['start_dt'])) $treatment->start_dt = $data['start_dt'];
+        if (isset($data['end_dt'])) $treatment->end_dt = $data['end_dt'];
+
+        $treatment->save();
+
+        return response()->json(['updated'=>true,'id'=>$treatment->id, 'treatment' => $treatment]);
     }
 }

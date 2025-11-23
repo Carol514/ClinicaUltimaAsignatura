@@ -1856,3 +1856,390 @@ hr {
     height: 24px;
     object-fit: contain;
 }
+
+
+/* ==========================
+   PANEL DEL MÉDICO
+   ========================== */
+
+.trat-section input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+.medico-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 0 40px;
+}
+
+/* Título principal del panel (igual estilo que otros h2 de dashboards) */
+.medico-dashboard h2 {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+/* ------------ GRID SUPERIOR (CITAS + GRÁFICA) ------------ */
+
+.med-top-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  margin-bottom: 25px;
+}
+
+/* Card genérico del médico (reusa estilo visual de cards que ya usas) */
+.med-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.med-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* Card de estadística simple */
+.med-card--stat {
+  text-align: center;
+}
+
+.med-stat-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.med-stat-number {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.med-stat-caption {
+  font-size: 12px;
+  color: #666666;
+}
+
+/* Card de gráfica */
+.med-card--chart {
+  display: flex;
+  flex-direction: column;
+}
+
+.med-chart-caption {
+  font-size: 12px;
+  color: #666666;
+  margin-top: 6px;
+}
+
+/* Gráfica minimal */
+.mini-chart {
+  margin-top: 6px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  height: 130px;
+  border: 1px solid #e3e3e3;
+  border-radius: 6px;
+  padding: 8px 10px 6px;
+  background-color: #f9f9f9;
+}
+
+.mini-chart-bar {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* barra en sí */
+.mini-chart-bar::before {
+  content: "";
+  width: 80%;
+  height: 100%;
+  border-radius: 4px 4px 0 0;
+  background: #7bc3ab; /* mismo verde de tu header */
+}
+
+/* valor arriba de la barra */
+.mini-chart-value {
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+/* etiqueta de día abajo */
+.mini-chart-label {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* ------------ HISTORIAL + FILTROS ------------ */
+
+.med-history-section {
+  margin-top: 10px;
+}
+
+/* Fila de filtros */
+.med-filters-row {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 12px;
+  align-items: flex-end;
+}
+
+.med-filters-row .field {
+  flex: 1;
+}
+
+.med-filters-row .field input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.med-filters-row label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+/* input + botón buscar */
+.search-row {
+  display: flex;
+  gap: 6px;
+}
+
+.search-row input {
+  flex: 1;
+}
+
+/* Tabla historial dentro de tarjeta */
+.med-card--history {
+  margin-top: 4px;
+}
+
+.med-card--history table {
+  width: 100%;
+}
+
+.history-actions {
+  text-align: center;
+}
+
+.history-actions .icon-btn img {
+  width: 20px;
+}
+
+/* Mensaje vacío del historial */
+#medHistoryEmpty {
+  font-size: 13px;
+}
+
+/* ------------ ALTA DE HISTORIAL ------------ */
+
+.med-form-section {
+  margin-top: 24px;
+}
+
+/* Ajuste de secciones de texto en el formulario */
+.trat-section {
+  margin-bottom: 10px;
+}
+
+.trat-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* Grid usado en alergias/antecedentes dentro del médico */
+.history-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 18px;
+}
+
+.history-grid textarea,
+.trat-section textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical; /* o none si no quieres que el usuario lo cambie */
+}
+
+
+/* ------------ DOCUMENTOS ------------ */
+
+.med-docs-section {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 16px;
+}
+
+.med-docs-patient {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.med-link {
+  color: #2c8d70;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Zona de arrastrar archivos */
+.med-dropzone {
+  border: 1px dashed #b7d9cd;
+  border-radius: 6px;
+  padding: 18px 12px;
+  text-align: center;
+  background-color: #f7fcfa;
+  cursor: pointer;
+}
+
+.med-dropzone p {
+  font-size: 13px;
+}
+
+.med-dropzone-hint {
+  margin-top: 4px;
+  color: #777;
+}
+
+/* Lista de documentos ya subidos */
+.docs-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+}
+
+.doc-icon {
+  width: 20px;
+}
+
+.doc-name {
+  flex: 1;
+  font-size: 13px;
+}
+
+.doc-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  border: 1px solid #7bc3ab;
+}
+
+/* ------------ MODAL DETALLE HISTORIAL ------------ */
+
+.history-modal-body {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.history-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.history-section p {
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+/* lista de signos vitales dentro del modal */
+.vitals-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 20px;
+}
+
+.vitals-list li {
+  font-size: 13px;
+}
+
+/* ------------ RESPONSIVE ------------ */
+
+@media (max-width: 900px) {
+  .med-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .med-docs-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .med-filters-row {
+    flex-direction: column;
+  }
+
+  .history-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mini-chart {
+    height: 110px;
+  }
+}
+
+
+.med-dx-field {
+  position: relative;
+}
+
+/* Contenedor de sugerencias */
+.dx-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  width: 100%;           /* mismo ancho del input */
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 20;
+  padding: 4px 0;
+}
+
+.dx-suggestions.hidden {
+  display: none;
+}
+
+.dx-suggestion-item {
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dx-suggestion-item:hover {
+  background-color: #f3fbf7;
+}

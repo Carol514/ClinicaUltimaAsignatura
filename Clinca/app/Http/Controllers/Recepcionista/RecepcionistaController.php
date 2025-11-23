@@ -57,7 +57,12 @@ class RecepcionistaController extends Controller {
             ->orderBy('users.name','asc')
             ->get();
 
-        $out = $rows->map(function($r){ return ['id'=>$r->id,'name'=>$r->name]; });
+        $out = $rows->map(function($r){ 
+            // Extract last name from full name (assuming format: "FirstName LastName")
+            $nameParts = explode(' ', trim($r->name));
+            $lastName = count($nameParts) > 1 ? end($nameParts) : $r->name;
+            return ['id'=>$r->id,'name'=>'Dr. ' . $lastName]; 
+        });
         return response()->json(['data'=>$out]);
     }
 
@@ -222,7 +227,12 @@ class RecepcionistaController extends Controller {
         $clinicians = [];
         if (count($clinicianIds)){
             $rows = DB::table('users')->whereIn('id', $clinicianIds)->select('id','name')->get();
-            $clinicians = $rows->pluck('name','id')->toArray();
+            $clinicians = $rows->mapWithKeys(function($r){
+                // Extract last name from full name (assuming format: "FirstName LastName")
+                $nameParts = explode(' ', trim($r->name));
+                $lastName = count($nameParts) > 1 ? end($nameParts) : $r->name;
+                return [$r->id => 'Dr. ' . $lastName];
+            })->toArray();
         }
 
         $items = $apps->map(function($a) use ($patients, $clinicians){

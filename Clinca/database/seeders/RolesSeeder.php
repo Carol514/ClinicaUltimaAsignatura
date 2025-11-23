@@ -14,20 +14,17 @@ class RolesSeeder extends Seeder
     public function run(): void
     {
         $roles = [
-            ['code' => 'administrador', 'name' => 'Administrador', 'description' => 'Administrador del sistema'],
-            ['code' => 'medico', 'name' => 'Médico', 'description' => 'Médico clínico'],
-            ['code' => 'enfermera', 'name' => 'Enfermera', 'description' => 'Enfermera'],
-            ['code' => 'recepcionista', 'name' => 'Recepcionista', 'description' => 'Recepcionista'],
-            ['code' => 'paciente', 'name' => 'Paciente', 'description' => 'Paciente'],
+            ['code' => 'administrador', 'name' => 'Administrador'],
+            ['code' => 'medico', 'name' => 'Médico'],
+            ['code' => 'enfermera', 'name' => 'Enfermera'],
+            ['code' => 'recepcionista', 'name' => 'Recepcionista'],
+            ['code' => 'paciente', 'name' => 'Paciente'],
         ];
 
         foreach ($roles as $roleData) {
             Role::firstOrCreate(
                 ['code' => $roleData['code']],
-                [
-                    'name' => $roleData['name'],
-                    'description' => $roleData['description']
-                ]
+                ['name' => $roleData['name']]
             );
         }
 

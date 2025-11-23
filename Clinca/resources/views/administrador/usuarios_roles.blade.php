@@ -43,9 +43,6 @@
     </div>
   </section>
 
-  
-
-
 
   <div style="max-width:1100px;margin:8px auto 40px;text-align:center;">
     <a href="{{ route('admin.panel') }}" class="cancel-btn">Volver al panel</a>
@@ -54,10 +51,53 @@
 
 {{-- ====== Modales (estilos mínimos) ====== --}}
 <style>
-  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:1000;}
-  .modal{background:#fff;border-radius:14px;max-width:520px;width:92%;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.2);}
-  .modal h4{margin:0 0 10px;color:#2a6b5f;}
-  .perm-chip{display:inline-block;background:#f1fbf7;color:#2a6b5f;border-radius:10px;padding:4px 8px;margin:2px 4px 0 0;font-size:.92em;}
+  .modal-backdrop{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,.35);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal{
+    background: #fff;
+    border-radius: 14px;
+    max-width: 520px;
+    width: 92%;
+    padding: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.2);
+    margin: auto;
+    display: block;
+    flex-direction: column;
+  }
+  .modal h4{
+    margin: 0 0 10px;
+    color: #2a6b5f;
+  }
+  .perm-chip{
+    display: inline-block;
+    background: #f1fbf7;
+    color: #2a6b5f;
+    border-radius: 10px;
+    padding: 4px 8px;
+    margin: 2px 4px 0 0;
+    font-size: .92em;
+  }
+  .modal input, .modal select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 5px;
+  }
+  .modal label {
+    font-weight: 500;
+    color: #333;
+  }
 </style>
 
 {{-- NOTE: The permisos column/feature was removed from the roles table; keep markup minimal and do not show the permisos modal. --}}
@@ -67,26 +107,26 @@
   <div class="modal">
     <h4>Agregar nuevo usuario del personal</h4>
     <div class="form-container">
-      <div class="fields" style="display:grid;grid-template-columns:1fr;gap:10px;">
-        <div>
+      <div class="fields">
+        <div style="margin-bottom: 15px;">
           <label>Nombre</label>
           <br>
-          <input id="userNombre" placeholder="Nombre completo">
+          <input id="userNombre" placeholder="Nombre completo" required>
         </div>
-        <div>
+        <div style="margin-bottom: 15px;">
           <label>Correo / ID</label>
           <br>
-          <input id="userCorreo" placeholder="usuario@hospital.local">
+          <input id="userCorreo" type="email" placeholder="usuario@hospital.local" required>
         </div>
-        <div>
+        <div style="margin-bottom: 15px;">
           <label>Contraseña</label>
           <br>
-          <input id="userContraseña" placeholder="********">
+          <input id="userContraseña" type="password" placeholder="********" minlength="6" required>
         </div>
-        <div>
+        <div style="margin-bottom: 15px;">
           <label>Rol</label>
           <br>
-          <select id="userRol"></select>
+          <select id="userRol" required></select>
         </div>
       </div>
     </div>
@@ -102,9 +142,7 @@
   // Use the lightweight admin API implemented in routes (no CSS or model changes)
   const $ = sel => document.querySelector(sel);
   const usersTbody = $('#usersTbody');
-  const rolesTbody = $('#rolesTbody');
   const noUsers = $('#noUsers');
-  const noRoles = $('#noRoles');
   const userModal = $('#userModal');
 
   const CSRF = '{{ csrf_token() }}';
@@ -145,33 +183,11 @@
     });
   }
 
-  
-  
-
-  function renderRoles(list = []){
-    rolesTbody.innerHTML='';
-    if(!list.length){ noRoles.style.display='block'; return; }
-    noRoles.style.display='none';
-    list.forEach(r=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${r.name}</td>
-        
-        <td>
-          
-          <button class="cancel-btn"  data-action="delrole"  data-roleid="${r.id}" style="margin-left:8px;">Eliminar rol</button>
-        </td>
-      `;
-      rolesTbody.appendChild(tr);
-    });
-  }
-
   function loadAll(){
     Promise.all([
       api('/administrador/api/roles'),
       api('/administrador/api/users')
     ]).then(([roles, users])=>{
-      renderRoles(roles || []);
       renderUsers(users || []);
       updateRoleSelect(roles || []);
     }).catch(err=>{
@@ -190,28 +206,9 @@
   });
   $('#btnResetFiltro').onclick = ()=>{ $('#searchUser').value=''; loadAll(); };
 
-  rolesTbody.addEventListener('click', e=>{
-    const btn = e.target.closest('button'); if(!btn) return;
-    const action = btn.dataset.action;
-    const roleId = btn.dataset.roleid;
-    const roleName = btn.dataset.rolename;
-    if(action==='delrole'){
-      if(!confirm('¿Eliminar este rol?')) return;
-      api(`/administrador/api/roles/${roleId}`, { method: 'DELETE' })
-        .then(()=> loadAll())
-        .catch(err=> alert(err.body?.message || 'Error eliminando rol'));
-    }
-    // permissions UI removed (roles table no longer contains permisos)
-  });
-  // permissions UI removed; no handlers for permisos are required
 
-  $('#btnAgregarRol').onclick = ()=>{
-    const name = $('#newRoleName').value.trim();
-    if(!name) return alert('Ingresa un nombre');
-    api('/administrador/api/roles', { method: 'POST', body: { code: name.toLowerCase().replace(/[^a-z0-9_]+/g,'_'), name } })
-      .then(()=> { $('#newRoleName').value=''; loadAll(); })
-      .catch(err=> alert(err.body?.message || 'Error creando rol'));
-  };
+
+
 
   usersTbody.addEventListener('click', e=>{
     const btn = e.target.closest('button'); if(!btn) return;
@@ -374,7 +371,13 @@
 
   function updateRoleSelect(list = []){
     const sel = $('#userRol');
-    sel.innerHTML = list.map(r=>`<option value="${r.name}">${r.name}</option>`).join('');
+    // Filter out 'paciente' role since this is for staff management
+    const staffRoles = list.filter(r => 
+      r.name && 
+      r.name.toLowerCase() !== 'paciente' && 
+      r.code !== 'paciente'
+    );
+    sel.innerHTML = staffRoles.map(r=>`<option value="${r.name}">${r.name}</option>`).join('');
   }
   $('#btnNuevoUsuario').onclick = ()=>{ 
     $('#userNombre').value=''; 
@@ -389,8 +392,20 @@
     const correo = $('#userCorreo').value.trim();
     const rol    = $('#userRol').value;
     const password = ($('#userContraseña').value || '').trim();
+    
     if(!nombre || !correo) return alert('Completa todos los campos');
+    
+    // Validate name does not contain numbers
+    if(/\d/.test(nombre)) return alert('El nombre no puede contener números');
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!emailRegex.test(correo)) return alert('Por favor ingresa un correo electrónico válido');
+    
     if(!password || password.length < 6) return alert('La contraseña es obligatoria y debe tener al menos 6 caracteres');
+    
+    if(!rol) return alert('Por favor selecciona un rol para el usuario');
+    
     const body = { name: nombre, email: correo, role: rol, password };
     api('/administrador/api/users', { method:'POST', body })
       .then(()=> { 

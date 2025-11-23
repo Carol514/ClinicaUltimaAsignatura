@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use App\Models\Patient;
 use App\Models\MedicalRecord;
 use App\Models\Appointment;
@@ -15,10 +16,11 @@ use App\Models\Treatment;
 use App\Models\MedicalHistory;
 use App\Models\VitalSign;
 use App\Models\Reminder;
+use App\Models\Allergy;
 
 class PatientController extends Controller
 {
-    // Return unified history events for a patient
+    // Return unified history events for a patient with detailed medical information
     public function history(Request $request)
     {
         $patient = $this->resolvePatient($request);
@@ -27,53 +29,97 @@ class PatientController extends Controller
         $record = $patient->record;
         $items = [];
 
-        // Appointments (patient-level)
-        $appts = Appointment::where('patient_id', $patient->id)->get();
-        foreach ($appts as $a) {
-            $dt = $a->scheduled_at ? substr($a->scheduled_at,0,10) : ($a->created_at?substr($a->created_at,0,10):null);
-            $items[] = [
-                'fecha' => $dt,
-                'tipo' => 'Cita',
-                'detalle' => trim(($a->reason ?? '') . ' (' . ($a->status ?? '') . ')'),
-            ];
-        }
-
         if ($record) {
             $rid = $record->id;
 
-            $enc = Encounter::where('record_id', $rid)->get();
-            foreach ($enc as $e){
-                $dt = $e->encounter_dt ? substr($e->encounter_dt,0,10) : ($e->created_at?substr($e->created_at,0,10):null);
-                $items[] = ['fecha'=>$dt,'tipo'=>'Encuentro','detalle'=>($e->reason ?? '') . ' ' . ($e->notes ?? '')];
-            }
-
-            $mh = MedicalHistory::where('record_id', $rid)->get();
-            foreach ($mh as $m){
-                $dt = $m->recorded_at ? substr($m->recorded_at,0,10) : ($m->created_at?substr($m->created_at,0,10):null);
-                $items[] = ['fecha'=>$dt,'tipo'=>'Historial','detalle'=>($m->condition ?? '') . ' - ' . ($m->details ?? '')];
-            }
-
-            $docs = Document::where('record_id', $rid)->get();
-            foreach ($docs as $d){
-                $dt = $d->created_at ? substr($d->created_at,0,10) : null;
-                $items[] = ['fecha'=>$dt,'tipo'=>'Documento','detalle'=>($d->title ?? $d->doc_type ?? '')];
-            }
-
-            $treats = Treatment::where('record_id', $rid)->get();
-            foreach ($treats as $t){
-                $dt = $t->start_dt ? substr($t->start_dt,0,10) : ($t->created_at?substr($t->created_at,0,10):null);
-                $items[] = ['fecha'=>$dt,'tipo'=>'Tratamiento','detalle'=>($t->name ?? '') . ' ' . ($t->dose ?? '')];
-            }
-
-            $vitals = VitalSign::where('encounter_id', $enc->pluck('id')->toArray())->get();
-            foreach ($vitals as $v){
-                $dt = $v->taken_at ? substr($v->taken_at,0,10) : ($v->created_at?substr($v->created_at,0,10):null);
-                $items[] = ['fecha'=>$dt,'tipo'=>'Signos vitales','detalle'=>('TA ' . ($v->sbp ?? '') . '/' . ($v->dbp ?? '') . ' · Temp ' . ($v->temp_c ?? ''))];
+            // Get encounters with all related data
+            $encounters = Encounter::where('record_id', $rid)->get();
+            
+            foreach ($encounters as $encounter) {
+                $dt = $encounter->encounter_dt ? substr($encounter->encounter_dt, 0, 10) : 
+                      ($encounter->created_at ? substr($encounter->created_at, 0, 10) : null);
+                
+                // Format date for display (DD/MM/YYYY)
+                $fechaDisplay = $dt ? date('d/m/Y', strtotime($dt)) : '—';
+                
+                // Get clinician name
+                $clinician = \App\Models\User::find($encounter->clinician_id);
+                $doctorName = $clinician ? $clinician->name : 'Doctor no asignado';
+                
+                // Get vital signs for this encounter
+                $vitals = VitalSign::where('encounter_id', $encounter->id)->first();
+                
+                // Get medical history for this record
+                $medHistory = MedicalHistory::where('record_id', $rid)->first();
+                
+                // Get allergies
+                $allergies = Allergy::where('record_id', $rid)
+                    ->pluck('allergen')
+                    ->toArray();
+                $allergiesStr = !empty($allergies) ? implode(', ', $allergies) : 'Ninguna registrada';
+                
+                // Get antecedentes (medical background)
+                $antecedentes = $medHistory ? $medHistory->details : 'Sin antecedentes registrados';
+                
+                // Get treatments for this encounter
+                $treatments = Treatment::where('record_id', $rid)
+                    ->where('start_dt', '>=', $encounter->encounter_dt)
+                    ->get();
+                
+                $treatmentStr = $treatments->map(function($t) {
+                    return ($t->name ?? 'Tratamiento') . ' ' . ($t->dose ?? '') . 
+                           ($t->instructions ? ' - ' . $t->instructions : '');
+                })->implode('; ');
+                
+                if (empty($treatmentStr)) {
+                    $treatmentStr = 'Sin tratamiento registrado';
+                }
+                
+                // Get documents for this encounter
+                $documents = Document::where('record_id', $rid)->get();
+                
+                $docsArray = $documents->map(function($d) {
+                    return [
+                        'id' => $d->id,
+                        'name' => $d->title ?? $d->doc_type ?? 'Documento',
+                        'uri' => $d->storage_uri ?? ''
+                    ];
+                })->toArray();
+                
+                $docsStr = !empty($docsArray) ? json_encode($docsArray) : '';
+                
+                // Build comprehensive history item
+                $items[] = [
+                    'fecha' => $fechaDisplay,
+                    'motivo' => $encounter->reason ?? 'Consulta general',
+                    'diagnostico' => $encounter->notes ?? 'Sin diagnóstico registrado',
+                    'doctor' => $doctorName,
+                    'doctor_id' => $encounter->clinician_id,
+                    'alergias' => $allergiesStr,
+                    'antecedentes' => $antecedentes,
+                    'temperatura' => $vitals && $vitals->temp_c ? $vitals->temp_c . ' °C' : '—',
+                    'presion' => $vitals && $vitals->sbp && $vitals->dbp ? 
+                                 $vitals->sbp . '/' . $vitals->dbp . ' mmHg' : '—',
+                    'pulso' => $vitals && $vitals->hr ? $vitals->hr . ' lpm' : '—',
+                    'frecuencia_resp' => $vitals && $vitals->rr ? $vitals->rr . ' rpm' : '—',
+                    'saturacion_ox' => $vitals && $vitals->spo2 ? $vitals->spo2 . ' %' : '—',
+                    'tratamiento' => $treatmentStr,
+                    'documentos' => $docsStr,
+                    'encounter_id' => $encounter->id,
+                    'fecha_raw' => $dt // for sorting
+                ];
             }
         }
 
-        // sort by fecha desc
-        usort($items, function($a,$b){ return strcmp($b['fecha'] ?? '', $a['fecha'] ?? ''); });
+        // Sort by fecha desc
+        usort($items, function($a, $b) { 
+            return strcmp($b['fecha_raw'] ?? '', $a['fecha_raw'] ?? ''); 
+        });
+
+        // Remove fecha_raw before returning
+        foreach ($items as &$item) {
+            unset($item['fecha_raw']);
+        }
 
         return response()->json(array_values($items));
     }
@@ -84,33 +130,88 @@ class PatientController extends Controller
         $patient = $this->resolvePatient($request);
         if (!$patient) return response()->json([], 200);
 
-        $appts = Appointment::where('patient_id', $patient->id)->get();
+        $appts = Appointment::where('patient_id', $patient->id)
+            ->orderBy('scheduled_at', 'asc')
+            ->get();
+        
         $rows = [];
-        foreach ($appts as $a){
-            $fecha = $a->scheduled_at ? substr($a->scheduled_at,0,10) : null;
-            $hora  = $a->scheduled_at ? substr($a->scheduled_at,11,5) : null;
-            $estado = $a->status ?? 'Programada';
-
-            // look for Reminder entries
-            $rem = Reminder::where('appointment_id', $a->id)->orderBy('send_at')->get();
-            if ($rem && $rem->count()){
-                foreach ($rem as $r){
-                    $rows[] = [
-                        'fecha' => $r->send_at ? substr($r->send_at,0,10) : $fecha,
-                        'hora'  => $r->send_at ? substr($r->send_at,11,5) : $hora,
-                        'tipo'  => 'Recordatorio',
-                        'detalle'=> $r->channel . ' ' . ($r->result ?? ''),
-                        'estado' => $r->sent ? 'Enviado' : 'Pendiente',
-                    ];
+        $today = now();
+        
+        foreach ($appts as $a) {
+            $fecha = $a->scheduled_at ? substr($a->scheduled_at, 0, 10) : null;
+            $hora  = $a->scheduled_at ? substr($a->scheduled_at, 11, 5) : null;
+            $fechaDisplay = $fecha ? date('d/m/Y', strtotime($fecha)) : '—';
+            
+            $estado = $a->status ?? 'pending';
+            
+            // Get clinician name with Dr. prefix and last name only
+            $clinician = \App\Models\User::find($a->clinician_id);
+            $doctorName = 'Doctor';
+            if ($clinician) {
+                // Extract last name from full name (assuming format: "FirstName LastName")
+                $nameParts = explode(' ', trim($clinician->name));
+                $lastName = count($nameParts) > 1 ? end($nameParts) : $clinician->name;
+                $doctorName = 'Dr. ' . $lastName;
+            }
+            
+            $appointmentDate = $fecha ? \Carbon\Carbon::parse($fecha . ' ' . $hora) : null;
+            
+            // Determine status for display
+            $estadoDisplay = 'Próxima';
+            $detalle = '';
+            
+            if ($estado === 'cancelled') {
+                $estadoDisplay = 'Cancelada';
+                $detalle = "Tu cita con {$doctorName} fue cancelada";
+            } elseif ($estado === 'no_show') {
+                $estadoDisplay = 'No asistió';
+                $detalle = "Faltaste a tu cita con {$doctorName} el {$fechaDisplay}";
+            } elseif ($estado === 'completed') {
+                $estadoDisplay = 'Completada';
+                $detalle = "Cita completada con {$doctorName}";
+            } elseif ($appointmentDate) {
+                if ($appointmentDate->isToday()) {
+                    $estadoDisplay = 'Hoy';
+                    $detalle = "¡Tienes una cita HOY con {$doctorName} a las {$hora}!";
+                } elseif ($appointmentDate->isTomorrow()) {
+                    $estadoDisplay = 'Mañana';
+                    $detalle = "Tienes una cita mañana con {$doctorName} a las {$hora}";
+                } elseif ($appointmentDate->isFuture()) {
+                    $estadoDisplay = 'Próxima';
+                    $detalle = "Cita con {$doctorName} el {$fechaDisplay} a las {$hora}";
+                } else {
+                    // Past appointment
+                    $estadoDisplay = 'Pasada';
+                    $detalle = "Cita pasada con {$doctorName}";
                 }
             } else {
-                $rows[] = [
-                    'fecha'=>$fecha,'hora'=>$hora,'tipo'=>'Cita','detalle'=>($a->reason ?? ''),'estado'=>$estado
-                ];
+                $detalle = "Cita con {$doctorName}";
             }
+            
+            $rows[] = [
+                'fecha' => $fechaDisplay,
+                'hora' => $hora,
+                'tipo' => 'Cita',
+                'detalle' => $detalle,
+                'estado' => $estadoDisplay,
+                'motivo' => $a->reason ?? 'Consulta general',
+                'doctor' => $doctorName,
+                'appointment_id' => $a->id,
+                'status_code' => $estado
+            ];
         }
 
-        usort($rows, function($a,$b){ return strcmp($a['fecha'].$a['hora'], $b['fecha'].$b['hora']); });
+        // Sort: upcoming first, then past
+        usort($rows, function($a, $b) {
+            $aFuture = in_array($a['estado'], ['Hoy', 'Mañana', 'Próxima']);
+            $bFuture = in_array($b['estado'], ['Hoy', 'Mañana', 'Próxima']);
+            
+            if ($aFuture && !$bFuture) return -1;
+            if (!$aFuture && $bFuture) return 1;
+            
+            return strcmp($a['fecha'] . $a['hora'], $b['fecha'] . $b['hora']);
+        });
+        
         return response()->json(array_values($rows));
     }
 
@@ -152,6 +253,74 @@ class PatientController extends Controller
         ]);
 
         return response()->json($prefs);
+    }
+
+    // Download a document for the authenticated patient
+    public function downloadDocument(Request $request, $id)
+    {
+        $patient = $this->resolvePatient($request);
+        if (!$patient) {
+            return response()->json(['error' => 'Unauthenticated'], 403);
+        }
+
+        // Find the document
+        $document = Document::find($id);
+        if (!$document) {
+            return response()->json(['error' => 'Document not found'], 404);
+        }
+
+        // Verify the document belongs to this patient's medical record
+        $record = $patient->record;
+        if (!$record || $document->record_id !== $record->id) {
+            return response()->json(['error' => 'Unauthorized access'], 403);
+        }
+
+        // Get the file path from storage_uri - try multiple possible locations
+        $storageUri = $document->storage_uri;
+        
+        // Try different path combinations
+        $possiblePaths = [
+            storage_path('app/' . $storageUri),
+            storage_path('app/public/' . $storageUri),
+            public_path('storage/' . $storageUri),
+            public_path($storageUri),
+            base_path($storageUri)
+        ];
+        
+        $filePath = null;
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path)) {
+                $filePath = $path;
+                break;
+            }
+        }
+        
+        if (!$filePath) {
+            Log::error('Document file not found', [
+                'document_id' => $id,
+                'storage_uri' => $storageUri,
+                'tried_paths' => $possiblePaths
+            ]);
+            return response()->json([
+                'error' => 'File not found on server',
+                'storage_uri' => $storageUri,
+                'tried_paths' => $possiblePaths
+            ], 404);
+        }
+
+        // Get the original filename or create one
+        $filename = $document->title ?? basename($filePath);
+        
+        // Add file extension if missing
+        if (!pathinfo($filename, PATHINFO_EXTENSION)) {
+            $ext = pathinfo($filePath, PATHINFO_EXTENSION);
+            if ($ext) {
+                $filename .= '.' . $ext;
+            }
+        }
+        
+        // Return the file as a download
+        return response()->download($filePath, $filename);
     }
 
     protected function resolvePatient(Request $request)

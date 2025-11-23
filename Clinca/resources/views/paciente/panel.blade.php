@@ -30,119 +30,7 @@
                     </tr>
                 </thead>
                 <tbody id="historyRows">
-
-                    {{-- EJEMPLO DE REGISTRO PARA QUE SE VEA EL DISEÑO --}}
-                    <tr>
-                        <td>21/11/2025</td>
-                        <td>Dolor de estómago</td>
-                        <td>Gastritis aguda</td>
-                        <td>Dr. Abraham García</td>
-                        <td class="history-actions">
-                            <button
-                                style="background-color:#7bc3ab;"
-                                type="button"
-                                class="icon-btn history-detail-btn"
-                                data-date="21/11/2025"
-                                data-doctor="Dr. Abraham García"
-                                data-dx="Gastritis aguda"
-                                data-motive="Dolor de estómago de 3 días, ardor después de comer."
-                                data-allergies="Penicilina"
-                                data-antecedentes="Gastritis previa, tabaquismo ocasional."
-                                data-temp="36.5 °C"
-                                data-press="120/80 mmHg"
-                                data-pulse="75 lpm"
-                                data-fr="16 rpm"
-                                data-spo2="98 %"
-                                data-treatment="Omeprazol 20 mg cada 12 horas por 14 días."
-                                data-docs="Laboratorio general; Endoscopía (PDF)">
-                                <img src="/img/visualizar.png" alt="Ver detalle" style="width:22px; height:22px;">
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>21/11/2025</td>
-                        <td>Dolor de estómago</td>
-                        <td>Gastritis aguda</td>
-                        <td>Dr. Abraham García</td>
-                        <td class="history-actions">
-                            <button
-                                style="background-color:#7bc3ab;"
-                                type="button"
-                                class="icon-btn history-detail-btn"
-                                data-date="21/11/2025"
-                                data-doctor="Dr. Abraham García"
-                                data-dx="Gastritis aguda"
-                                data-motive="Dolor de estómago de 3 días, ardor después de comer."
-                                data-allergies="Penicilina"
-                                data-antecedentes="Gastritis previa, tabaquismo ocasional."
-                                data-temp="36.5 °C"
-                                data-press="120/80 mmHg"
-                                data-pulse="75 lpm"
-                                data-fr="16 rpm"
-                                data-spo2="98 %"
-                                data-treatment="Omeprazol 20 mg cada 12 horas por 14 días."
-                                data-docs="Laboratorio general; Endoscopía (PDF)">
-                                <img src="/img/visualizar.png" alt="Ver detalle" style="width:22px; height:22px;">
-                            </button>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>21/11/2025</td>
-                        <td>Dolor de estómago</td>
-                        <td>Gastritis aguda</td>
-                        <td>Dr. Abraham García</td>
-                        <td class="history-actions">
-                            <button
-                                style="background-color:#7bc3ab;"
-                                type="button"
-                                class="icon-btn history-detail-btn"
-                                data-date="21/11/2025"
-                                data-doctor="Dr. Abraham García"
-                                data-dx="Gastritis aguda"
-                                data-motive="Dolor de estómago de 3 días, ardor después de comer."
-                                data-allergies="Penicilina"
-                                data-antecedentes="Gastritis previa, tabaquismo ocasional."
-                                data-temp="36.5 °C"
-                                data-press="120/80 mmHg"
-                                data-pulse="75 lpm"
-                                data-fr="16 rpm"
-                                data-spo2="98 %"
-                                data-treatment="Omeprazol 20 mg cada 12 horas por 14 días."
-                                data-docs="Laboratorio general; Endoscopía (PDF)">
-                                <img src="/img/visualizar.png" alt="Ver detalle" style="width:22px; height:22px;">
-                            </button>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>21/11/2025</td>
-                        <td>Dolor de estómago</td>
-                        <td>Gastritis aguda</td>
-                        <td>Dr. Abraham García</td>
-                        <td class="history-actions">
-                            <button
-                                style="background-color:#7bc3ab;"
-                                type="button"
-                                class="icon-btn history-detail-btn"
-                                data-date="21/11/2025"
-                                data-doctor="Dr. Abraham García"
-                                data-dx="Gastritis aguda"
-                                data-motive="Dolor de estómago de 3 días, ardor después de comer."
-                                data-allergies="Penicilina"
-                                data-antecedentes="Gastritis previa, tabaquismo ocasional."
-                                data-temp="36.5 °C"
-                                data-press="120/80 mmHg"
-                                data-pulse="75 lpm"
-                                data-fr="16 rpm"
-                                data-spo2="98 %"
-                                data-treatment="Omeprazol 20 mg cada 12 horas por 14 días."
-                                data-docs="Laboratorio general; Endoscopía (PDF)">
-                                <img src="/img/visualizar.png" alt="Ver detalle" style="width:22px; height:22px;">
-                            </button>
-                        </td>
-                    </tr>
-
+                    {{-- Dynamic rows will be loaded from database --}}
                 </tbody>
             </table>
 
@@ -165,40 +53,13 @@
         <div class="patient-card patient-card--notifs">
             <h3>Recordatorios</h3>
 
-            <div class="reminders-list">
-
-                <div class="reminder-card reminder-card--info">
-                    <div class="reminder-icon">
-                        <img src="/img/calendario.png" width="22">
-                    </div>
-                    <div class="reminder-content">
-                        <div class="reminder-text">
-                            Cita con Dr. Abraham el 25/11/2025 a las 12:00 PM
-                        </div>
-                    </div>
-                </div>
-
-                <div class="reminder-card reminder-card--info">
-                    <div class="reminder-icon">
-                        <img src="/img/calendario.png" width="22">
-                    </div>
-                    <div class="reminder-content">
-                        <div class="reminder-text">
-                            Cita con Dr. Gomez el 26/11/2025 a las 2:00 AM
-                        </div>
-                    </div>
-                </div>
-
-                <div class="reminder-card reminder-card--danger">
-                    <div class="reminder-icon">✖</div>
-                    <div class="reminder-content">
-                        <div class="reminder-text">
-                            Faltaste a tu cita con Dr. Gomez el 20/11/2025
-                        </div>
-                    </div>
-                </div>
-
+            <div class="reminders-list" id="remindersList">
+                {{-- Dynamic reminders will be loaded from database --}}
             </div>
+            
+            <p id="remindersEmpty" class="muted" style="text-align:center;margin-top:10px; display:none;">
+                No hay recordatorios recientes.
+            </p>
         </div>
 
     </div>
@@ -327,21 +188,48 @@
     }
     noHistoryRows.style.display = 'none';
 
-    list
-      .sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''))
-      .forEach(it => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${it.fecha || ''}</td>
-          <td>${it.tipo || it.evento || ''}</td>
-          <td>${it.detalle || ''}</td>
-        `;
-        historyRows.appendChild(tr);
-      });
+    list.forEach(item => {
+      const tr = document.createElement('tr');
+      
+      // Escape the docs JSON for HTML attribute
+      const docsJson = (item.documentos || '').replace(/"/g, '&quot;');
+      
+      tr.innerHTML = `
+        <td>${item.fecha || '—'}</td>
+        <td>${item.motivo || '—'}</td>
+        <td>${item.diagnostico || '—'}</td>
+        <td>${item.doctor || '—'}</td>
+        <td class="history-actions">
+          <button
+            style="background-color:#7bc3ab;"
+            type="button"
+            class="icon-btn history-detail-btn"
+            data-date="${item.fecha || ''}"
+            data-doctor="${item.doctor || ''}"
+            data-dx="${item.diagnostico || ''}"
+            data-motive="${item.motivo || ''}"
+            data-allergies="${item.alergias || ''}"
+            data-antecedentes="${item.antecedentes || ''}"
+            data-temp="${item.temperatura || ''}"
+            data-press="${item.presion || ''}"
+            data-pulse="${item.pulso || ''}"
+            data-fr="${item.frecuencia_resp || ''}"
+            data-spo2="${item.saturacion_ox || ''}"
+            data-treatment="${item.tratamiento || ''}"
+            data-docs="${docsJson}">
+            <img src="/img/visualizar.png" alt="Ver detalle" style="width:22px; height:22px;">
+          </button>
+        </td>
+      `;
+      historyRows.appendChild(tr);
+      
+      // Attach click event to the button
+      const btn = tr.querySelector('.history-detail-btn');
+      btn.addEventListener('click', () => openHistoryModal(btn));
+    });
   }
 
   // === NOTIFICACIONES ===
-  const notifEnabled   = document.getElementById('notifEnabled');
   const remindersList  = document.getElementById('remindersList');
   const remindersEmpty = document.getElementById('remindersEmpty');
 
@@ -378,12 +266,14 @@
 
     remindersEmpty.style.display = 'none';
 
-    list.slice(0, 5).forEach(it => {
+    list.slice(0, 10).forEach(it => {
       const card = document.createElement('div');
 
       let cardClass = 'reminder-card';
       const estado = (it.estado || '').toLowerCase();
-      if (estado.includes('no asist') || estado.includes('falt')) {
+      
+      // Determine card style based on status
+      if (estado.includes('no asist') || estado.includes('falt') || estado.includes('cancelada')) {
         cardClass += ' reminder-card--danger';
       } else {
         cardClass += ' reminder-card--info';
@@ -391,25 +281,28 @@
 
       const date = it.fecha || '';
       const time = it.hora || '';
-      const timeStr = time ? ` • ${time}` : '';
+      const timeStr = time ? ` a las ${time}` : '';
+      
+      // Choose icon based on status
+      let icon = '📅';
+      if (estado.includes('no asist') || estado.includes('falt')) {
+        icon = '✖';
+      } else if (estado === 'hoy') {
+        icon = '🔔';
+      } else if (estado === 'mañana') {
+        icon = '📌';
+      }
 
       card.className = cardClass;
       card.innerHTML = `
-        <div class="reminder-icon">${estado.includes('no asist') || estado.includes('falt') ? '✖' : '📅'}</div>
+        <div class="reminder-icon">${icon}</div>
         <div class="reminder-content">
           <div class="reminder-text">${it.detalle || ''}</div>
-          <div class="reminder-meta">${date}${timeStr}</div>
         </div>
       `;
       remindersList.appendChild(card);
     });
   }
-
-  notifEnabled.addEventListener('change', () => {
-    const on = notifEnabled.checked;
-    remindersList.style.opacity = on ? '1' : '0.4';
-    remindersList.style.pointerEvents = on ? 'auto' : 'none';
-  });
 
   // Cargar datos al entrar
   fetchHistory().then(renderHistory);
@@ -442,7 +335,7 @@
   const docsContainer = document.getElementById('hDetDocs');
 
 
-  function openHistoryModal(btn) {
+  window.openHistoryModal = function(btn) {
 
     // Rellenar campos del modal
     spanFecha.textContent   = btn.dataset.date || '—';
@@ -465,22 +358,38 @@
     docsContainer.innerHTML = ''; // limpiar
 
     const rawDocs = btn.dataset.docs || '';
-    const docs = rawDocs.split(';').map(d => d.trim()).filter(Boolean);
+    console.log('Raw docs data:', rawDocs); // Debug
+    
+    let docs = [];
+    if (rawDocs) {
+      try {
+        docs = JSON.parse(rawDocs);
+        console.log('Parsed docs:', docs); // Debug
+      } catch (e) {
+        console.warn('Error parsing documents:', e);
+        docs = [];
+      }
+    }
 
-    if (!docs.length) {
+    if (!docs || docs.length === 0) {
       docsContainer.innerHTML = `<p class="muted">Sin documentos asociados.</p>`;
     } else {
-      docs.forEach(name => {
+      docs.forEach(doc => {
+        const icon = '/img/visualizar.png';
+        const docId = doc.id || '';
+        const docName = doc.name || 'Documento';
         
-        // Por ahora usamos cancelar.png como ícono de ejemplo
-        const icon = '/img/visualizar.png'; // luego lo cambias a visualizar.png
+        // Always use the API endpoint for downloading
+        const downloadUrl = `/paciente/api/documents/${docId}/download`;
+        
+        console.log('Creating doc link:', docName, downloadUrl); // Debug
 
         docsContainer.insertAdjacentHTML('beforeend', `
           <div class="doc-item">
-            <span class="doc-name">${name}</span>
+            <span class="doc-name">${docName}</span>
 
-            <a href="#" class="doc-btn" target="_blank">
-              <img src="${icon}" class="doc-icon" alt="Ver">
+            <a href="${downloadUrl}" class="doc-btn">
+              <img src="${icon}" class="doc-icon" alt="Descargar">
             </a>
           </div>
         `);
@@ -494,12 +403,6 @@
   function closeHistoryModal() {
     historyModal.classList.add('hidden');
   }
-
-
-  // Abrir modal al tocar ícono
-  detailButtons.forEach(btn => {
-    btn.addEventListener('click', () => openHistoryModal(btn));
-  });
 
   // Botón cerrar
   historyClose.addEventListener('click', closeHistoryModal);

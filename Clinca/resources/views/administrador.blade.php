@@ -329,41 +329,54 @@ document.addEventListener('DOMContentLoaded', async () => {
       const response = await fetch('/administrador/api/appointments/by-status', {
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
       });
-      const data = await response.json();
+      const result = await response.json();
+      const data = result.data || result; // Handle both formats
+      
+      console.log('Pie chart data:', data); // Debug log
       
       const legendList = document.querySelector('.admin-legend');
       legendList.innerHTML = '';
       
       const colors = {
-        'Programadas': '#5bc0de',
-        'Confirmadas': '#007bff',
-        'Atendidas': '#28a745',
-        'No asistió': '#ffc107',
-        'Canceladas': '#dc3545'
+        'programada': '#5bc0de',
+        'confirmada': '#007bff',
+        'atendida': '#28a745',
+        'no_asistio': '#ffc107',
       };
       
-      data.forEach(item => {
-        const li = document.createElement('li');
-        const color = colors[item.label] || '#6c757d';
-        li.innerHTML = `
-          <span class="legend-dot" style="background:${color};"></span>
-          <span class="legend-label">${item.label}</span>
-          <span class="legend-value">${item.count} (${item.percentage}%)</span>
-        `;
-        legendList.appendChild(li);
-      });
-      
-      // Update pie chart CSS conic-gradient
       const pieDiv = document.querySelector('.admin-pie');
-      let gradientStops = [];
-      let cumulative = 0;
-      data.forEach(item => {
-        const color = colors[item.label] || '#6c757d';
-        const percent = parseFloat(item.percentage);
-        gradientStops.push(`${color} ${cumulative}% ${cumulative + percent}%`);
-        cumulative += percent;
-      });
-      pieDiv.style.background = `conic-gradient(${gradientStops.join(', ')})`;
+      
+      if (Array.isArray(data) && data.length > 0) {
+        data.forEach(item => {
+          console.log('Item label:', item.label, 'Status:', item.status); // Debug
+          const color = colors[item.label] || colors[item.status] || '#6c757d';
+          li = document.createElement('li');
+          li.innerHTML = `
+            <span class="legend-dot" style="background:${color};"></span>
+            <span class="legend-label">${item.label}</span>
+            <span class="legend-value">${item.count} (${item.percentage}%)</span>
+          `;
+          legendList.appendChild(li);
+        });
+        
+        // Update pie chart CSS conic-gradient
+        let gradientStops = [];
+        let cumulative = 0;
+        data.forEach(item => {
+          const color = colors[item.label] || colors[item.status] || '#6c757d';
+          const percent = parseFloat(item.percentage);
+          gradientStops.push(`${color} ${cumulative}% ${cumulative + percent}%`);
+          cumulative += percent;
+        });
+        
+        const gradient = `conic-gradient(${gradientStops.join(', ')})`;
+        console.log('Setting gradient:', gradient); // Debug log
+        pieDiv.style.setProperty('background', gradient, 'important');
+      } else {
+        // No data - show default message
+        legendList.innerHTML = '<li style="list-style:none;color:#6c757d;text-align:center;">No hay datos de citas disponibles</li>';
+        pieDiv.style.setProperty('background', '#e8f6f0', 'important');
+      }
     } catch (err) {
       console.error('Error loading pie chart:', err);
     }
@@ -377,21 +390,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       const lineData = await response.json();
       
+      console.log('Line chart data:', lineData); // Debug log
+      
       const lineChart = document.getElementById('adminLineChart');
       lineChart.innerHTML = '';
       
+      if (!Array.isArray(lineData) || lineData.length === 0) {
+        lineChart.innerHTML = '<p style="text-align:center;color:#6c757d;margin:20px 0;">No hay datos disponibles</p>';
+        return;
+      }
+      
       const maxVal = Math.max(...lineData.map(d => d.value)) || 1;
+      const maxHeight = 150; // Maximum height in pixels
+      console.log('Max value:', maxVal); // Debug log
 
       lineData.forEach(d => {
+        console.log('Day:', d.label, 'Value:', d.value); // Debug
         const bar = document.createElement('div');
         bar.className = 'line-bar';
+        // Calculate height in pixels based on max value
+        const heightPx = d.value > 0 ? Math.round((d.value / maxVal) * maxHeight) : 3;
+        const opacity = d.value === 0 ? '0.3' : '1';
         bar.innerHTML = `
-          <div class="line-bar-inner" style="height:${(d.value / maxVal) * 100}%"></div>
+          <div class="line-bar-inner" style="height: ${heightPx}px; opacity: ${opacity};"></div>
           <span class="line-value">${d.value}</span>
           <span class="line-label">${d.label}</span>
         `;
         lineChart.appendChild(bar);
       });
+      
+      console.log('Line chart children:', lineChart.children.length); // Debug
     } catch (err) {
       console.error('Error loading line chart:', err);
     }

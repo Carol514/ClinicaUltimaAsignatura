@@ -102,7 +102,7 @@ class DashboardController extends Controller
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
             $count = Appointment::whereDate('scheduled_at', $date->toDateString())
-                ->where('status', 'completed')
+                ->where('status', 'atendida')
                 ->count();
             
             $days[] = [

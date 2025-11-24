@@ -266,7 +266,7 @@
 
     remindersEmpty.style.display = 'none';
 
-    list.slice(0, 10).forEach(it => {
+    list.slice(0, 5).forEach(it => {
       const card = document.createElement('div');
 
       let cardClass = 'reminder-card';

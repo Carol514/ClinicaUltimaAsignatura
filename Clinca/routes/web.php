@@ -239,6 +239,14 @@ Route::prefix('medico')->group(function () {
             return app(\App\Http\Controllers\Medico\MedicoController::class)->getDiagnoses(request());
         });
 
+        Route::get('history-detail', function () {
+            $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+                ->join('roles','roles.id','=','users_roles.role_id')
+                ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+            if (!in_array($role, ['medico','administrador'])) abort(403);
+            return app(\App\Http\Controllers\Medico\MedicoController::class)->historyDetail(request());
+        });
+
         Route::get('documentos', function () {
             $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
                 ->join('roles','roles.id','=','users_roles.role_id')

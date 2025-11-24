@@ -328,7 +328,7 @@
           <h4>Datos de la consulta</h4>
           <p><strong>Fecha:</strong> <span id="mh_fecha">—</span></p>
           <p><strong>Paciente:</strong> <span id="mh_paciente">—</span></p>
-          <p><strong>Diagnóstico:</strong> <span id="mh_dx">—</span></p>
+          <p><strong>Tipo:</strong> <span id="mh_dx">—</span></p>
         </div>
 
         <hr class="section-divider">
@@ -684,10 +684,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${h.diagnostico || '—'}</td>
         <td class="history-actions">
           <button type="button" class="icon-btn med-history-detail"
+                  data-id="${h.id || ''}"
                   data-fecha="${h.fecha || ''}"
                   data-tipo="${h.tipo || ''}"
                   data-detalle="${h.detalle || ''}"
-                  data-autor="${h.autor || ''}">
+                  data-diagnostico="${h.diagnostico || ''}"
+                  data-autor="${h.autor || ''}"
+                  data-motivo="${h.motivo || ''}"
+                  data-antecedentes="${h.antecedentes || ''}"
+                  data-alergias="${h.alergias || ''}"
+                  data-tratamiento="${h.tratamiento || ''}"
+                  data-notas="${h.notas || ''}"
+                  data-temperatura="${h.temperatura || ''}"
+                  data-presion="${h.presion || ''}"
+                  data-pulso="${h.pulso || ''}"
+                  data-frecuencia-respiratoria="${h.frecuencia_respiratoria || ''}"
+                  data-spo2="${h.spo2 || ''}"
+                  data-peso="${h.peso || ''}"
+                  data-altura="${h.altura || ''}">
             <a href="#" class="doc-btn" style="font-size: 23px;">
               <img src="/img/visualizar.png" alt="Ver detalle" style="width:20px; height:20px;">
             </a>
@@ -1019,22 +1033,91 @@ document.addEventListener('DOMContentLoaded', async () => {
   const spanTrat    = document.getElementById('mh_trat');
   const spanDocs    = document.getElementById('mh_docs');
 
-  function openHistoryModal(btn) {
-    spanFecha.textContent   = btn.dataset.fecha || '—';
-    spanPac.textContent     = 'Consulta';
-    spanDx.textContent      = btn.dataset.tipo || '—';
-    spanMotivo.textContent  = btn.dataset.detalle || '—';
-    spanAlerg.textContent   = '—';
+  async function openHistoryModal(btn) {
+    const tipo = btn.dataset.tipo || '';
+    const historyId = btn.dataset.id || '';
+    
+    // Common fields
+    spanFecha.textContent = btn.dataset.fecha || '—';
+    spanPac.textContent = currentPatientName || '—';
+    spanDx.textContent = tipo || '—';
+    
+    // Reset all fields first
+    spanMotivo.textContent = '—';
+    spanAlerg.textContent = '—';
     spanAnteced.textContent = '—';
-    spanTemp.textContent    = '—';
-    spanPress.textContent   = '—';
-    spanPulse.textContent   = '—';
-    spanFR.textContent      = '—';
-    spanSpO2.textContent    = '—';
-    spanPeso.textContent    = '—';
-    spanAltura.textContent  = '—';
-    spanTrat.textContent    = '—';
-    spanDocs.textContent    = btn.dataset.autor ? 'Autor: ' + btn.dataset.autor : '—';
+    spanTemp.textContent = '—';
+    spanPress.textContent = '—';
+    spanPulse.textContent = '—';
+    spanFR.textContent = '—';
+    spanSpO2.textContent = '—';
+    spanPeso.textContent = '—';
+    spanAltura.textContent = '—';
+    spanTrat.textContent = '—';
+    spanDocs.textContent = '—';
+    
+    // Fill based on tipo
+    if (tipo === 'Historial') {
+      spanMotivo.textContent = btn.dataset.motivo || '—';
+      spanAlerg.textContent = btn.dataset.alergias || '—';
+      spanAnteced.textContent = btn.dataset.antecedentes || '—';
+      
+      // Fetch additional vital signs and treatments
+      if (historyId) {
+        try {
+          const response = await fetch(`/medico/api/history-detail?history_id=${historyId}&tipo=${tipo}`, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            
+            // Fill vital signs if available
+            if (data.vitals) {
+              spanTemp.textContent = data.vitals.temperatura ? data.vitals.temperatura + ' °C' : '—';
+              spanPress.textContent = data.vitals.presion ? data.vitals.presion + ' mmHg' : '—';
+              spanPulse.textContent = data.vitals.pulso ? data.vitals.pulso + ' lpm' : '—';
+              spanFR.textContent = data.vitals.frecuencia_respiratoria ? data.vitals.frecuencia_respiratoria + ' rpm' : '—';
+              spanSpO2.textContent = data.vitals.spo2 ? data.vitals.spo2 + ' %' : '—';
+              spanPeso.textContent = data.vitals.peso ? data.vitals.peso + ' kg' : '—';
+              spanAltura.textContent = data.vitals.altura ? data.vitals.altura + ' cm' : '—';
+            }
+            
+            // Fill treatments if available
+            if (data.tratamientos && data.tratamientos.length > 0) {
+              spanTrat.textContent = data.tratamientos.join('; ');
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching history details:', error);
+        }
+      }
+    } else if (tipo === 'Signos vitales') {
+      spanTemp.textContent = btn.dataset.temperatura ? btn.dataset.temperatura + ' °C' : '—';
+      spanPress.textContent = btn.dataset.presion ? btn.dataset.presion + ' mmHg' : '—';
+      spanPulse.textContent = btn.dataset.pulso ? btn.dataset.pulso + ' lpm' : '—';
+      spanFR.textContent = btn.dataset.frecuenciaRespiratoria ? btn.dataset.frecuenciaRespiratoria + ' rpm' : '—';
+      spanSpO2.textContent = btn.dataset.spo2 ? btn.dataset.spo2 + ' %' : '—';
+      spanPeso.textContent = btn.dataset.peso ? btn.dataset.peso + ' kg' : '—';
+      spanAltura.textContent = btn.dataset.altura ? btn.dataset.altura + ' cm' : '—';
+    } else if (tipo === 'Tratamiento') {
+      spanTrat.textContent = btn.dataset.tratamiento || '—';
+      spanMotivo.textContent = btn.dataset.notas || '—';
+    } else if (tipo === 'Cita' || tipo === 'Encuentro') {
+      spanMotivo.textContent = btn.dataset.motivo || '—';
+      if (btn.dataset.notas) {
+        spanMotivo.textContent += ' - ' + btn.dataset.notas;
+      }
+    } else {
+      spanMotivo.textContent = btn.dataset.detalle || '—';
+    }
+    
+    // Always show author
+    spanDocs.textContent = btn.dataset.autor ? 'Autor: ' + btn.dataset.autor : '—';
 
     historyModal.classList.remove('hidden');
   }

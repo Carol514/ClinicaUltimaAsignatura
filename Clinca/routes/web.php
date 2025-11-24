@@ -107,6 +107,20 @@ Route::prefix('administrador')->group(function () {
 
     // Lightweight admin JSON API (used by admin frontend JS) - each route checks role
     Route::prefix('api')->group(function () {
+        // dashboard stats
+        Route::get('stats', function () { 
+            if ((session('userRole') ?? null) !== 'administrador') abort(403); 
+            return app(\App\Http\Controllers\Admin\DashboardController::class)->stats(); 
+        });
+        Route::get('appointments/by-status', function () { 
+            if ((session('userRole') ?? null) !== 'administrador') abort(403); 
+            return app(\App\Http\Controllers\Admin\DashboardController::class)->appointmentsByStatus(); 
+        });
+        Route::get('appointments/last-7-days', function () { 
+            if ((session('userRole') ?? null) !== 'administrador') abort(403); 
+            return app(\App\Http\Controllers\Admin\DashboardController::class)->appointmentsLast7Days(); 
+        });
+        
         // roles
         Route::get('roles', function () { if ((session('userRole') ?? null) !== 'administrador') abort(403); return app(RoleController::class)->index(); });
         Route::post('roles', function () { if ((session('userRole') ?? null) !== 'administrador') abort(403); return app(RoleController::class)->store(request()); });

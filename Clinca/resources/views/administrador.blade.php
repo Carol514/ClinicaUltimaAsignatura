@@ -15,19 +15,19 @@
   <section class="admin-top-grid">
     <div class="admin-card admin-card--stat">
       <p class="admin-stat-label">Pacientes registrados</p>
-      <p class="admin-stat-number" id="statPacientes">4</p>
+      <p class="admin-stat-number" id="statPacientes">...</p>
       <p class="admin-stat-caption">En toda la clínica</p>
     </div>
 
     <div class="admin-card admin-card--stat">
       <p class="admin-stat-label">Citas programadas hoy</p>
-      <p class="admin-stat-number" id="statCitasHoyAdmin">3</p>
+      <p class="admin-stat-number" id="statCitasHoyAdmin">...</p>
       <p class="admin-stat-caption">Incluye programadas, confirmadas y atendidas</p>
     </div>
 
     <div class="admin-card admin-card--stat">
       <p class="admin-stat-label">Personal activo</p>
-      <p class="admin-stat-number" id="statPersonal">4</p>
+      <p class="admin-stat-number" id="statPersonal">...</p>
       <p class="admin-stat-caption">Médicos, enfermería y administrativos</p>
     </div>
   </section>
@@ -47,31 +47,7 @@
         </div>
 
         <ul class="admin-legend">
-          <li>
-            <span class="legend-dot" style="background:#5bc0de;"></span>
-            <span class="legend-label">Programadas</span>
-            <span class="legend-value">2 (17%)</span>
-          </li>
-          <li>
-            <span class="legend-dot" style="background:#007bff;"></span>
-            <span class="legend-label">Confirmadas</span>
-            <span class="legend-value">2 (17%)</span>
-          </li>
-          <li>
-            <span class="legend-dot" style="background:#28a745;"></span>
-            <span class="legend-label">Atendidas</span>
-            <span class="legend-value">5 (42%)</span>
-          </li>
-          <li>
-            <span class="legend-dot" style="background:#ffc107;"></span>
-            <span class="legend-label">No asistió</span>
-            <span class="legend-value">1 (8%)</span>
-          </li>
-          <li>
-            <span class="legend-dot" style="background:#dc3545;"></span>
-            <span class="legend-label">Canceladas</span>
-            <span class="legend-value">2 (17%)</span>
-          </li>
+          {{-- Loaded dynamically from API --}}
         </ul>
       </div>
 
@@ -102,8 +78,7 @@
     <div class="admin-card">
       <h3 class="admin-card-title" style="text-align:center;">Generar reportes</h3>
       <p class="admin-module-text" style="text-align:center;">
-        Reportes enfocados en <strong>pacientes atendidos</strong>. Esta sección está maquetada para
-        conectar después con la generación real de PDFs desde la base de datos.
+        Reportes enfocados en <strong>pacientes atendidos</strong>.
       </p>
 
       <div class="admin-report-row">
@@ -128,7 +103,7 @@
             <tbody id="adminReportBody"></tbody>
           </table>
           <p id="adminReportEmpty" class="muted" style="text-align:center;margin-top:8px;">
-            Selecciona un tipo de reporte y haz clic en "Generar" para ver un ejemplo.
+            Selecciona un tipo de reporte y haz clic en "Generar".
           </p>
         </div>
       </div>
@@ -148,32 +123,9 @@
             </tr>
           </thead>
           <tbody id="adminReportListBody">
-            <tr>
-              <td>21/11/2025 10:15</td>
-              <td>Pacientes atendidos (última semana)</td>
-              <td>PDF</td>
-              <td>
-                <button type="button" class="confirm-btn admin-inline-btn admin-download-btn">
-                  <img src="/img/descargar.png" class="btn-icon" alt="Descargar" style="width:24px; height:24px;">
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td>18/11/2025 09:40</td>
-              <td>Pacientes atendidos (último mes)</td>
-              <td>PDF</td>
-              <td>
-                <button type="button" class="confirm-btn admin-inline-btn admin-download-btn">
-                  <img src="/img/descargar.png" class="btn-icon" alt="Descargar" style="width:24px; height:24px;">
-                </button>
-              </td>
-            </tr>
+            {{-- Loaded dynamically from localStorage --}}
           </tbody>
         </table>
-        <p class="muted" style="font-size:13px;margin-top:6px;">
-          Los archivos listados son ejemplos. En una versión conectada a la BD, aquí aparecerían
-          los PDFs reales generados por el administrador.
-        </p>
       </div>
     </div>
   </section>
@@ -187,7 +139,7 @@
         <div>
           <h4 style="margin:0;">Respaldos de BD</h4>
           <p class="admin-module-text">
-            Generar un respaldo manual de la base de datos (solo demostración visual).
+            Generar un respaldo manual de la base de datos.
           </p>
         </div>
 
@@ -206,7 +158,7 @@
     <div class="admin-card">
       <h3 class="admin-card-title" style="text-align:center;">Panel administrativo</h3>
       <p class="admin-module-text" style="text-align:center;">
-        Resumen rápido de los usuarios del sistema. Los botones son demostración de edición y eliminación.
+        Gestión de usuarios del sistema.
       </p>
 
       {{-- Filtro por rol --}}
@@ -242,108 +194,13 @@
             </tr>
           </thead>
           <tbody id="adminRolesBody">
-  <tr data-rol="Administrador">
-    <td>admin</td>
-    <td>Administrador</td>
-    <td class="admin-actions">
-      <button type="button"
-              class="confirm-btn admin-inline-btn admin-edit-btn"
-              data-user="admin"
-              data-role="Administrador"
-              style="background-color: orange;"
-              onmouseover="this.style.backgroundColor='darkorange'"
-              onmouseout="this.style.backgroundColor='orange'">
-        <img src="/img/editar.png" class="btn-icon" alt="Editar" style="width:24px; height:24px;">
-      </button>
-
-      <button type="button"
-              class="cancel-btn admin-inline-btn admin-delete-btn"
-              style="background-color:#e74c3c;"
-              onmouseover="this.style.backgroundColor='#c0392b'"
-              onmouseout="this.style.backgroundColor='#e74c3c'">
-        <img src="/img/cancelar.png" class="btn-icon" alt="Eliminar" style="width:24px; height:24px;">
-      </button>
-    </td>
-  </tr>
-
-  <tr data-rol="Médico">
-    <td>medico01</td>
-    <td>Médico</td>
-    <td class="admin-actions">
-      <button type="button"
-              class="confirm-btn admin-inline-btn admin-edit-btn"
-              data-user="medico01"
-              data-role="Médico"
-              style="background-color: orange;"
-              onmouseover="this.style.backgroundColor='darkorange'"
-              onmouseout="this.style.backgroundColor='orange'">
-        <img src="/img/editar.png" class="btn-icon" alt="Editar" style="width:24px; height:24px;">
-      </button>
-
-      <button type="button"
-              class="cancel-btn admin-inline-btn admin-delete-btn"
-              style="background-color:#e74c3c;"
-              onmouseover="this.style.backgroundColor='#c0392b'"
-              onmouseout="this.style.backgroundColor='#e74c3c'">
-        <img src="/img/cancelar.png" class="btn-icon" alt="Eliminar" style="width:24px; height:24px;">
-      </button>
-    </td>
-  </tr>
-
-  <tr data-rol="Enfermera">
-    <td>enfermera01</td>
-    <td>Enfermera</td>
-    <td class="admin-actions">
-      <button type="button"
-              class="confirm-btn admin-inline-btn admin-edit-btn"
-              data-user="enfermera01"
-              data-role="Enfermera"
-              style="background-color: orange;"
-              onmouseover="this.style.backgroundColor='darkorange'"
-              onmouseout="this.style.backgroundColor='orange'">
-        <img src="/img/editar.png" class="btn-icon" alt="Editar" style="width:24px; height:24px;">
-      </button>
-
-      <button type="button"
-              class="cancel-btn admin-inline-btn admin-delete-btn"
-              style="background-color:#e74c3c;"
-              onmouseover="this.style.backgroundColor='#c0392b'"
-              onmouseout="this.style.backgroundColor='#e74c3c'">
-        <img src="/img/cancelar.png" class="btn-icon" alt="Eliminar" style="width:24px; height:24px;">
-      </button>
-    </td>
-  </tr>
-
-  <tr data-rol="Recepcionista">
-    <td>recepcion01</td>
-    <td>Recepcionista</td>
-    <td class="admin-actions">
-      <button type="button"
-              class="confirm-btn admin-inline-btn admin-edit-btn"
-              data-user="recepcion01"
-              data-role="Recepcionista"
-              style="background-color: orange;"
-              onmouseover="this.style.backgroundColor='darkorange'"
-              onmouseout="this.style.backgroundColor='orange'">
-        <img src="/img/editar.png" class="btn-icon" alt="Editar" style="width:24px; height:24px;">
-      </button>
-
-      <button type="button"
-              class="cancel-btn admin-inline-btn admin-delete-btn"
-              style="background-color:#e74c3c;"
-              onmouseover="this.style.backgroundColor='#c0392b'"
-              onmouseout="this.style.backgroundColor='#e74c3c'">
-        <img src="/img/cancelar.png" class="btn-icon" alt="Eliminar" style="width:24px; height:24px;">
-      </button>
-    </td>
-  </tr>
-</tbody>
-
+            {{-- Loaded dynamically from API --}}
+          </tbody>
         </table>
       </div>
 
       <p class="muted" style="font-size:13px;margin-top:8px;">
-        Más adelante este panel se puede conectar a la gestión real de usuarios, roles y permisos.
+        Gestión de usuarios y roles del sistema.
       </p>
     </div>
   </section>
@@ -446,41 +303,144 @@
 
 </main>
 
-{{-- ================= JS MAQUETADO ================= --}}
+{{-- ================= JS WITH BACKEND INTEGRATION ================= --}}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
-  // ----------- Gráfica lineal demo -----------
-  const lineChart = document.getElementById('adminLineChart');
-  const lineData = [
-    { label: 'lun', value: 0 },
-    { label: 'mar', value: 0 },
-    { label: 'mié', value: 0 },
-    { label: 'jue', value: 1 },
-    { label: 'vie', value: 2 },
-    { label: 'sáb', value: 2 },
-    { label: 'dom', value: 1 },
-  ];
-  const maxVal = Math.max(...lineData.map(d => d.value)) || 1;
+  // ----------- Load Dashboard Stats -----------
+  async function loadDashboardStats() {
+    try {
+      const response = await fetch('/administrador/api/stats', {
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+      });
+      const data = await response.json();
+      
+      document.getElementById('statPacientes').textContent = data.pacientes || 0;
+      document.getElementById('statCitasHoyAdmin').textContent = data.citas_hoy || 0;
+      document.getElementById('statPersonal').textContent = data.personal || 0;
+    } catch (err) {
+      console.error('Error loading dashboard stats:', err);
+    }
+  }
 
-  lineData.forEach(d => {
-    const bar = document.createElement('div');
-    bar.className = 'line-bar';
-    bar.innerHTML = `
-      <div class="line-bar-inner" style="height:${(d.value / maxVal) * 100}%"></div>
-      <span class="line-value">${d.value}</span>
-      <span class="line-label">${d.label}</span>
-    `;
-    lineChart.appendChild(bar);
-  });
+  // ----------- Load Pie Chart (Appointments by Status) -----------
+  async function loadPieChart() {
+    try {
+      const response = await fetch('/administrador/api/appointments/by-status', {
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+      });
+      const data = await response.json();
+      
+      const legendList = document.querySelector('.admin-legend');
+      legendList.innerHTML = '';
+      
+      const colors = {
+        'Programadas': '#5bc0de',
+        'Confirmadas': '#007bff',
+        'Atendidas': '#28a745',
+        'No asistió': '#ffc107',
+        'Canceladas': '#dc3545'
+      };
+      
+      data.forEach(item => {
+        const li = document.createElement('li');
+        const color = colors[item.label] || '#6c757d';
+        li.innerHTML = `
+          <span class="legend-dot" style="background:${color};"></span>
+          <span class="legend-label">${item.label}</span>
+          <span class="legend-value">${item.count} (${item.percentage}%)</span>
+        `;
+        legendList.appendChild(li);
+      });
+      
+      // Update pie chart CSS conic-gradient
+      const pieDiv = document.querySelector('.admin-pie');
+      let gradientStops = [];
+      let cumulative = 0;
+      data.forEach(item => {
+        const color = colors[item.label] || '#6c757d';
+        const percent = parseFloat(item.percentage);
+        gradientStops.push(`${color} ${cumulative}% ${cumulative + percent}%`);
+        cumulative += percent;
+      });
+      pieDiv.style.background = `conic-gradient(${gradientStops.join(', ')})`;
+    } catch (err) {
+      console.error('Error loading pie chart:', err);
+    }
+  }
 
-  // ----------- Botón de respaldo (demo) -----------
+  // ----------- Load Line Chart (Last 7 Days) -----------
+  async function loadLineChart() {
+    try {
+      const response = await fetch('/administrador/api/appointments/last-7-days', {
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+      });
+      const lineData = await response.json();
+      
+      const lineChart = document.getElementById('adminLineChart');
+      lineChart.innerHTML = '';
+      
+      const maxVal = Math.max(...lineData.map(d => d.value)) || 1;
+
+      lineData.forEach(d => {
+        const bar = document.createElement('div');
+        bar.className = 'line-bar';
+        bar.innerHTML = `
+          <div class="line-bar-inner" style="height:${(d.value / maxVal) * 100}%"></div>
+          <span class="line-value">${d.value}</span>
+          <span class="line-label">${d.label}</span>
+        `;
+        lineChart.appendChild(bar);
+      });
+    } catch (err) {
+      console.error('Error loading line chart:', err);
+    }
+  }
+
+  // Load all dashboard data
+  await Promise.all([
+    loadDashboardStats(),
+    loadPieChart(),
+    loadLineChart()
+  ]);
+
+  // ----------- Botón de respaldo -----------
   const btnBackup  = document.getElementById('btnBackupDemo');
-  btnBackup.addEventListener('click', () => {
-    alert('Aquí se conectará la generación real de respaldos.\nPor ahora es solo demostración visual.');
+  btnBackup.addEventListener('click', async () => {
+    const originalText = btnBackup.querySelector('span').textContent;
+    btnBackup.disabled = true;
+    btnBackup.querySelector('span').textContent = 'Generando...';
+    
+    try {
+      const response = await fetch('/administrador/api/backups', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ format: 'xlsx' })
+      });
+      const data = await response.json();
+      
+      btnBackup.disabled = false;
+      btnBackup.querySelector('span').textContent = originalText;
+      
+      const tablesCount = data.tables_count || 0;
+      alert(`Respaldo completado exitosamente. ${tablesCount} tablas respaldadas.`);
+      
+      // Trigger download if available
+      if (data.download) {
+        window.location.href = data.download;
+      }
+    } catch (err) {
+      console.error('Error generating backup:', err);
+      btnBackup.disabled = false;
+      btnBackup.querySelector('span').textContent = originalText;
+      alert('Error al generar el respaldo.');
+    }
   });
 
-  // ----------- Reportes demo (tabla) -----------
+  // ----------- Reportes (tabla) -----------
   const btnReporte = document.getElementById('btnGenerarReporteDemo');
   const selTipoRep = document.getElementById('reporteTipo');
   const repHead  = document.getElementById('adminReportHead');
@@ -488,101 +448,156 @@ document.addEventListener('DOMContentLoaded', () => {
   const repEmpty = document.getElementById('adminReportEmpty');
   const reportListBody = document.getElementById('adminReportListBody');
 
-  const REPORT_DEMO = {
-    usuarios: {
-      encabezado: ['Usuario', 'Rol'],
-      filas: [
-        ['admin',       'Administrador'],
-        ['medico01',    'Médico'],
-        ['enfermera01', 'Enfermera'],
-        ['recepcion01', 'Recepcionista'],
-      ],
-    },
-    citas: {
-      encabezado: ['Fecha', 'Pacientes atendidos'],
-      filas: [
-        ['2025-11-18', 12],
-        ['2025-11-19', 9],
-        ['2025-11-20', 15],
-        ['2025-11-21', 11],
-        ['2025-11-22', 8],
-      ],
-    },
-    tratamientos: {
-      encabezado: ['Paciente', 'Tratamiento', 'Fecha'],
-      filas: [
-        ['Hugo García',   'Omeprazol 20 mg c/12h',    '2025-11-21'],
-        ['María López',   'Metformina 850 mg c/12h',  '2025-11-10'],
-        ['Juan Pérez',    'Ibuprofeno 400 mg c/8h',   '2025-11-18'],
-        ['Ana Díaz',      'Salbutamol inhalado',      '2025-11-19'],
-      ],
-    },
-  };
-
   const REPORT_LABELS = {
     citas: 'Pacientes atendidos por día',
     usuarios: 'Usuarios por rol (pacientes atendidos por área)',
     tratamientos: 'Pacientes atendidos y tratamientos aplicados',
   };
 
-  function renderReport(tipo) {
-    const cfg = REPORT_DEMO[tipo];
-    if (!cfg) {
-      repHead.innerHTML = '';
-      repBody.innerHTML = '';
-      repEmpty.style.display = 'block';
-      return;
-    }
-
-    repHead.innerHTML = `
-      <tr>${cfg.encabezado.map(h => `<th>${h}</th>`).join('')}</tr>
-    `;
-    repBody.innerHTML = cfg.filas
-      .map(row => `<tr>${row.map(col => `<td>${col}</td>`).join('')}</tr>`)
-      .join('');
-    repEmpty.style.display = 'none';
+  // Load existing reports from localStorage
+  function loadSavedReports() {
+    const savedReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+    reportListBody.innerHTML = '';
+    savedReports.forEach(report => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${report.fecha} ${report.hora}</td>
+        <td>${report.tipo}</td>
+        <td>PDF</td>
+        <td>
+          <button type="button" class="confirm-btn admin-inline-btn admin-download-btn">
+            <img src="/img/descargar.png" class="btn-icon" alt="Descargar" style="width:24px; height:24px;">
+          </button>
+        </td>
+      `;
+      reportListBody.appendChild(tr);
+    });
   }
 
-  btnReporte.addEventListener('click', () => {
+  // Save report to localStorage
+  function saveReport(fecha, hora, tipo) {
+    const savedReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+    savedReports.unshift({ fecha, hora, tipo });
+    localStorage.setItem('generatedReports', JSON.stringify(savedReports));
+  }
+
+  loadSavedReports();
+
+  btnReporte.addEventListener('click', async () => {
     const tipo = selTipoRep.value;
     if (!tipo) {
       alert('Selecciona un tipo de reporte.');
       return;
     }
 
-    // Vista previa
-    renderReport(tipo);
+    try {
+      const response = await fetch('/administrador/api/reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ report_type: tipo })
+      });
+      const data = await response.json();
+      
+      // Preview report in table
+      if (data.headers && data.rows) {
+        repHead.innerHTML = `<tr>${data.headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        repBody.innerHTML = data.rows.map(row => 
+          `<tr>${row.map(col => `<td>${col}</td>`).join('')}</tr>`
+        ).join('');
+        repEmpty.style.display = 'none';
+      }
 
-    // Simular que se generó un PDF y se agrega a la lista
-    const now = new Date();
-    const fecha = now.toLocaleDateString('es-MX', {
-      day:'2-digit', month:'2-digit', year:'numeric'
-    });
-    const hora = now.toLocaleTimeString('es-MX', {
-      hour:'2-digit', minute:'2-digit'
-    });
-    const tipoTexto = REPORT_LABELS[tipo] || 'Reporte de pacientes atendidos';
+      // Add to generated reports list
+      const now = new Date();
+      const fecha = now.toLocaleDateString('es-MX', {
+        day:'2-digit', month:'2-digit', year:'numeric'
+      });
+      const hora = now.toLocaleTimeString('es-MX', {
+        hour:'2-digit', minute:'2-digit'
+      });
+      const tipoTexto = REPORT_LABELS[tipo] || 'Reporte de pacientes';
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${fecha} ${hora}</td>
-      <td>${tipoTexto}</td>
-      <td>PDF</td>
-      <td>
-        <button type="button" class="confirm-btn admin-inline-btn admin-download-btn">
-          <img src="/img/descargar.png" class="btn-icon" alt="Descargar" style="width:24px; height:24px;">
-        </button>
-      </td>
-    `;
-    reportListBody.prepend(tr);
+      // Save to localStorage
+      saveReport(fecha, hora, tipoTexto);
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${fecha} ${hora}</td>
+        <td>${tipoTexto}</td>
+        <td>PDF</td>
+        <td>
+          <button type="button" class="confirm-btn admin-inline-btn admin-download-btn">
+            <img src="/img/descargar.png" class="btn-icon" alt="Descargar" style="width:24px; height:24px;">
+          </button>
+        </td>
+      `;
+      reportListBody.prepend(tr);
+    } catch (err) {
+      console.error('Error generating report:', err);
+      alert('Error al generar el reporte.');
+    }
   });
+
+  // ----------- Load Users Table -----------
+  async function loadUsersTable() {
+    try {
+      const response = await fetch('/administrador/api/users', {
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+      });
+      const users = await response.json();
+      
+      const rolesBody = document.getElementById('adminRolesBody');
+      rolesBody.innerHTML = '';
+      
+      users.forEach(user => {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-rol', user.role_name);
+        tr.innerHTML = `
+          <td>${user.name}</td>
+          <td>${user.role_name}</td>
+          <td class="admin-actions">
+            <button type="button"
+                    class="confirm-btn admin-inline-btn admin-edit-btn"
+                    data-user-id="${user.id}"
+                    data-user="${user.name}"
+                    data-role="${user.role_name}"
+                    style="background-color: orange;"
+                    onmouseover="this.style.backgroundColor='darkorange'"
+                    onmouseout="this.style.backgroundColor='orange'">
+              <img src="/img/editar.png" class="btn-icon" alt="Editar" style="width:24px; height:24px;">
+            </button>
+
+            <button type="button"
+                    class="cancel-btn admin-inline-btn admin-delete-btn"
+                    data-user-id="${user.id}"
+                    data-user="${user.name}"
+                    style="background-color:#e74c3c;"
+                    onmouseover="this.style.backgroundColor='#c0392b'"
+                    onmouseout="this.style.backgroundColor='#e74c3c'">
+              <img src="/img/cancelar.png" class="btn-icon" alt="Eliminar" style="width:24px; height:24px;">
+            </button>
+          </td>
+        `;
+        rolesBody.appendChild(tr);
+      });
+      
+      // Attach event listeners to new buttons
+      attachUserEventListeners();
+    } catch (err) {
+      console.error('Error loading users:', err);
+    }
+  }
+
+  await loadUsersTable();
 
   // ----------- Filtro por rol en la tabla -----------
   const filterRol = document.getElementById('filterRol');
-  const rolesBody = document.getElementById('adminRolesBody');
-
   filterRol.addEventListener('change', () => {
     const val = filterRol.value.toLowerCase();
+    const rolesBody = document.getElementById('adminRolesBody');
     rolesBody.querySelectorAll('tr').forEach(tr => {
       const rol = (tr.getAttribute('data-rol') || '').toLowerCase();
       tr.style.display = !val || rol === val ? '' : 'none';
@@ -601,31 +616,80 @@ const btnSave     = document.getElementById("btnSaveUser");
 const inputUser   = document.getElementById("editUserName");
 const inputRole   = document.getElementById("editUserRole");
 
-// Abrir modal
-document.querySelectorAll(".admin-edit-btn").forEach(btn => {
+let currentUserId = null;
+
+function attachUserEventListeners() {
+  // Edit buttons
+  document.querySelectorAll(".admin-edit-btn").forEach(btn => {
     btn.addEventListener("click", () => {
+      currentUserId = btn.dataset.userId;
+      const user = btn.dataset.user;
+      const role = btn.dataset.role;
 
-        const user = btn.dataset.user;
-        const role = btn.dataset.role;
+      inputUser.value = user;
+      inputRole.value = role;
 
-        inputUser.value = user;
-
-        // Preseleccionar el rol
-        inputRole.value = role;
-
-        modalEdit.classList.remove("hidden");
+      modalEdit.classList.remove("hidden");
     });
-});
+  });
+
+  // Delete buttons
+  document.querySelectorAll(".admin-delete-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const userId = btn.dataset.userId;
+      const userName = btn.dataset.user;
+      
+      if (!confirm(`¿Está seguro de eliminar al usuario "${userName}"?`)) return;
+
+      try {
+        const response = await fetch(`/administrador/api/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+          }
+        });
+        const data = await response.json();
+        alert(data.message || 'Usuario eliminado exitosamente.');
+        
+        // Reload users table
+        await loadUsersTable();
+      } catch (err) {
+        console.error('Error deleting user:', err);
+        alert('Error al eliminar el usuario.');
+      }
+    });
+  });
+}
 
 // Cerrar modal
 btnCancel.addEventListener("click", () => {
     modalEdit.classList.add("hidden");
 });
 
-// Guardar (demo)
-btnSave.addEventListener("click", () => {
-    alert("Cambios guardados (maquetado). Aquí se conectará al backend.");
-    modalEdit.classList.add("hidden");
+// Guardar cambios
+btnSave.addEventListener("click", async () => {
+    if (!currentUserId) return;
+    
+    try {
+      const response = await fetch(`/administrador/api/users/${currentUserId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ role_name: inputRole.value })
+      });
+      const data = await response.json();
+      alert(data.message || 'Rol actualizado exitosamente.');
+      
+      modalEdit.classList.add("hidden");
+      
+      // Reload users table
+      await loadUsersTable();
+    } catch (err) {
+      console.error('Error updating user role:', err);
+      alert('Error al actualizar el rol.');
+    }
 });
 
 // Cerrar al hacer click fuera
@@ -648,7 +712,6 @@ const inputNewPass   = document.getElementById("newUserPass");
 // Abrir modal "Nuevo usuario"
 if (btnOpenNewUser) {
   btnOpenNewUser.addEventListener("click", () => {
-    // limpiar campos
     inputNewName.value  = "";
     inputNewEmail.value = "";
     inputNewRole.value  = "";
@@ -665,11 +728,39 @@ if (btnCancelNew) {
   });
 }
 
-// Guardar (solo demo / maquetado)
+// Guardar nuevo usuario
 if (btnSaveNewUser) {
-  btnSaveNewUser.addEventListener("click", () => {
-    alert("Usuario registrado (maquetado). Aquí se conectará al backend para crear el usuario en la BD.");
-    modalNewUser.classList.add("hidden");
+  btnSaveNewUser.addEventListener("click", async () => {
+    const name = inputNewName.value.trim();
+    const email = inputNewEmail.value.trim();
+    const role = inputNewRole.value;
+    const password = inputNewPass.value;
+
+    if (!name || !email || !role || !password) {
+      alert('Por favor complete todos los campos.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/administrador/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ name, email, role_name: role, password })
+      });
+      const data = await response.json();
+      alert(data.message || 'Usuario creado exitosamente.');
+      
+      modalNewUser.classList.add("hidden");
+      
+      // Reload users table
+      await loadUsersTable();
+    } catch (err) {
+      console.error('Error creating user:', err);
+      alert('Error al crear el usuario.');
+    }
   });
 }
 
@@ -681,5 +772,54 @@ if (modalNewUser) {
     }
   });
 }
+
+// Make loadUsersTable available globally for event handlers
+window.loadUsersTable = async function() {
+  try {
+    const response = await fetch('/administrador/api/users', {
+      headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    });
+    const users = await response.json();
+    
+    const rolesBody = document.getElementById('adminRolesBody');
+    rolesBody.innerHTML = '';
+    
+    users.forEach(user => {
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-rol', user.role_name);
+      tr.innerHTML = `
+        <td>${user.name}</td>
+        <td>${user.role_name}</td>
+        <td class="admin-actions">
+          <button type="button"
+                  class="confirm-btn admin-inline-btn admin-edit-btn"
+                  data-user-id="${user.id}"
+                  data-user="${user.name}"
+                  data-role="${user.role_name}"
+                  style="background-color: orange;"
+                  onmouseover="this.style.backgroundColor='darkorange'"
+                  onmouseout="this.style.backgroundColor='orange'">
+            <img src="/img/editar.png" class="btn-icon" alt="Editar" style="width:24px; height:24px;">
+          </button>
+
+          <button type="button"
+                  class="cancel-btn admin-inline-btn admin-delete-btn"
+                  data-user-id="${user.id}"
+                  data-user="${user.name}"
+                  style="background-color:#e74c3c;"
+                  onmouseover="this.style.backgroundColor='#c0392b'"
+                  onmouseout="this.style.backgroundColor='#e74c3c'">
+            <img src="/img/cancelar.png" class="btn-icon" alt="Eliminar" style="width:24px; height:24px;">
+          </button>
+        </td>
+      `;
+      rolesBody.appendChild(tr);
+    });
+    
+    attachUserEventListeners();
+  } catch (err) {
+    console.error('Error loading users:', err);
+  }
+};
 </script>
 @endsection

@@ -10,7 +10,7 @@ class ReportController extends Controller
 {
     public function generate(Request $request)
     {
-        $type = $request->input('type');
+        $type = $request->input('report_type');
         $from = $request->input('from');
         $to = $request->input('to');
 
@@ -20,8 +20,10 @@ class ReportController extends Controller
                 ->leftJoin('users', 'users_roles.user_id', '=', 'users.id')
                 ->select('roles.name as role', DB::raw('count(users.id) as count'))
                 ->groupBy('roles.name')
-                ->get();
-            return response()->json(['encabezado' => ['Rol', 'Cantidad'], 'datos' => $rows]);
+                ->get()
+                ->map(fn($r) => [$r->role, $r->count])
+                ->toArray();
+            return response()->json(['headers' => ['Rol', 'Cantidad'], 'rows' => $rows]);
         }
 
         if ($type === 'citas') {
@@ -31,11 +33,13 @@ class ReportController extends Controller
                     ->select(DB::raw('date(scheduled_at) as fecha'), DB::raw('count(*) as cantidad'))
                     ->groupBy(DB::raw('date(scheduled_at)'))
                     ->orderBy('fecha')
-                    ->get();
-                return response()->json(['encabezado' => ['Fecha', 'Citas programadas'], 'datos' => $rows]);
+                    ->get()
+                    ->map(fn($r) => [$r->fecha, $r->cantidad])
+                    ->toArray();
+                return response()->json(['headers' => ['Fecha', 'Citas programadas'], 'rows' => $rows]);
             }
             // fallback
-            return response()->json(['encabezado' => ['Fecha', 'Citas programadas'], 'datos' => []]);
+            return response()->json(['headers' => ['Fecha', 'Citas programadas'], 'rows' => []]);
         }
 
         if ($type === 'tratamientos') {
@@ -43,10 +47,12 @@ class ReportController extends Controller
                 $rows = DB::table('treatments')
                     ->select('name', DB::raw('count(*) as aplicaciones'))
                     ->groupBy('name')
-                    ->get();
-                return response()->json(['encabezado' => ['Tratamiento', 'Aplicaciones'], 'datos' => $rows]);
+                    ->get()
+                    ->map(fn($r) => [$r->name, $r->aplicaciones])
+                    ->toArray();
+                return response()->json(['headers' => ['Tratamiento', 'Aplicaciones'], 'rows' => $rows]);
             }
-            return response()->json(['encabezado' => ['Tratamiento', 'Aplicaciones'], 'datos' => []]);
+            return response()->json(['headers' => ['Tratamiento', 'Aplicaciones'], 'rows' => []]);
         }
 
         return response()->json(['message' => 'Tipo de reporte no soportado'], 400);

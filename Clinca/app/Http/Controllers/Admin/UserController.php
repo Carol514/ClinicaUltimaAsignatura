@@ -53,6 +53,8 @@ class UserController extends Controller
 
         $result = array_map(function($u) use ($rolesByUser){
             $u['roles'] = $rolesByUser[$u['id']] ?? [];
+            // Add role_name for frontend convenience (first role's name)
+            $u['role_name'] = !empty($u['roles']) ? $u['roles'][0]['name'] : 'Sin rol';
             return $u;
         }, $users);
 
@@ -64,8 +66,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:users,email',
-            'role' => 'required|string',
-            // password is now mandatory
+            'role_name' => 'required|string',
             'password' => 'required|string|min:6',
         ]);
 
@@ -76,7 +77,7 @@ class UserController extends Controller
             'password' => $data['password'],
         ]);
 
-        $role = Role::where('name', $data['role'])->orWhere('code', $data['role'])->first();
+        $role = Role::where('name', $data['role_name'])->orWhere('code', $data['role_name'])->first();
         if ($role) {
             // insert directly into pivot table to avoid model relation
             DB::table('users_roles')->insert([
@@ -87,8 +88,13 @@ class UserController extends Controller
 
         // return user with roles
         $userArray = ['id'=>$user->id,'name'=>$user->name,'email'=>$user->email,'roles'=>[]];
-        if ($role) $userArray['roles'][] = ['id'=>$role->id,'name'=>$role->name,'code'=>$role->code];
-        return response()->json($userArray, 201);
+        if ($role) {
+            $userArray['roles'][] = ['id'=>$role->id,'name'=>$role->name,'code'=>$role->code];
+            $userArray['role_name'] = $role->name;
+        } else {
+            $userArray['role_name'] = 'Sin rol';
+        }
+        return response()->json(['message' => 'Usuario creado exitosamente', 'user' => $userArray], 201);
     }
 
     public function updateRole(Request $request, User $user)
@@ -106,13 +112,19 @@ class UserController extends Controller
         DB::table('users_roles')->where('user_id', $user->id)->delete();
         DB::table('users_roles')->insert(['user_id' => $user->id, 'role_id' => $role->id]);
 
-        $userArray = ['id'=>$user->id,'name'=>$user->name,'email'=>$user->email,'roles'=>[['id'=>$role->id,'name'=>$role->name,'code'=>$role->code]]];
-        return response()->json($userArray);
+        $userArray = [
+            'id'=>$user->id,
+            'name'=>$user->name,
+            'email'=>$user->email,
+            'roles'=>[['id'=>$role->id,'name'=>$role->name,'code'=>$role->code]],
+            'role_name'=>$role->name
+        ];
+        return response()->json(['message' => 'Rol actualizado exitosamente', 'user' => $userArray]);
     }
 
     public function destroy(User $user)
     {
         $user->delete();
-        return response()->json(['deleted' => true]);
+        return response()->json(['message' => 'Usuario eliminado exitosamente', 'deleted' => true]);
     }
 }

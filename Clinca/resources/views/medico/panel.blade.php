@@ -73,27 +73,28 @@
   <section class="med-history-section">
 
     {{-- FILTROS --}}
-<div class="med-filters-row">
+    <div class="med-filters-row">
 
-  <div class="field" style="position: relative;">
-    <label for="f_paciente">Buscar paciente</label>
-    <div class="search-row">
-      <input id="f_paciente" placeholder="Nombre o ID del paciente" autocomplete="off">
-      <button id="btnBuscarHist" class="confirm-btn" type="button">
-        <img src="/img/buscar.png" class="btn-icon" alt="Buscar">
-      </button>
+      <div class="field" style="position: relative;">
+        <label for="f_paciente">Buscar paciente</label>
+        <div class="search-row">
+          <input id="f_paciente" placeholder="Nombre o ID del paciente" autocomplete="off">
+          <button id="btnBuscarHist" class="confirm-btn" type="button">
+            <img src="/img/buscar.png" class="btn-icon" alt="Buscar">
+          </button>
+        </div>
+        <div id="hist-patient-suggestions" class="suggestions-dropdown hidden"></div>
+      </div>
+
+      {{-- Filtro por enfermedad / diagnóstico --}}
+      <div class="field" style="position: relative;">
+        <label for="f_enfermedad">Filtrar por enfermedad / diagnóstico</label>
+        <input id="f_enfermedad" placeholder="Ej. Gastritis, Diabetes..." autocomplete="off">
+        <div id="dxSuggestions" class="suggestions-dropdown hidden"></div>
+      </div>
+
     </div>
-    <div id="hist-patient-suggestions" class="suggestions-dropdown hidden"></div>
-  </div>
 
-  {{-- Filtro por enfermedad / diagnóstico --}}
-  <div class="field" style="position: relative;">
-    <label for="f_enfermedad">Filtrar por enfermedad / diagnóstico</label>
-    <input id="f_enfermedad" placeholder="Ej. Gastritis, Diabetes..." autocomplete="off">
-    <div id="dxSuggestions" class="suggestions-dropdown hidden"></div>
-  </div>
-
-</div>
     {{-- TABLA HISTORIAL --}}
     <div class="med-card med-card--history">
       <h3 class="med-card-title">Historial de expedientes</h3>
@@ -391,10 +392,123 @@
     </div>
   </div>
 
+  {{-- ====== ALERTA GLOBAL ====== --}}
+  <div id="appAlertOverlay" class="app-alert-overlay app-alert-hidden">
+      <div class="app-alert">
+          <div class="app-alert-top"></div>
+
+          <div class="app-alert-card">
+              <div class="app-alert-icon-wrapper">
+                  <img src="/img/templogo.jpg" alt="OK" class="app-alert-icon">
+              </div>
+
+              <p id="appAlertText" class="app-alert-text">
+                  Texto de ejemplo
+              </p>
+
+              <button id="appAlertClose" class="app-alert-btn">
+                  <span>OK</span>
+              </button>
+          </div>
+      </div>
+  </div>
+
+  {{-- ====== CONFIRM GLOBAL ====== --}}
+  <div id="appConfirmOverlay" class="app-alert-overlay app-alert-hidden">
+      <div class="app-alert app-confirm">
+          <div class="app-alert-top"></div>
+
+          <div class="app-alert-card">
+              <div class="app-alert-icon-wrapper">
+                  <img src="/img/templogo.jpg" alt="OK" class="app-alert-icon">
+              </div>
+
+              <p id="appConfirmText" class="app-alert-text">
+                  ¿Estás seguro?
+              </p>
+
+              <div class="app-confirm-buttons">
+                  <button id="appConfirmCancel" class="app-alert-btn cancel-btn">
+                      <span>Cancelar</span>
+                  </button>
+
+                  <button id="appConfirmOK" class="app-alert-btn">
+                      <span>OK</span>
+                  </button>
+              </div>
+          </div>
+      </div>
+  </div>
+
 </main>
 
 {{-- ================= JS ================= --}}
 <script>
+// ====== ALERTA GLOBAL REUTILIZABLE ======
+function showAppAlert(message, type = 'success') {
+    const overlay = document.getElementById('appAlertOverlay');
+    const textEl  = document.getElementById('appAlertText');
+    const wrapper = overlay?.querySelector('.app-alert');
+
+    if (!overlay || !textEl || !wrapper) {
+        alert(message);
+        return;
+    }
+
+    textEl.textContent = message;
+
+    wrapper.classList.remove('app-alert--success', 'app-alert--error');
+    wrapper.classList.add(
+        type === 'error' ? 'app-alert--error' : 'app-alert--success'
+    );
+
+    overlay.classList.remove('app-alert-hidden');
+
+    const closeBtn = document.getElementById('appAlertClose');
+    const close = () => {
+        overlay.classList.add('app-alert-hidden');
+        closeBtn.removeEventListener('click', close);
+    };
+
+    closeBtn.addEventListener('click', close);
+}
+
+// ====== CONFIRM GLOBAL (por si lo necesitas) ======
+function showAppConfirm(message, callback) {
+    const overlay = document.getElementById('appConfirmOverlay');
+    const textEl  = document.getElementById('appConfirmText');
+    const okBtn   = document.getElementById('appConfirmOK');
+    const cancelBtn = document.getElementById('appConfirmCancel');
+
+    if (!overlay || !textEl || !okBtn || !cancelBtn) {
+        const result = confirm(message);
+        callback(result);
+        return;
+    }
+
+    textEl.textContent = message;
+    overlay.classList.remove('app-alert-hidden');
+
+    function cleanup() {
+        overlay.classList.add('app-alert-hidden');
+        okBtn.removeEventListener('click', onOk);
+        cancelBtn.removeEventListener('click', onCancel);
+    }
+
+    function onOk() {
+        cleanup();
+        callback(true);
+    }
+
+    function onCancel() {
+        cleanup();
+        callback(false);
+    }
+
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // ----------- Load Dashboard Stats -----------
   const statCitasHoy = document.getElementById('statCitasHoy');
@@ -466,7 +580,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function searchAndLoadHistory() {
     const query = fPaciente.value.trim();
     if (!query) {
-      alert('Por favor ingrese un nombre o ID de paciente');
+      showAppAlert('Por favor ingrese un nombre o ID de paciente', 'error');
       return;
     }
 
@@ -484,7 +598,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const patients = await response.json();
       
       if (patients.length === 0) {
-        alert('No se encontró ningún paciente con ese nombre o ID');
+        showAppAlert('No se encontró ningún paciente con ese nombre o ID', 'error');
         return;
       }
       
@@ -495,8 +609,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadPatientHistory(currentPatientId);
       } else {
         // Multiple matches - show selection
-        const names = patients.map((p, i) => `${i+1}. ${p.name} (${p.age || 'Sin edad'})`).join('\\n');
-        const selection = prompt(`Se encontraron ${patients.length} pacientes:\\n${names}\\n\\nIngrese el número del paciente:`);
+        const names = patients.map((p, i) => `${i+1}. ${p.name} (${p.age || 'Sin edad'})`).join('\n');
+        const selection = prompt(`Se encontraron ${patients.length} pacientes:\n${names}\n\nIngrese el número del paciente:`);
         const idx = parseInt(selection) - 1;
         if (idx >= 0 && idx < patients.length) {
           currentPatientId = patients[idx].id;
@@ -507,7 +621,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
     } catch (error) {
       console.error('Error searching patients:', error);
-      alert('Error al buscar pacientes');
+      showAppAlert('Error al buscar pacientes', 'error');
     }
   }
 
@@ -555,7 +669,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
     } catch (error) {
       console.error('Error loading history:', error);
-      alert('Error al cargar el historial');
+      showAppAlert('Error al cargar el historial', 'error');
     }
   }
 
@@ -811,7 +925,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (error) {
       console.error('Error searching by diagnosis:', error);
-      alert('Error al buscar por diagnóstico');
+      showAppAlert('Error al buscar por diagnóstico', 'error');
     }
   }
 
@@ -903,7 +1017,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Hide sections until a new search
         document.getElementById('altaHistorialSection').classList.add('hidden');
         document.getElementById('subirDocumentosSection').classList.add('hidden');
-        document.getElementById('documentosPacienteSection').classList.add('hidden');
+        const docPacSec = document.getElementById('documentosPacienteSection');
+        if (docPacSec) {
+          docPacSec.classList.add('hidden');
+        }
       }
       
       return;
@@ -1167,12 +1284,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
 
     if (!currentPatientId) {
-      alert('Por favor seleccione un paciente primero');
+      showAppAlert('Por favor seleccione un paciente primero', 'error');
       return;
     }
 
     if (!fileInput.files.length) {
-      alert('Por favor seleccione al menos un archivo');
+      showAppAlert('Por favor seleccione al menos un archivo', 'error');
       return;
     }
 
@@ -1202,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       const result = await response.json();
-      alert('Documentos subidos exitosamente');
+      showAppAlert('Documentos subidos exitosamente', 'success');
 
       // Clear form
       docTipo.value = '';
@@ -1215,7 +1332,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (error) {
       console.error('Error uploading documents:', error);
-      alert('Error al subir documentos: ' + error.message);
+      showAppAlert('Error al subir documentos: ' + error.message, 'error');
     }
   });
 
@@ -1324,17 +1441,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const altura = document.getElementById('ah_altura').value;
     
     if (!currentPatientId) {
-      alert('Por favor busque y seleccione un paciente primero usando el buscador de historial');
+      showAppAlert('Por favor busque y seleccione un paciente primero usando el buscador de historial', 'error');
       return;
     }
     
     if (!fecha) {
-      alert('Por favor seleccione una fecha');
+      showAppAlert('Por favor seleccione una fecha', 'error');
       return;
     }
     
     if (!diagnostico) {
-      alert('El diagnóstico es obligatorio');
+      showAppAlert('El diagnóstico es obligatorio', 'error');
       return;
     }
     
@@ -1385,7 +1502,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
       const result = await response.json();
-      alert('✅ Historial médico guardado exitosamente');
+      showAppAlert('✅ Historial médico guardado exitosamente', 'success');
       
       // Clear form
       altaHistForm.reset();
@@ -1397,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
     } catch (error) {
       console.error('Error saving medical history:', error);
-      alert('❌ Error al guardar el historial: ' + error.message);
+      showAppAlert('❌ Error al guardar el historial: ' + error.message, 'error');
     }
   });
 });

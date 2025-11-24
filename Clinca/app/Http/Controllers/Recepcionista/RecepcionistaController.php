@@ -335,19 +335,11 @@ class RecepcionistaController extends Controller {
                 return;
             }
 
-            // Check if patient has opted in for email notifications
-            $key = 'patient_notifications_' . $patient->id;
-            $prefs = Cache::get($key);
-            Log::info('Patient notification preferences', [
+            // All patients automatically receive email notifications
+            Log::info('Sending email notification to patient', [
                 'patient_id' => $patient->id,
-                'cache_key' => $key,
-                'preferences' => $prefs
+                'email' => $patient->email
             ]);
-            
-            if (!$prefs || !$prefs['enabled'] || !$prefs['email']) {
-                Log::info('Patient has not opted in for email notifications');
-                return;
-            }
 
             $scheduledAt = $appointment->scheduled_at ? \Carbon\Carbon::parse($appointment->scheduled_at) : null;
             $dateStr = $scheduledAt ? $scheduledAt->format('d/m/Y') : 'Fecha por confirmar';

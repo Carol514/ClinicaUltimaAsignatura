@@ -32,38 +32,56 @@ class PatientController extends Controller
         if ($record) {
             $rid = $record->id;
 
-            // Get encounters with all related data
-            $encounters = Encounter::where('record_id', $rid)->get();
+            // Get medical histories (these contain the actual diagnosis records)
+            $medHistories = MedicalHistory::where('record_id', $rid)
+                ->orderBy('recorded_at', 'desc')
+                ->get();
             
-            foreach ($encounters as $encounter) {
-                $dt = $encounter->encounter_dt ? substr($encounter->encounter_dt, 0, 10) : 
-                      ($encounter->created_at ? substr($encounter->created_at, 0, 10) : null);
+            foreach ($medHistories as $medHistory) {
+                $dt = $medHistory->recorded_at ? substr($medHistory->recorded_at, 0, 10) : 
+                      ($medHistory->created_at ? substr($medHistory->created_at, 0, 10) : null);
                 
                 // Format date for display (DD/MM/YYYY)
                 $fechaDisplay = $dt ? date('d/m/Y', strtotime($dt)) : '—';
                 
-                // Get clinician name
-                $clinician = \App\Models\User::find($encounter->clinician_id);
-                $doctorName = $clinician ? $clinician->name : 'Doctor no asignado';
+                // Get clinician name with Dr. prefix and last name only
+                $clinician = \App\Models\User::find($medHistory->recorded_by);
+                $doctorName = 'Doctor no asignado';
+                if ($clinician) {
+                    // Extract last name from full name (assuming format: "FirstName LastName")
+                    $nameParts = explode(' ', trim($clinician->name));
+                    $lastName = count($nameParts) > 1 ? end($nameParts) : $clinician->name;
+                    $doctorName = 'Dr. ' . $lastName;
+                }
                 
-                // Get vital signs for this encounter
-                $vitals = VitalSign::where('encounter_id', $encounter->id)->first();
+                // Find encounter on same date to get vital signs
+                $encounter = Encounter::where('record_id', $rid)
+                    ->whereDate('encounter_dt', $dt)
+                    ->first();
                 
-                // Get medical history for this record
-                $medHistory = MedicalHistory::where('record_id', $rid)->first();
+                $vitals = null;
+                if ($encounter) {
+                    $vitals = VitalSign::where('encounter_id', $encounter->id)->first();
+                }
                 
-                // Get allergies
+                // Get all allergies for this patient
                 $allergies = Allergy::where('record_id', $rid)
                     ->pluck('allergen')
                     ->toArray();
                 $allergiesStr = !empty($allergies) ? implode(', ', $allergies) : 'Ninguna registrada';
                 
-                // Get antecedentes (medical background)
-                $antecedentes = $medHistory ? $medHistory->details : 'Sin antecedentes registrados';
+                // Get antecedentes from medical_background field
+                $antecedentes = $medHistory->medical_background ?? 'Sin antecedentes registrados';
                 
-                // Get treatments for this encounter
+                // Get treatments active around this date
                 $treatments = Treatment::where('record_id', $rid)
-                    ->where('start_dt', '>=', $encounter->encounter_dt)
+                    ->where(function($q) use ($dt) {
+                        $q->whereDate('start_dt', '<=', $dt)
+                          ->where(function($q2) use ($dt) {
+                              $q2->whereNull('end_dt')
+                                 ->orWhereDate('end_dt', '>=', $dt);
+                          });
+                    })
                     ->get();
                 
                 $treatmentStr = $treatments->map(function($t) {
@@ -75,8 +93,13 @@ class PatientController extends Controller
                     $treatmentStr = 'Sin tratamiento registrado';
                 }
                 
-                // Get documents for this encounter
-                $documents = Document::where('record_id', $rid)->get();
+                // Get documents around this date (within 7 days)
+                $dateStart = date('Y-m-d', strtotime($dt . ' -7 days'));
+                $dateEnd = date('Y-m-d', strtotime($dt . ' +7 days'));
+                
+                $documents = Document::where('record_id', $rid)
+                    ->whereBetween('created_at', [$dateStart, $dateEnd])
+                    ->get();
                 
                 $docsArray = $documents->map(function($d) {
                     return [
@@ -91,10 +114,10 @@ class PatientController extends Controller
                 // Build comprehensive history item
                 $items[] = [
                     'fecha' => $fechaDisplay,
-                    'motivo' => $encounter->reason ?? 'Consulta general',
-                    'diagnostico' => $encounter->notes ?? 'Sin diagnóstico registrado',
+                    'motivo' => $medHistory->details ?? 'Consulta general',
+                    'diagnostico' => $medHistory->condition ?? 'Sin diagnóstico registrado',
                     'doctor' => $doctorName,
-                    'doctor_id' => $encounter->clinician_id,
+                    'doctor_id' => $medHistory->recorded_by,
                     'alergias' => $allergiesStr,
                     'antecedentes' => $antecedentes,
                     'temperatura' => $vitals && $vitals->temp_c ? $vitals->temp_c . ' °C' : '—',
@@ -105,7 +128,7 @@ class PatientController extends Controller
                     'saturacion_ox' => $vitals && $vitals->spo2 ? $vitals->spo2 . ' %' : '—',
                     'tratamiento' => $treatmentStr,
                     'documentos' => $docsStr,
-                    'encounter_id' => $encounter->id,
+                    'history_id' => $medHistory->id,
                     'fecha_raw' => $dt // for sorting
                 ];
             }

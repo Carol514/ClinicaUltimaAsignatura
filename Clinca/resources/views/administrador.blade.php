@@ -766,7 +766,10 @@ btnCancel.addEventListener("click", () => {
 
 // Guardar cambios
 btnSave.addEventListener("click", async () => {
+    if (btnSave.disabled) return;
     if (!currentUserId) return;
+    
+    btnSave.disabled = true;
     
     try {
       const url = `/administrador/api/users/${currentUserId}/role`;
@@ -799,6 +802,8 @@ btnSave.addEventListener("click", async () => {
     } catch (err) {
       console.error('Error updating user role:', err);
       showAppAlert('Error al actualizar el rol.', 'error');
+    } finally {
+      btnSave.disabled = false;
     }
 });
 
@@ -841,6 +846,8 @@ if (btnCancelNew) {
 // Guardar nuevo usuario
 if (btnSaveNewUser) {
   btnSaveNewUser.addEventListener("click", async () => {
+    if (btnSaveNewUser.disabled) return;
+    
     const name = inputNewName.value.trim();
     const email = inputNewEmail.value.trim();
     const role = inputNewRole.value;
@@ -872,6 +879,8 @@ if (btnSaveNewUser) {
       return;
     }
 
+    btnSaveNewUser.disabled = true;
+
     try {
       const response = await fetch('/administrador/api/users', {
         method: 'POST',
@@ -890,6 +899,8 @@ if (btnSaveNewUser) {
     } catch (err) {
       console.error('Error creating user:', err);
       showAppAlert('Error al crear el usuario.', 'error');
+    } finally {
+      btnSaveNewUser.disabled = false;
     }
   });
 }

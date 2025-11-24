@@ -78,6 +78,17 @@ class RecepcionistaController extends Controller {
         // Normalize input and map human-friendly sex values to DB enum (M,F,I)
         $data = $request->only(['curp','first_name','last_name','dob','sex','phone','email','address','age']);
 
+        // Check if patient with this email already exists
+        if (!empty($data['email'])) {
+            $existingPatient = Patient::where('email', $data['email'])->first();
+            if ($existingPatient) {
+                return response()->json([
+                    'error' => 'Ya existe un paciente registrado con este correo electrónico.',
+                    'patient_id' => $existingPatient->id
+                ], 422);
+            }
+        }
+
         // Convert age to date of birth if age is provided instead of dob
         if (!empty($data['age']) && empty($data['dob'])) {
             $age = (int)$data['age'];

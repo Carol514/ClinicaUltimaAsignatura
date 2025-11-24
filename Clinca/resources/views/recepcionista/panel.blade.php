@@ -1012,6 +1012,10 @@ document.addEventListener("DOMContentLoaded", () => {
         editCitaForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!citaEditActual) return;
+            
+            // Prevent duplicate submissions
+            const submitButton = editCitaForm.querySelector('button[type="submit"]');
+            if (submitButton.disabled) return;
 
             const doctorId = editDoctor.value;
             const fecha    = editFecha.value;
@@ -1044,6 +1048,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 showAppAlert(msg, 'error');
                 return;
             }
+            
+            // Disable submit button to prevent duplicates
+            submitButton.disabled = true;
 
             try {
                 const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -1089,6 +1096,9 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch (err) {
                 console.error('Error updating appointment:', err);
                 showAppAlert('Error al actualizar la cita.', 'error');
+            } finally {
+                // Re-enable submit button
+                submitButton.disabled = false;
             }
         });
     }
@@ -1140,6 +1150,10 @@ document.addEventListener("DOMContentLoaded", () => {
     agendarForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        // Prevent duplicate submissions
+        const submitButton = agendarForm.querySelector('button[type="submit"]');
+        if (submitButton.disabled) return;
+        
         const patientId = citaPatientId.value;
         const doctorId  = citaDoctor.value;
         const hora      = citaHora.value;
@@ -1175,6 +1189,9 @@ document.addEventListener("DOMContentLoaded", () => {
             showAppAlert(conflictMessage, 'error');
             return;
         }
+        
+        // Disable submit button to prevent duplicates
+        submitButton.disabled = true;
         
         try {
             const scheduledDateTime = `${fechaSeleccionada} ${hora}:00`;
@@ -1218,6 +1235,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             console.error('Error creating appointment:', error);
             showAppAlert('Error al agendar la cita. Por favor verifica los datos e inténtalo de nuevo.', 'error');
+        } finally {
+            // Re-enable submit button
+            submitButton.disabled = false;
         }
     });
 
@@ -1242,6 +1262,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     pacienteForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        
+        // Prevent duplicate submissions
+        const submitButton = pacienteForm.querySelector('button[type="submit"]');
+        if (submitButton.disabled) return;
         
         const nombre    = document.getElementById('p_nombre').value.trim();
         const apellidos = document.getElementById('p_apellidos').value.trim();
@@ -1318,6 +1342,9 @@ document.addEventListener("DOMContentLoaded", () => {
             age:        age
         };
         
+        // Disable submit button to prevent duplicates
+        submitButton.disabled = true;
+        
         try {
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
             
@@ -1335,14 +1362,18 @@ document.addEventListener("DOMContentLoaded", () => {
             
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
-                if (response.status === 422 && errorData?.errors) {
+                if (response.status === 422 && errorData?.error) {
+                    // Handle single error message (like duplicate email)
+                    showAppAlert(errorData.error, 'error');
+                } else if (response.status === 422 && errorData?.errors) {
+                    // Handle validation errors object
                     const messages = [];
                     for (const field in errorData.errors) {
                         messages.push(errorData.errors[field].join(', '));
                     }
                     showAppAlert('Errores de validación:\n' + messages.join('\n'), 'error');
                 } else {
-                    showAppAlert('Error al registrar paciente: ' + (errorData?.message || `HTTP ${response.status}`), 'error');
+                    showAppAlert('Error al registrar paciente: ' + (errorData?.message || errorData?.error || `HTTP ${response.status}`), 'error');
                 }
                 return;
             }
@@ -1354,7 +1385,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 message += ` (ID: ${result.data.id})`;
             }
             if (result.created_user) {
-                message += `\n\nUsuario creado:\nEmail: ${result.created_user.email}\nContraseña temporal: ${result.created_user.temp_password}`;
+                message += `\n\nUsuario creado:\nEmail: ${result.created_user.email}\nContraseña : ${result.created_user.temp_password}`;
             }
             
             showAppAlert(message, 'success');
@@ -1363,6 +1394,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             console.error('Error registering patient:', error);
             showAppAlert('Error de conexión al registrar paciente. Verifica tu conexión e inténtalo de nuevo.', 'error');
+        } finally {
+            // Re-enable submit button
+            submitButton.disabled = false;
         }
     });
 

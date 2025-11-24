@@ -1402,6 +1402,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   docsForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // Prevent duplicate submissions
+    const submitButton = docsForm.querySelector('button[type="submit"]');
+    if (submitButton.disabled) return;
 
     if (!currentPatientId) {
       showAppAlert('Por favor seleccione un paciente primero', 'error');
@@ -1422,6 +1426,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (let i = 0; i < fileInput.files.length; i++) {
       formData.append('files[]', fileInput.files[i]);
     }
+    
+    // Disable submit button to prevent duplicates
+    submitButton.disabled = true;
 
     try {
       const response = await fetch('/medico/api/upload-documentos', {
@@ -1453,6 +1460,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
       console.error('Error uploading documents:', error);
       showAppAlert('Error al subir documentos: ' + error.message, 'error');
+    } finally {
+      // Re-enable submit button
+      submitButton.disabled = false;
     }
   });
 
@@ -1544,6 +1554,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   altaHistForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    // Prevent duplicate submissions
+    const submitButton = altaHistForm.querySelector('button[type="submit"]');
+    if (submitButton.disabled) return;
+    
     const paciente = document.getElementById('ah_paciente').value.trim();
     const fecha = document.getElementById('ah_fecha').value;
     const motivo = document.getElementById('ah_motivo').value.trim();
@@ -1604,6 +1618,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     };
     
+    // Disable submit button to prevent duplicates
+    submitButton.disabled = true;
+    
     try {
       const response = await fetch('/medico/api/alta-historial', {
         method: 'POST',
@@ -1635,6 +1652,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
       console.error('Error saving medical history:', error);
       showAppAlert('❌ Error al guardar el historial: ' + error.message, 'error');
+    } finally {
+      // Re-enable submit button
+      submitButton.disabled = false;
     }
   });
 });

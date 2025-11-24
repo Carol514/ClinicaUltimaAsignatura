@@ -211,15 +211,25 @@
 
       {{-- Filtro por rol --}}
       <div class="admin-filter-row">
-        <span>Filtrar por rol:</span>
-        <select id="filterRol">
-          <option value="">Todos</option>
-          <option value="Administrador">Administrador</option>
-          <option value="Médico">Médico</option>
-          <option value="Enfermera">Enfermera</option>
-          <option value="Recepcionista">Recepcionista</option>
-        </select>
-      </div>
+  <div class="admin-filter-left">
+    <span>Filtrar por rol:</span>
+    <select id="filterRol">
+      <option value="">Todos</option>
+      <option value="Administrador">Administrador</option>
+      <option value="Médico">Médico</option>
+      <option value="Enfermera">Enfermera</option>
+      <option value="Recepcionista">Recepcionista</option>
+    </select>
+  </div>
+
+  <button type="button"
+          class="confirm-btn admin-inline-btn"
+          id="btnOpenNewUser">
+    <img src="/img/agregar.png" class="btn-icon" alt="Agregar" style="width:24px; height:24px;">
+    <span>Agregar usuario</span>
+  </button>
+</div>
+
 
       {{-- Tabla de usuarios / roles --}}
       <div class="admin-roles-table table-container">
@@ -374,6 +384,65 @@
 
   </div>
 </div>
+
+<!-- =======================
+     MODAL NUEVO USUARIO
+======================= -->
+<div id="modalNewUser" class="modal hidden">
+  <div class="modal-content modal-sm">
+
+    <h3 class="modal-title">Nuevo usuario</h3>
+
+    <div class="modal-body">
+      <div class="field">
+        <label for="newUserName">Nombre</label>
+        <input id="newUserName"
+               type="text"
+               class="modal-input"
+               placeholder="Nombre del usuario">
+      </div>
+
+      <div class="field">
+        <label for="newUserEmail">Correo electrónico</label>
+        <input id="newUserEmail"
+               type="email"
+               class="modal-input"
+               placeholder="correo@ejemplo.com">
+      </div>
+
+      <div class="field">
+        <label for="newUserRole">Rol</label>
+        <select id="newUserRole" class="modal-input">
+          <option value="">Seleccione un rol...</option>
+          <option value="Administrador">Administrador</option>
+          <option value="Médico">Médico</option>
+          <option value="Enfermera">Enfermera</option>
+          <option value="Recepcionista">Recepcionista</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="newUserPass">Contraseña</label>
+        <input id="newUserPass"
+               type="text"
+               class="modal-input"
+               placeholder="ContraseñaUsuario123">
+      </div>
+    </div>
+
+    <div class="btn-container" style="margin-top:20px;">
+      <button id="btnSaveNewUser" class="confirm-btn">
+        <img src="/img/guardar.png" class="btn-icon" alt="Guardar" style="width:28px; height:28px;">
+      </button>
+
+      <button id="btnCancelNew" class="cancel-btn">
+        <img src="/img/cancelar.png" class="btn-icon" alt="Cancelar" style="width:20px; height:20px;">
+      </button>
+    </div>
+
+  </div>
+</div>
+
 
 </main>
 
@@ -564,5 +633,53 @@ modalEdit.addEventListener("click", e => {
     if (e.target === modalEdit) modalEdit.classList.add("hidden");
 });
 
+// ======================
+// MODAL NUEVO USUARIO
+// ======================
+const modalNewUser   = document.getElementById("modalNewUser");
+const btnOpenNewUser = document.getElementById("btnOpenNewUser");
+const btnCancelNew   = document.getElementById("btnCancelNew");
+const btnSaveNewUser = document.getElementById("btnSaveNewUser");
+const inputNewName   = document.getElementById("newUserName");
+const inputNewEmail  = document.getElementById("newUserEmail");
+const inputNewRole   = document.getElementById("newUserRole");
+const inputNewPass   = document.getElementById("newUserPass");
+
+// Abrir modal "Nuevo usuario"
+if (btnOpenNewUser) {
+  btnOpenNewUser.addEventListener("click", () => {
+    // limpiar campos
+    inputNewName.value  = "";
+    inputNewEmail.value = "";
+    inputNewRole.value  = "";
+    inputNewPass.value  = "";
+
+    modalNewUser.classList.remove("hidden");
+  });
+}
+
+// Cerrar modal
+if (btnCancelNew) {
+  btnCancelNew.addEventListener("click", () => {
+    modalNewUser.classList.add("hidden");
+  });
+}
+
+// Guardar (solo demo / maquetado)
+if (btnSaveNewUser) {
+  btnSaveNewUser.addEventListener("click", () => {
+    alert("Usuario registrado (maquetado). Aquí se conectará al backend para crear el usuario en la BD.");
+    modalNewUser.classList.add("hidden");
+  });
+}
+
+// Cerrar haciendo click fuera del contenido
+if (modalNewUser) {
+  modalNewUser.addEventListener("click", (e) => {
+    if (e.target === modalNewUser) {
+      modalNewUser.classList.add("hidden");
+    }
+  });
+}
 </script>
 @endsection

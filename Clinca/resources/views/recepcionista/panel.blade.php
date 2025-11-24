@@ -45,7 +45,7 @@
 
     {{-- ====== HEADER ====== --}}
     <header class="recep-header">
-        <h1 class="recep-page-title">Bienvenid@, Recepcionista</h1>
+        <h1 class="recep-page-title" style="color:#2a6b5f;">Panel de Recepcionista</h1>
     </header>
 
     {{-- ====== GRID PRINCIPAL ====== --}}

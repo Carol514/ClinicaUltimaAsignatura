@@ -122,12 +122,12 @@
       
       {{-- Pagination Controls --}}
       <div id="historyPagination" class="pagination-container" style="display: none; margin-top: 15px; text-align: center;">
-        <button id="prevPage" class="icon-btn" style="margin: 0 5px;">
-          <img src="/img/flecha-izquierda.png" alt="Anterior" style="width:20px; height:20px;">
+        <button id="prevPage" class="doc-btn" style="font-size: 23px; background-color:#e3e3e3;">
+          <img src="/img/anterior.png" alt="Anterior" style="width:20px; height:20px;">
         </button>
         <span id="pageInfo" style="margin: 0 15px; font-weight: 600;">Página 1 de 1</span>
-        <button id="nextPage" class="icon-btn" style="margin: 0 5px;">
-          <img src="/img/flecha-derecha.png" alt="Siguiente" style="width:20px; height:20px;">
+        <button id="nextPage" class="doc-btn" style="font-size: 23px; background-color:#e3e3e3;" >
+          <img src="/img/siguiente.png" alt="Siguiente" style="width:20px; height:20px;">
         </button>
       </div>
     </div>

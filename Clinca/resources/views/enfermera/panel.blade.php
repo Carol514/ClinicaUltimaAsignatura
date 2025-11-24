@@ -53,7 +53,9 @@
     <div class="search-row">
       <input id="txtPaciente" placeholder="Ingrese el nombre o ID del paciente" autocomplete="off">
       <div id="patient-suggestions" class="suggestions-dropdown hidden"></div>
-      <button id="btnBuscar" class="confirm-btn" type="button"><img src="/img/buscar.png" alt="Buscar" width="22" height="22" ></button>
+      <button id="btnBuscar" class="confirm-btn" type="button">
+        <img src="/img/buscar.png" alt="Buscar" width="22" height="22" >
+      </button>
     </div>
   </form>
 
@@ -130,52 +132,8 @@
           </button>
         </div>
 
-        {{-- Tratamientos de ejemplo (clicables) --}}
         <div id="treatmentsContainer">
-        <div class="treat-card treatment-item"
-             data-date="21/11/2025"
-             data-summary="Amoxicilina 500 mg c/8h por 7 días.">
-          <div class="treat-icon">
-            <img src="/img/medicina.png" alt="med">
-          </div>
-
-          <div class="treat-content">
-            <p class="treat-title">Tratamiento del 21/11/2025</p>
-            <p class="treat-desc">
-              Amoxicilina 500 mg c/8h.
-            </p>
-          </div>
-        </div>
-
-        <div class="treat-card treatment-item"
-             data-date="15/11/2025"
-             data-summary="Paracetamol 800 mg cada 8 horas por 3 días.">
-          <div class="treat-icon">
-            <img src="/img/medicina.png" alt="med">
-          </div>
-
-          <div class="treat-content">
-            <p class="treat-title">Tratamiento del 15/11/2025</p>
-            <p class="treat-desc">
-              Paracetamol 800 mg c/8h.
-            </p>
-          </div>
-        </div>
-
-        <div class="treat-card treatment-item"
-             data-date="25/10/2025"
-             data-summary="Ibuprofeno 400 mg cada 8 horas por 5 días.">
-          <div class="treat-icon">
-            <img src="/img/medicina.png" alt="med">
-          </div>
-
-          <div class="treat-content">
-            <p class="treat-title">Tratamiento del 25/10/2025</p>
-            <p class="treat-desc">
-              Ibuprofeno 400 mg c/8h.
-            </p>
-          </div>
-        </div>
+          {{-- Se rellena por JS con los tratamientos reales --}}
         </div>
       </div>
 
@@ -381,11 +339,124 @@
   </div>
 </div>
 
+{{-- ====== ALERTA GLOBAL ====== --}}
+<div id="appAlertOverlay" class="app-alert-overlay app-alert-hidden">
+    <div class="app-alert">
+        <div class="app-alert-top"></div>
+
+        <div class="app-alert-card">
+            <div class="app-alert-icon-wrapper">
+                <img src="/img/templogo.jpg" alt="OK" class="app-alert-icon">
+            </div>
+
+            <p id="appAlertText" class="app-alert-text">
+                Texto de ejemplo
+            </p>
+
+            <button id="appAlertClose" class="app-alert-btn">
+                <span>OK</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- ====== CONFIRM GLOBAL ====== --}}
+<div id="appConfirmOverlay" class="app-alert-overlay app-alert-hidden">
+    <div class="app-alert app-confirm">
+        <div class="app-alert-top"></div>
+
+        <div class="app-alert-card">
+            <div class="app-alert-icon-wrapper">
+                <img src="/img/templogo.jpg" alt="OK" class="app-alert-icon">
+            </div>
+
+            <p id="appConfirmText" class="app-alert-text">
+                ¿Estás seguro?
+            </p>
+
+            <div class="app-confirm-buttons">
+                <button id="appConfirmCancel" class="app-alert-btn cancel-btn">
+                    <span>Cancelar</span>
+                </button>
+
+                <button id="appConfirmOK" class="app-alert-btn">
+                    <span>OK</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 {{-- ==========================================================
       JS
    =========================================================== --}}
 <script>
+// ====== ALERTA GLOBAL REUTILIZABLE ======
+function showAppAlert(message, type = 'success') {
+    const overlay = document.getElementById('appAlertOverlay');
+    const textEl  = document.getElementById('appAlertText');
+    const wrapper = overlay?.querySelector('.app-alert');
+
+    if (!overlay || !textEl || !wrapper) {
+        alert(message);
+        return;
+    }
+
+    textEl.textContent = message;
+
+    wrapper.classList.remove('app-alert--success', 'app-alert--error');
+    wrapper.classList.add(
+        type === 'error' ? 'app-alert--error' : 'app-alert--success'
+    );
+
+    overlay.classList.remove('app-alert-hidden');
+
+    const closeBtn = document.getElementById('appAlertClose');
+    const close = () => {
+        overlay.classList.add('app-alert-hidden');
+        closeBtn.removeEventListener('click', close);
+    };
+
+    closeBtn.addEventListener('click', close);
+}
+
+// ====== CONFIRM GLOBAL (por si lo necesitas) ======
+function showAppConfirm(message, callback) {
+    const overlay = document.getElementById('appConfirmOverlay');
+    const textEl  = document.getElementById('appConfirmText');
+    const okBtn   = document.getElementById('appConfirmOK');
+    const cancelBtn = document.getElementById('appConfirmCancel');
+
+    if (!overlay || !textEl || !okBtn || !cancelBtn) {
+        const result = confirm(message);
+        callback(result);
+        return;
+    }
+
+    textEl.textContent = message;
+    overlay.classList.remove('app-alert-hidden');
+
+    function cleanup() {
+        overlay.classList.add('app-alert-hidden');
+        okBtn.removeEventListener('click', onOk);
+        cancelBtn.removeEventListener('click', onCancel);
+    }
+
+    function onOk() {
+        cleanup();
+        callback(true);
+    }
+
+    function onCancel() {
+        cleanup();
+        callback(false);
+    }
+
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+}
+
 (() => {
   const $ = (id) => document.getElementById(id);
 
@@ -408,8 +479,6 @@
 
   const lnkSignos = $('lnkSignos');
   const lnkTrat   = $('lnkTrat');
-
-  const treatmentItems = document.querySelectorAll('.treatment-item');
 
   function pacienteSeleccionado() {
     return !(hdrPaciente.textContent.endsWith('—'));
@@ -469,13 +538,6 @@
     await loadPatientData(patient);
   }
   
-  // Clear search field function
-  function clearSearch() {
-    txtPaciente.value = '';
-    selectedPatient = null;
-    patientSuggestions.classList.add('hidden');
-  }
-  
   // Hide suggestions when clicking outside
   document.addEventListener('click', (e) => {
     if (!txtPaciente.contains(e.target) && !patientSuggestions.contains(e.target)) {
@@ -504,14 +566,13 @@
       pDx.textContent = patient.diagnosis || '—';
       pUltima.textContent = patient.last_consult || '—';
 
-      // Load patient data
       await loadVitals(currentPatientId);
       await loadTreatments(currentPatientId);
 
       nurseLayout.style.display = 'grid';
     } catch(err) {
       console.error('Error loading patient data:', err);
-      alert('Error al cargar los datos del paciente.');
+      showAppAlert('Error al cargar los datos del paciente.', 'error');
     }
   }
 
@@ -520,7 +581,10 @@
   // ==========================
   async function buscarPaciente() {
     const nombre = txtPaciente.value.trim();
-    if (!nombre) { alert('Escribe un nombre o ID de paciente.'); return; }
+    if (!nombre) { 
+      showAppAlert('Escribe un nombre o ID de paciente.', 'error');
+      return; 
+    }
 
     try {
       const res = await fetch(`/enfermera/api/paciente?query=${encodeURIComponent(nombre)}`, {
@@ -543,13 +607,12 @@
       pDx.textContent = patient.diagnosis || '—';
       pUltima.textContent = patient.last_consult || '—';
 
-      // Load patient data
       await loadVitals(currentPatientId);
       await loadTreatments(currentPatientId);
 
     } catch(err) {
       console.error(err);
-      alert('No se encontró ningún paciente.');
+      showAppAlert('No se encontró ningún paciente.', 'error');
     } finally {
       nurseLayout.style.display = 'grid';
     }
@@ -581,7 +644,7 @@
     vitals.forEach(v => {
       const fecha = v.fecha || '—';
       const temp = v.temp ? v.temp + ' °C' : '—';
-      const ta = (v.sbp && v.dbp) ? `${v.sbp}/${v.dbp}` : '—';
+      const ta = (v.sbp && v.dbp) ? `${v.sbp}/${v.dbp}` : (v.ta || '—');
       const pulso = v.pulso ? v.pulso + ' lpm' : '—';
       const fr = v.fr ? v.fr + ' rpm' : '—';
       const spo2 = v.spo2 ? v.spo2 + ' %' : '—';
@@ -652,7 +715,12 @@
   }
 
   btnBuscar.addEventListener('click', buscarPaciente);
-  txtPaciente.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); buscarPaciente(); } });
+  txtPaciente.addEventListener('keydown', (e)=>{ 
+    if(e.key === 'Enter'){ 
+      e.preventDefault(); 
+      buscarPaciente(); 
+    } 
+  });
 
   const q = new URLSearchParams(location.search).get('p');
   if (q) { txtPaciente.value = q; buscarPaciente(); }
@@ -675,55 +743,42 @@
 
   function setTratReadOnly(isReadOnly) {
     allTratFields.forEach(el => {
-      // solo campos, no tocamos los botones
       if (el.type !== 'submit' && el.type !== 'button') {
         el.disabled = isReadOnly;
       }
     });
   }
 
-  // 👀 MODO SOLO LECTURA: Editar + Cancelar
   function setModeView() {
     setTratReadOnly(true);
-
-    // Editar visible
     tratEditBtn.classList.remove('hidden');
     tratEditBtn.style.display = 'inline-flex';
-
-    // Guardar oculto
     tratSaveBtn.classList.add('hidden');
     tratSaveBtn.style.display = 'none';
   }
 
-  // ✍️ MODO EDICIÓN: Guardar + Cancelar
   function setModeEdit() {
     setTratReadOnly(false);
-
-    // Editar oculto
     tratEditBtn.classList.add('hidden');
     tratEditBtn.style.display = 'none';
-
-    // Guardar visible
     tratSaveBtn.classList.remove('hidden');
     tratSaveBtn.style.display = 'inline-flex';
   }
 
-  // Abrir modal en modo CREAR (botón +)
   function openTratModalCreate() {
     if (!pacienteSeleccionado()) {
-      alert('Primero selecciona un paciente.');
+      showAppAlert('Primero selecciona un paciente.', 'error');
       return;
     }
     tratForm.reset();
     currentTreatmentId = null;
-    setModeEdit();   // solo Guardar + Cancelar
+    setModeEdit();
     tratModal.classList.remove('hidden');
   }
 
-  // Abrir modal en modo VER (clic tarjeta)
   function openTratModalFromCard(card) {
     if (!pacienteSeleccionado()) {
-      alert('Primero selecciona un paciente.');
+      showAppAlert('Primero selecciona un paciente.', 'error');
       return;
     }
 
@@ -739,8 +794,15 @@
     tNuevo.value  = summary;
     $('med_name').value = name;
     $('med_dose').value = dose;
+    $('med_unit').value = ''; 
+    $('med_freq').value = '';
+    $('med_day').value  = '';
+    $('med_time').value = '';
+    $('tipo_resultado').value = '';
+    $('fecha_resultado').value = '';
+    $('t_notas').value = instructions || '';
 
-    setModeView();  // solo Editar + Cancelar
+    setModeView();
     tratModal.classList.remove('hidden');
   }
 
@@ -749,7 +811,6 @@
     tratForm.reset();
   }
 
-  // Eventos tratamientos
   lnkTrat.addEventListener('click', (e) => {
     e.preventDefault();
     openTratModalCreate();
@@ -775,7 +836,7 @@
     const startDate = $('med_day').value;
     
     if (!name) {
-      alert('Por favor ingresa el nombre del medicamento o tratamiento.');
+      showAppAlert('Por favor ingresa el nombre del medicamento o tratamiento.', 'error');
       return;
     }
     
@@ -790,7 +851,6 @@
     try {
       let response;
       if (currentTreatmentId) {
-        // Update existing treatment
         response = await fetch(`/enfermera/api/treatments/${currentTreatmentId}`, {
           method: 'PUT',
           credentials: 'same-origin',
@@ -802,7 +862,6 @@
           body: JSON.stringify(treatmentData)
         });
       } else {
-        // Create new treatment
         response = await fetch('/enfermera/api/treatments', {
           method: 'POST',
           credentials: 'same-origin',
@@ -817,12 +876,12 @@
       
       if (!response.ok) throw new Error('Failed to save treatment');
       
-      alert('✅ Tratamiento guardado exitosamente.');
+      showAppAlert('✅ Tratamiento guardado exitosamente.', 'success');
       closeTratModal();
       await loadTreatments(currentPatientId);
     } catch(err) {
       console.error('Error saving treatment:', err);
-      alert('❌ Error al guardar el tratamiento.');
+      showAppAlert('❌ Error al guardar el tratamiento.', 'error');
     }
   });
 
@@ -836,7 +895,7 @@
 
   function openVitalsModal() {
     if (!pacienteSeleccionado()) {
-      alert('Primero selecciona un paciente.');
+      showAppAlert('Primero selecciona un paciente.', 'error');
       return;
     }
 
@@ -875,14 +934,13 @@
     const altura = $('v_altura').value;
     
     if (!press) {
-      alert('La presión arterial es obligatoria.');
+      showAppAlert('La presión arterial es obligatoria.', 'error');
       return;
     }
     
-    // Validate blood pressure format (e.g., 120/80, 95/60, 140/100)
     const bpPattern = /^\d{2,3}\/\d{2,3}$/;
     if (!bpPattern.test(press)) {
-      alert('La presión arterial debe seguir el formato: XX/XX o XXX/XXX (Ej. 120/80, 95/60)');
+      showAppAlert('La presión arterial debe seguir el formato: XX/XX o XXX/XXX (Ej. 120/80, 95/60)', 'error');
       return;
     }
     
@@ -912,12 +970,12 @@
       
       if (!response.ok) throw new Error('Failed to save vitals');
       
-      alert('✅ Signos vitales registrados exitosamente.');
+      showAppAlert('✅ Signos vitales registrados exitosamente.', 'success');
       closeVitalsModal();
       await loadVitals(currentPatientId);
     } catch(err) {
       console.error('Error saving vitals:', err);
-      alert('❌ Error al registrar signos vitales.');
+      showAppAlert('❌ Error al registrar signos vitales.', 'error');
     }
   });
 

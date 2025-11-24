@@ -107,26 +107,6 @@
           </p>
         </div>
       </div>
-
-      <hr class="section-divider" style="margin-top:16px;">
-
-      {{-- Lista de reportes generados (simulando PDFs descargables) --}}
-      <h4 class="admin-subtitle" style="text-align:left;margin-bottom:8px;">Reportes generados</h4>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Fecha de reporte</th>
-              <th>Tipo</th>
-              <th>Formato</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="adminReportListBody">
-            {{-- Loaded dynamically from localStorage --}}
-          </tbody>
-        </table>
-      </div>
     </div>
   </section>
 
@@ -163,25 +143,24 @@
 
       {{-- Filtro por rol --}}
       <div class="admin-filter-row">
-  <div class="admin-filter-left">
-    <span>Filtrar por rol:</span>
-    <select id="filterRol">
-      <option value="">Todos</option>
-      <option value="Administrador">Administrador</option>
-      <option value="Médico">Médico</option>
-      <option value="Enfermera">Enfermera</option>
-      <option value="Recepcionista">Recepcionista</option>
-    </select>
-  </div>
+        <div class="admin-filter-left">
+          <span>Filtrar por rol:</span>
+          <select id="filterRol">
+            <option value="">Todos</option>
+            <option value="Administrador">Administrador</option>
+            <option value="Médico">Médico</option>
+            <option value="Enfermera">Enfermera</option>
+            <option value="Recepcionista">Recepcionista</option>
+          </select>
+        </div>
 
-  <button type="button"
-          class="confirm-btn admin-inline-btn"
-          id="btnOpenNewUser">
-    <img src="/img/agregar.png" class="btn-icon" alt="Agregar" style="width:24px; height:24px;">
-    <span>Agregar usuario</span>
-  </button>
-</div>
-
+        <button type="button"
+                class="confirm-btn admin-inline-btn"
+                id="btnOpenNewUser">
+          <img src="/img/agregar.png" class="btn-icon" alt="Agregar" style="width:24px; height:24px;">
+          <span>Agregar usuario</span>
+        </button>
+      </div>
 
       {{-- Tabla de usuarios / roles --}}
       <div class="admin-roles-table table-container">
@@ -300,11 +279,149 @@
   </div>
 </div>
 
+  <!-- ====== ALERTA GLOBAL ====== -->
+  <div id="appAlertOverlay" class="app-alert-overlay app-alert-hidden">
+    <div class="app-alert">
+      <div class="app-alert-top"></div>
+
+      <div class="app-alert-card">
+        <div class="app-alert-icon-wrapper">
+          <img src="/img/templogo.jpg" alt="OK" class="app-alert-icon">
+        </div>
+
+        <p id="appAlertText" class="app-alert-text">
+          Texto de ejemplo
+        </p>
+
+        <button id="appAlertClose" class="app-alert-btn">
+          <span>OK</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== CONFIRM GLOBAL ====== -->
+  <div id="appConfirmOverlay" class="app-alert-overlay app-alert-hidden">
+    <div class="app-alert app-confirm">
+      <div class="app-alert-top"></div>
+
+      <div class="app-alert-card">
+        <div class="app-alert-icon-wrapper">
+          <img src="/img/templogo.jpg" alt="OK" class="app-alert-icon">
+        </div>
+
+        <p id="appConfirmText" class="app-alert-text">
+          Texto de confirmación
+        </p>
+
+        <div class="app-confirm-buttons">
+          <button id="appConfirmCancel" class="cancel-btn app-alert-btn">
+          <span>Cancelar</span>
+          </button>
+
+
+          <button id="appConfirmOK" class="app-alert-btn">
+            <span>OK</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </main>
 
 {{-- ================= JS WITH BACKEND INTEGRATION ================= --}}
 <script>
+
+// ====== ALERTA GLOBAL REUTILIZABLE ======
+function showAppAlert(message, type = 'success') {
+  const overlay = document.getElementById('appAlertOverlay');
+  const textEl  = document.getElementById('appAlertText');
+  const wrapper = overlay?.querySelector('.app-alert');
+
+  if (!overlay || !textEl || !wrapper) {
+    alert(message);
+    return;
+  }
+
+  textEl.textContent = message;
+
+  wrapper.classList.remove('app-alert--success', 'app-alert--error', 'app-alert--warning');
+  if (type === 'error') {
+    wrapper.classList.add('app-alert--error');
+  } else if (type === 'warning') {
+    wrapper.classList.add('app-alert--warning');
+  } else {
+    wrapper.classList.add('app-alert--success');
+  }
+
+  overlay.classList.remove('app-alert-hidden');
+
+  const closeBtn = document.getElementById('appAlertClose');
+
+  function close() {
+    overlay.classList.add('app-alert-hidden');
+    overlay.removeEventListener('click', outsideHandler);
+    if (closeBtn) closeBtn.removeEventListener('click', close);
+  }
+
+  function outsideHandler(e) {
+    if (e.target === overlay) close();
+  }
+
+  if (closeBtn) closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', outsideHandler);
+}
+
+// ====== CONFIRM GLOBAL (warning) ======
+function confirmApp(message, callback) {
+  const overlay   = document.getElementById('appConfirmOverlay');
+  const textEl    = document.getElementById('appConfirmText');
+  const okBtn     = document.getElementById('appConfirmOK');
+  const cancelBtn = document.getElementById('appConfirmCancel');
+  const wrapper   = overlay?.querySelector('.app-alert');
+
+  if (!overlay || !textEl || !okBtn || !cancelBtn || !wrapper) {
+    // Si algo falla, usar confirm normal
+    const res = confirm(message);
+    callback(res);
+    return;
+  }
+
+  // estilo warning (amarillo)
+  wrapper.classList.remove('app-alert--success', 'app-alert--error');
+  wrapper.classList.add('app-alert--warning');
+
+  textEl.textContent = message;
+  overlay.classList.remove('app-alert-hidden');
+
+  function clean() {
+    okBtn.removeEventListener('click', okHandler);
+    cancelBtn.removeEventListener('click', cancelHandler);
+    overlay.removeEventListener('click', outsideHandler);
+  }
+
+  function okHandler() {
+    overlay.classList.add('app-alert-hidden');
+    clean();
+    callback(true);
+  }
+
+  function cancelHandler() {
+    overlay.classList.add('app-alert-hidden');
+    clean();
+    callback(false);
+  }
+
+  function outsideHandler(e) {
+    if (e.target === overlay) cancelHandler();
+  }
+
+  okBtn.addEventListener('click', okHandler);
+  cancelBtn.addEventListener('click', cancelHandler);
+  overlay.addEventListener('click', outsideHandler);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
 
   // ----------- Load Dashboard Stats -----------
@@ -330,9 +447,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
       });
       const result = await response.json();
-      const data = result.data || result; // Handle both formats
-      
-      console.log('Pie chart data:', data); // Debug log
+      const data = result.data || result;
       
       const legendList = document.querySelector('.admin-legend');
       legendList.innerHTML = '';
@@ -348,9 +463,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       if (Array.isArray(data) && data.length > 0) {
         data.forEach(item => {
-          console.log('Item label:', item.label, 'Status:', item.status); // Debug
           const color = colors[item.label] || colors[item.status] || '#6c757d';
-          li = document.createElement('li');
+          const li = document.createElement('li');
           li.innerHTML = `
             <span class="legend-dot" style="background:${color};"></span>
             <span class="legend-label">${item.label}</span>
@@ -359,7 +473,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           legendList.appendChild(li);
         });
         
-        // Update pie chart CSS conic-gradient
         let gradientStops = [];
         let cumulative = 0;
         data.forEach(item => {
@@ -370,10 +483,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         
         const gradient = `conic-gradient(${gradientStops.join(', ')})`;
-        console.log('Setting gradient:', gradient); // Debug log
         pieDiv.style.setProperty('background', gradient, 'important');
       } else {
-        // No data - show default message
         legendList.innerHTML = '<li style="list-style:none;color:#6c757d;text-align:center;">No hay datos de citas disponibles</li>';
         pieDiv.style.setProperty('background', '#e8f6f0', 'important');
       }
@@ -390,8 +501,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       const lineData = await response.json();
       
-      console.log('Line chart data:', lineData); // Debug log
-      
       const lineChart = document.getElementById('adminLineChart');
       lineChart.innerHTML = '';
       
@@ -401,14 +510,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
       const maxVal = Math.max(...lineData.map(d => d.value)) || 1;
-      const maxHeight = 150; // Maximum height in pixels
-      console.log('Max value:', maxVal); // Debug log
+      const maxHeight = 150;
 
       lineData.forEach(d => {
-        console.log('Day:', d.label, 'Value:', d.value); // Debug
         const bar = document.createElement('div');
         bar.className = 'line-bar';
-        // Calculate height in pixels based on max value
         const heightPx = d.value > 0 ? Math.round((d.value / maxVal) * maxHeight) : 3;
         const opacity = d.value === 0 ? '0.3' : '1';
         bar.innerHTML = `
@@ -418,14 +524,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         lineChart.appendChild(bar);
       });
-      
-      console.log('Line chart children:', lineChart.children.length); // Debug
     } catch (err) {
       console.error('Error loading line chart:', err);
     }
   }
 
-  // Load all dashboard data
   await Promise.all([
     loadDashboardStats(),
     loadPieChart(),
@@ -454,9 +557,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnBackup.querySelector('span').textContent = originalText;
       
       const tablesCount = data.tables_count || 0;
-      alert(`Respaldo completado exitosamente. ${tablesCount} tablas respaldadas.`);
+      showAppAlert(`Respaldo completado exitosamente. ${tablesCount} tablas respaldadas.`, 'success');
       
-      // Trigger download if available
       if (data.download) {
         window.location.href = data.download;
       }
@@ -464,7 +566,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Error generating backup:', err);
       btnBackup.disabled = false;
       btnBackup.querySelector('span').textContent = originalText;
-      alert('Error al generar el respaldo.');
+      showAppAlert('Error al generar el respaldo.', 'error');
     }
   });
 
@@ -474,47 +576,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const repHead  = document.getElementById('adminReportHead');
   const repBody  = document.getElementById('adminReportBody');
   const repEmpty = document.getElementById('adminReportEmpty');
-  const reportListBody = document.getElementById('adminReportListBody');
-
-  const REPORT_LABELS = {
-    citas: 'Pacientes atendidos por día',
-    usuarios: 'Usuarios por rol (pacientes atendidos por área)',
-    tratamientos: 'Pacientes atendidos y tratamientos aplicados',
-  };
-
-  // Load existing reports from localStorage
-  function loadSavedReports() {
-    const savedReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
-    reportListBody.innerHTML = '';
-    savedReports.forEach(report => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${report.fecha} ${report.hora}</td>
-        <td>${report.tipo}</td>
-        <td>PDF</td>
-        <td>
-          <button type="button" class="confirm-btn admin-inline-btn admin-download-btn">
-            <img src="/img/descargar.png" class="btn-icon" alt="Descargar" style="width:24px; height:24px;">
-          </button>
-        </td>
-      `;
-      reportListBody.appendChild(tr);
-    });
-  }
-
-  // Save report to localStorage
-  function saveReport(fecha, hora, tipo) {
-    const savedReports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
-    savedReports.unshift({ fecha, hora, tipo });
-    localStorage.setItem('generatedReports', JSON.stringify(savedReports));
-  }
-
-  loadSavedReports();
 
   btnReporte.addEventListener('click', async () => {
     const tipo = selTipoRep.value;
     if (!tipo) {
-      alert('Selecciona un tipo de reporte.');
+      showAppAlert('Selecciona un tipo de reporte.', 'error');
       return;
     }
 
@@ -529,43 +595,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       const data = await response.json();
       
-      // Preview report in table
       if (data.headers && data.rows) {
         repHead.innerHTML = `<tr>${data.headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
-        repBody.innerHTML = data.rows.map(row => 
-          `<tr>${row.map(col => `<td>${col}</td>`).join('')}</tr>`
-        ).join('');
+        repBody.innerHTML = data.rows
+          .map(row => `<tr>${row.map(col => `<td>${col}</td>`).join('')}</tr>`)
+          .join('');
         repEmpty.style.display = 'none';
+      } else {
+        repHead.innerHTML = '';
+        repBody.innerHTML = '';
+        repEmpty.style.display = 'block';
       }
 
-      // Add to generated reports list
-      const now = new Date();
-      const fecha = now.toLocaleDateString('es-MX', {
-        day:'2-digit', month:'2-digit', year:'numeric'
-      });
-      const hora = now.toLocaleTimeString('es-MX', {
-        hour:'2-digit', minute:'2-digit'
-      });
-      const tipoTexto = REPORT_LABELS[tipo] || 'Reporte de pacientes';
-
-      // Save to localStorage
-      saveReport(fecha, hora, tipoTexto);
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${fecha} ${hora}</td>
-        <td>${tipoTexto}</td>
-        <td>PDF</td>
-        <td>
-          <button type="button" class="confirm-btn admin-inline-btn admin-download-btn">
-            <img src="/img/descargar.png" class="btn-icon" alt="Descargar" style="width:24px; height:24px;">
-          </button>
-        </td>
-      `;
-      reportListBody.prepend(tr);
+      showAppAlert('Reporte generado con éxito.', 'success');
     } catch (err) {
       console.error('Error generating report:', err);
-      alert('Error al generar el reporte.');
+      showAppAlert('Error al generar el reporte.', 'error');
     }
   });
 
@@ -612,7 +657,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         rolesBody.appendChild(tr);
       });
       
-      // Attach event listeners to new buttons
       attachUserEventListeners();
     } catch (err) {
       console.error('Error loading users:', err);
@@ -663,28 +707,29 @@ function attachUserEventListeners() {
 
   // Delete buttons
   document.querySelectorAll(".admin-delete-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
+    btn.addEventListener("click", () => {
       const userId = btn.dataset.userId;
       const userName = btn.dataset.user;
       
-      if (!confirm(`¿Está seguro de eliminar al usuario "${userName}"?`)) return;
+      confirmApp(`¿Está seguro de eliminar al usuario "${userName}"?`, async (accepted) => {
+        if (!accepted) return;
 
-      try {
-        const response = await fetch(`/administrador/api/users/${userId}`, {
-          method: 'DELETE',
-          headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-          }
-        });
-        const data = await response.json();
-        alert(data.message || 'Usuario eliminado exitosamente.');
-        
-        // Reload users table
-        await loadUsersTable();
-      } catch (err) {
-        console.error('Error deleting user:', err);
-        alert('Error al eliminar el usuario.');
-      }
+        try {
+          const response = await fetch(`/administrador/api/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+          });
+          const data = await response.json();
+          showAppAlert(data.message || 'Usuario eliminado exitosamente.', 'success');
+          
+          await loadUsersTable();
+        } catch (err) {
+          console.error('Error deleting user:', err);
+          showAppAlert('Error al eliminar el usuario.', 'error');
+        }
+      });
     });
   });
 }
@@ -708,15 +753,14 @@ btnSave.addEventListener("click", async () => {
         body: JSON.stringify({ role_name: inputRole.value })
       });
       const data = await response.json();
-      alert(data.message || 'Rol actualizado exitosamente.');
+      showAppAlert(data.message || 'Rol actualizado exitosamente.', 'success');
       
       modalEdit.classList.add("hidden");
       
-      // Reload users table
       await loadUsersTable();
     } catch (err) {
       console.error('Error updating user role:', err);
-      alert('Error al actualizar el rol.');
+      showAppAlert('Error al actualizar el rol.', 'error');
     }
 });
 
@@ -765,7 +809,7 @@ if (btnSaveNewUser) {
     const password = inputNewPass.value;
 
     if (!name || !email || !role || !password) {
-      alert('Por favor complete todos los campos.');
+      showAppAlert('Por favor complete todos los campos.', 'error');
       return;
     }
 
@@ -779,15 +823,14 @@ if (btnSaveNewUser) {
         body: JSON.stringify({ name, email, role_name: role, password })
       });
       const data = await response.json();
-      alert(data.message || 'Usuario creado exitosamente.');
+      showAppAlert(data.message || 'Usuario creado exitosamente.', 'success');
       
       modalNewUser.classList.add("hidden");
       
-      // Reload users table
       await loadUsersTable();
     } catch (err) {
       console.error('Error creating user:', err);
-      alert('Error al crear el usuario.');
+      showAppAlert('Error al crear el usuario.', 'error');
     }
   });
 }

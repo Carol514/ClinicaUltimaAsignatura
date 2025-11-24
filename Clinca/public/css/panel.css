@@ -2673,3 +2673,210 @@ hr {
   align-items: center;
   gap: 8px;
 }
+
+
+/* ===== ALERTA GLOBAL REUTILIZABLE ===== */
+
+.app-alert-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.app-alert-hidden {
+  display: none;
+}
+
+.app-alert {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 16px;
+}
+
+.app-alert-top {
+  height: 70px;
+  background: #24b35b;           /* verde header */
+  border-radius: 0 0 32px 32px;
+}
+
+.app-alert-card {
+  margin: -46px auto 0;
+  background: #ffffff;
+  border-radius: 32px;
+  border: 2px solid #e2e6ea;
+  padding: 40px 32px 26px;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  position: relative;
+}
+
+.app-alert-icon-wrapper {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 3px solid #24b35b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  background: #f7fdf9;
+  animation: alert-pop 0.45s ease-out;
+}
+
+.app-alert-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  animation: alert-spin 0.45s ease-out;
+}
+
+.app-alert-text {
+  font-size: 1.05rem;
+  color: #24b35b;
+  font-weight: 600;
+  margin: 4px 0 18px;
+}
+
+/* botón inferior */
+.app-alert-btn {
+  margin: 0 auto;
+  padding: 8px 26px;
+  border-radius: 999px;
+  border: none;
+  background: #24b35b;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(36,179,91,0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+}
+
+.app-alert-btn:hover {
+  background: #1f9b4f;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(36,179,91,0.45);
+}
+
+/* variantes por tipo (por si luego quieres warning / error) */
+.app-alert--success .app-alert-top,
+.app-alert--success .app-alert-icon-wrapper,
+.app-alert--success .app-alert-btn {
+  background-color: #24b35b;
+  border-color: #24b35b;
+}
+
+.app-alert--error .app-alert-top,
+.app-alert--error .app-alert-icon-wrapper,
+.app-alert--error .app-alert-btn {
+  background-color: #e74c3c;
+  border-color: #e74c3c;
+}
+
+.app-alert--error .app-alert-text {
+  color: #e74c3c;
+}
+
+/* animaciones */
+@keyframes alert-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  60%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes alert-spin {
+  0%   { transform: rotate(-180deg) scale(0.4); opacity: 0; }
+  60%  { transform: rotate(-15deg)  scale(1.05); opacity: 1; }
+  100% { transform: rotate(0deg)    scale(1); }
+}
+
+@media (max-width: 480px) {
+  .app-alert-card {
+    max-width: 320px;
+    padding: 32px 22px 22px;
+  }
+}
+
+
+/* ===== FIX ancho de la franja superior del alert ===== */
+
+.app-alert {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* La franja ya no ocupa toda la pantalla, solo el ancho de la tarjeta */
+.app-alert-top {
+  max-width: 420px;        /* mismo ancho que la card (ajusta si tu card es más grande) */
+  width: 100%;
+  margin: 0 auto;          /* centrada */
+}
+
+/* Aseguramos que la tarjeta esté por encima de la franja */
+.app-alert-card {
+  position: relative;
+  z-index: 2;
+}
+
+/* La franja queda detrás y alineada con la card */
+.app-alert-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 56px;            /* lo que ya tenías */
+  border-radius: 999px;    /* pill redondito */
+  z-index: 1;
+}
+
+.app-confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+/* Sólo el botón "Cancelar" del confirm amarillo */
+.app-confirm .cancel-btn {
+  background-color: #b5b5b5;
+  border-color: #b5b5b5;
+  color: #ffffff;
+}
+
+.app-confirm .cancel-btn:hover {
+  background-color: #9d9d9d;
+  border-color: #9d9d9d;
+}
+
+
+.app-alert--warning .app-alert-top,
+.app-alert--warning .app-alert-icon-wrapper,
+.app-alert--warning .app-alert-btn {
+  background-color: #f1c40f;
+  border-color: #f1c40f;
+}
+
+.app-alert--warning .app-alert-text {
+  color: #f39c12;
+}
+
+
+.app-confirm .cancel-btn {
+  background-color: #e74c3c !important;
+  border-color: #e74c3c !important;
+  color: #fff !important;
+}
+
+.app-confirm .cancel-btn:hover {
+  background-color: #c0392b !important;
+  border-color: #c0392b !important;
+}

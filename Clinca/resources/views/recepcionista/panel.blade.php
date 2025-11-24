@@ -741,6 +741,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 return false;
             }
             
+            // Ignore cancelled and no-show appointments - they free up the time slot
+            if (appointment.status === 'cancelada' || appointment.status === 'no_asistio') {
+                return false;
+            }
+            
             const [existingHour, existingMinute] = appointment.hora.split(':').map(Number);
             const existingStartMinutes           = existingHour * 60 + existingMinute;
             const existingDurationMinutes        = appointment.duration_min || 30;
@@ -1110,6 +1115,11 @@ document.addEventListener("DOMContentLoaded", () => {
         
         agendarForm.reset();
         citaPatientId.value = '';
+        
+        // Auto-fill doctor if filter is active
+        if (doctorSelect.value) {
+            citaDoctor.value = doctorSelect.value;
+        }
         
         modalInfo.textContent = `📅 Fecha seleccionada: ${formatDate(fechaSeleccionada)}`;
         modalAgendar.classList.remove("hidden");

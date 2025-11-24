@@ -275,10 +275,10 @@
             <label for="doc_tipo">Tipo</label>
             <select id="doc_tipo">
               <option value="">Seleccione...</option>
-              <option>Laboratorio</option>
-              <option>Rayos X</option>
-              <option>Ultrasonido</option>
-              <option>Tomografía</option>
+              <option>Radiografía</option>
+              <option>Análisis</option>
+              <option>Receta</option>
+              <option>Referencia</option>
               <option>Otro</option>
             </select>
           </div>

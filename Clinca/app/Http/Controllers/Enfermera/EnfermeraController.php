@@ -34,6 +34,10 @@ class EnfermeraController extends Controller
         if (!$q) return response()->json([], 200);
 
         $query = Patient::query();
+        
+        // Only show patients with appointments
+        $query->whereHas('appointments');
+        
         // Accept numeric ids or UUIDs
         $isUuid = preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $q);
         if (is_numeric($q) || $isUuid) {
@@ -220,10 +224,15 @@ class EnfermeraController extends Controller
                 'id' => $t->id,
                 'name' => $t->name,
                 'dose' => $t->dose,
+                'route' => $t->route,
                 'instructions' => $t->instructions,
-                'start_dt' => $startDate,
+                'result_type' => $t->result_type,
+                'result_date' => $t->result_date,
+                'notes' => $t->notes,
+                'start_dt' => $t->start_dt, // Keep original format for form fields
+                'start_dt_formatted' => $startDate, // Formatted for display
                 'end_dt' => $endDate,
-                'summary' => ($t->name ?? 'Tratamiento') . ' ' . ($t->dose ?? '') . ($t->instructions ? ' - ' . $t->instructions : ''),
+                'summary' => ($t->name ?? 'Tratamiento') . ($t->dose ? ' ' . $t->dose : ''),
                 'created_at' => $t->created_at ? $t->created_at->format('Y-m-d H:i:s') : null,
             ];
         });
@@ -240,7 +249,11 @@ class EnfermeraController extends Controller
             'patient_id' => 'required',
             'name' => 'required|string|max:255',
             'dose' => 'nullable|string|max:255',
+            'route' => 'nullable|string|max:255',
             'instructions' => 'nullable|string',
+            'result_type' => 'nullable|string|max:255',
+            'result_date' => 'nullable|date',
+            'notes' => 'nullable|string',
             'start_dt' => 'nullable|date',
             'end_dt' => 'nullable|date',
         ]);
@@ -258,10 +271,14 @@ class EnfermeraController extends Controller
             'record_id' => $recordId,
             'name' => $data['name'],
             'dose' => $data['dose'] ?? null,
+            'route' => $data['route'] ?? null,
             'instructions' => $data['instructions'] ?? null,
+            'result_type' => $data['result_type'] ?? null,
+            'result_date' => $data['result_date'] ?? null,
+            'notes' => $data['notes'] ?? null,
             'start_dt' => $data['start_dt'] ?? now(),
             'end_dt' => $data['end_dt'] ?? null,
-            'prescribed_by' => Auth::id(),
+            'updated_by' => Auth::id(),
         ]);
 
         return response()->json(['created'=>true,'id'=>$treatment->id, 'treatment' => $treatment]);
@@ -276,19 +293,29 @@ class EnfermeraController extends Controller
         if (!$treatment) return response()->json(['error'=>'treatment not found'], 404);
 
         $data = $request->validate([
+            'patient_id' => 'nullable', // Allow but ignore
             'name' => 'nullable|string|max:255',
             'dose' => 'nullable|string|max:255',
+            'route' => 'nullable|string|max:255',
             'instructions' => 'nullable|string',
+            'result_type' => 'nullable|string|max:255',
+            'result_date' => 'nullable|date',
+            'notes' => 'nullable|string',
             'start_dt' => 'nullable|date',
             'end_dt' => 'nullable|date',
         ]);
 
         if (isset($data['name'])) $treatment->name = $data['name'];
         if (isset($data['dose'])) $treatment->dose = $data['dose'];
+        if (isset($data['route'])) $treatment->route = $data['route'];
         if (isset($data['instructions'])) $treatment->instructions = $data['instructions'];
+        if (isset($data['result_type'])) $treatment->result_type = $data['result_type'];
+        if (isset($data['result_date'])) $treatment->result_date = $data['result_date'];
+        if (isset($data['notes'])) $treatment->notes = $data['notes'];
         if (isset($data['start_dt'])) $treatment->start_dt = $data['start_dt'];
         if (isset($data['end_dt'])) $treatment->end_dt = $data['end_dt'];
-
+        
+        $treatment->updated_by = Auth::id();
         $treatment->save();
 
         return response()->json(['updated'=>true,'id'=>$treatment->id, 'treatment' => $treatment]);

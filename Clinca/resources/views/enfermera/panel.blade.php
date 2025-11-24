@@ -476,6 +476,7 @@ function showAppConfirm(message, callback) {
 
   let currentPatientId = null;
   let selectedPatient = null;
+  let currentTreatments = [];
 
   const lnkSignos = $('lnkSignos');
   const lnkTrat   = $('lnkTrat');
@@ -675,6 +676,7 @@ function showAppConfirm(message, callback) {
       });
       if (!res.ok) throw new Error('Failed to load treatments');
       const treatments = await res.json();
+      currentTreatments = treatments;
       renderTreatments(treatments);
     } catch(err) {
       console.error('Error loading treatments:', err);
@@ -698,13 +700,17 @@ function showAppConfirm(message, callback) {
       div.dataset.name = t.name || '';
       div.dataset.dose = t.dose || '';
       div.dataset.instructions = t.instructions || '';
+      div.dataset.route = t.route || '';
+      div.dataset.resultType = t.result_type || '';
+      div.dataset.resultDate = t.result_date || '';
+      div.dataset.notes = t.notes || '';
       
       div.innerHTML = `
         <div class="treat-icon">
           <img src="/img/medicina.png" alt="med">
         </div>
         <div class="treat-content">
-          <p class="treat-title">Tratamiento del ${t.start_dt || 'Sin fecha'}</p>
+          <p class="treat-title">Tratamiento del ${t.start_dt_formatted || t.start_dt || 'Sin fecha'}</p>
           <p class="treat-desc">${t.summary || t.name || 'Sin descripción'}</p>
         </div>
       `;
@@ -772,6 +778,15 @@ function showAppConfirm(message, callback) {
     }
     tratForm.reset();
     currentTreatmentId = null;
+    
+    // Auto-fill tratamiento actual with latest treatment
+    if (currentTreatments && currentTreatments.length > 0) {
+      const latest = currentTreatments[0];
+      const fecha = latest.start_dt || 'Sin fecha';
+      const summary = latest.summary || latest.name || 'Sin descripción';
+      tActual.value = `Tratamiento del ${fecha}: ${summary}`;
+    }
+    
     setModeEdit();
     tratModal.classList.remove('hidden');
   }
@@ -787,20 +802,61 @@ function showAppConfirm(message, callback) {
     const name = card.dataset.name || '';
     const dose = card.dataset.dose || '';
     const instructions = card.dataset.instructions || '';
+    const route = card.dataset.route || '';
+    const resultType = card.dataset.resultType || '';
+    const resultDate = card.dataset.resultDate || '';
+    const notes = card.dataset.notes || '';
 
     currentTreatmentId = card.dataset.treatmentId || null;
 
     tActual.value = `Tratamiento del ${fecha}: ${summary}`;
-    tNuevo.value  = summary;
+    tNuevo.value  = name;
     $('med_name').value = name;
-    $('med_dose').value = dose;
-    $('med_unit').value = ''; 
-    $('med_freq').value = '';
-    $('med_day').value  = '';
-    $('med_time').value = '';
-    $('tipo_resultado').value = '';
-    $('fecha_resultado').value = '';
-    $('t_notas').value = instructions || '';
+    
+    // Parse dose field back into parts (e.g., "500 mg cada 8 horas" -> dosis=500, unidad=mg, freq=cada 8 horas)
+    if (dose) {
+      const parts = dose.split(' ');
+      if (parts.length >= 3) {
+        // Has all parts: dose unit frequency...
+        $('med_dose').value = parts[0]; // First part is dose
+        $('med_unit').value = parts[1]; // Second part is unit
+        $('med_freq').value = parts.slice(2).join(' '); // Rest is frequency
+      } else if (parts.length === 2) {
+        // Has dose and unit only
+        $('med_dose').value = parts[0];
+        $('med_unit').value = parts[1];
+        $('med_freq').value = '';
+      } else {
+        // Only has dose
+        $('med_dose').value = dose;
+        $('med_unit').value = '';
+        $('med_freq').value = '';
+      }
+    } else {
+      $('med_dose').value = '';
+      $('med_unit').value = ''; 
+      $('med_freq').value = '';
+    }
+    
+    // Set date and time from fecha (format: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)
+    if (fecha) {
+      const dateTimeParts = fecha.split(' ');
+      $('med_day').value = dateTimeParts[0]; // Date part
+      if (dateTimeParts.length > 1) {
+        // Has time component
+        const timePart = dateTimeParts[1].substring(0, 5); // Get HH:MM
+        $('med_time').value = timePart;
+      } else {
+        $('med_time').value = '';
+      }
+    } else {
+      $('med_day').value  = '';
+      $('med_time').value = '';
+    }
+    
+    $('tipo_resultado').value = resultType;
+    $('fecha_resultado').value = resultDate;
+    $('t_notas').value = notes || '';
 
     setModeView();
     tratModal.classList.remove('hidden');
@@ -832,20 +888,30 @@ function showAppConfirm(message, callback) {
     const name = $('med_name').value.trim() || tNuevo.value.trim();
     const dose = $('med_dose').value.trim();
     const unit = $('med_unit').value;
-    const instructions = tNuevo.value.trim();
     const startDate = $('med_day').value;
+    const frequency = $('med_freq').value.trim();
+    const resultType = $('tipo_resultado').value;
+    const resultDate = $('fecha_resultado').value;
+    const resultNotes = $('t_notas').value.trim();
     
     if (!name) {
       showAppAlert('Por favor ingresa el nombre del medicamento o tratamiento.', 'error');
       return;
     }
     
+    // Always combine dose, unit, and frequency into the dose field
+    const finalDose = [dose, unit, frequency].filter(v => v).join(' ');
+    
     const treatmentData = {
       patient_id: currentPatientId,
       name: name,
-      dose: dose && unit ? `${dose} ${unit}` : dose,
-      instructions: instructions,
+      dose: finalDose,
+      instructions: tNuevo.value.trim(),
       start_dt: startDate || new Date().toISOString().split('T')[0],
+      route: frequency || null,
+      result_type: resultType || null,
+      result_date: resultDate || null,
+      notes: resultNotes || null,
     };
     
     try {
@@ -874,14 +940,18 @@ function showAppConfirm(message, callback) {
         });
       }
       
-      if (!response.ok) throw new Error('Failed to save treatment');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Server error:', errorData);
+        throw new Error(errorData.message || 'Failed to save treatment');
+      }
       
       showAppAlert('✅ Tratamiento guardado exitosamente.', 'success');
       closeTratModal();
       await loadTreatments(currentPatientId);
     } catch(err) {
       console.error('Error saving treatment:', err);
-      showAppAlert('❌ Error al guardar el tratamiento.', 'error');
+      showAppAlert('❌ Error al guardar el tratamiento: ' + err.message, 'error');
     }
   });
 

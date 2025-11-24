@@ -148,7 +148,7 @@
           <select id="filterRol">
             <option value="">Todos</option>
             <option value="Administrador">Administrador</option>
-            <option value="Médico">Médico</option>
+            <option value="Médico">Medico</option>
             <option value="Enfermera">Enfermera</option>
             <option value="Recepcionista">Recepcionista</option>
           </select>
@@ -201,9 +201,7 @@
       <div class="field" style="margin-top:12px;">
         <label>Rol</label>
         <select id="editUserRole">
-          <option value="Médico">Médico</option>
-          <option value="Enfermera">Enfermera</option>
-          <option value="Recepcionista">Recepcionista</option>
+          <!-- Loaded dynamically from API -->
         </select>
       </div>
     </div>
@@ -231,7 +229,7 @@
 
     <div class="modal-body">
       <div class="field">
-        <label for="newUserName">Nombre</label>
+        <label for="newUserName">Nombre Completo</label>
         <input id="newUserName"
                type="text"
                class="modal-input"
@@ -693,17 +691,44 @@ let currentUserId = null;
 function attachUserEventListeners() {
   // Edit buttons
   document.querySelectorAll(".admin-edit-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       currentUserId = btn.dataset.userId;
       const user = btn.dataset.user;
       const role = btn.dataset.role;
 
       inputUser.value = user;
-      inputRole.value = role;
+      
+      // Load roles from API
+      await loadRolesIntoSelect(inputRole, role);
 
       modalEdit.classList.remove("hidden");
     });
   });
+
+  async function loadRolesIntoSelect(selectElement, currentRole) {
+    try {
+      const response = await fetch('/administrador/api/roles', {
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+      });
+      const roles = await response.json();
+      
+      selectElement.innerHTML = '';
+      roles.forEach(role => {
+        // Exclude "paciente" role
+        if (role.name.toLowerCase() === 'paciente') return;
+        
+        const option = document.createElement('option');
+        option.value = role.name;
+        option.textContent = role.name;
+        if (role.name === currentRole) {
+          option.selected = true;
+        }
+        selectElement.appendChild(option);
+      });
+    } catch (err) {
+      console.error('Error loading roles:', err);
+    }
+  }
 
   // Delete buttons
   document.querySelectorAll(".admin-delete-btn").forEach(btn => {
@@ -744,14 +769,27 @@ btnSave.addEventListener("click", async () => {
     if (!currentUserId) return;
     
     try {
-      const response = await fetch(`/administrador/api/users/${currentUserId}/role`, {
+      const url = `/administrador/api/users/${currentUserId}/role`;
+      console.log('Updating user role:', url, 'with role:', inputRole.value);
+      
+      const response = await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify({ role_name: inputRole.value })
+        body: JSON.stringify({ role: inputRole.value })
       });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('Server response:', text);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       showAppAlert(data.message || 'Rol actualizado exitosamente.', 'success');
       
@@ -808,8 +846,29 @@ if (btnSaveNewUser) {
     const role = inputNewRole.value;
     const password = inputNewPass.value;
 
+    // Validation
     if (!name || !email || !role || !password) {
       showAppAlert('Por favor complete todos los campos.', 'error');
+      return;
+    }
+
+    // Validate name - only letters and spaces
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+    if (!nameRegex.test(name)) {
+      showAppAlert('El nombre solo debe contener letras.', 'error');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showAppAlert('Por favor ingrese un correo electrónico válido.', 'error');
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      showAppAlert('La contraseña debe tener al menos 6 caracteres.', 'error');
       return;
     }
 

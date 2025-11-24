@@ -35,9 +35,6 @@ class EnfermeraController extends Controller
 
         $query = Patient::query();
         
-        // Only show patients with appointments
-        $query->whereHas('appointments');
-        
         // Accept numeric ids or UUIDs
         $isUuid = preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $q);
         if (is_numeric($q) || $isUuid) {
@@ -96,8 +93,12 @@ class EnfermeraController extends Controller
                 'age' => $age,
                 'diagnosis' => $diagnosis,
                 'last_consult' => $last ? substr($last,0,10) : null,
+                'has_appointment' => $lastAppt ? true : false,
             ];
-        });
+        })->filter(function($patient) {
+            // Only show patients with appointments
+            return $patient['has_appointment'];
+        })->values();
 
         return response()->json($list);
     }

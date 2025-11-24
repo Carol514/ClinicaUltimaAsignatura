@@ -885,6 +885,10 @@ function showAppConfirm(message, callback) {
   tratForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    // Prevent duplicate submissions
+    const submitButton = tratForm.querySelector('button[type="submit"]');
+    if (submitButton.disabled) return;
+    
     const name = $('med_name').value.trim() || tNuevo.value.trim();
     const dose = $('med_dose').value.trim();
     const unit = $('med_unit').value;
@@ -913,6 +917,9 @@ function showAppConfirm(message, callback) {
       result_date: resultDate || null,
       notes: resultNotes || null,
     };
+    
+    // Disable submit button to prevent duplicates
+    submitButton.disabled = true;
     
     try {
       let response;
@@ -952,6 +959,9 @@ function showAppConfirm(message, callback) {
     } catch(err) {
       console.error('Error saving treatment:', err);
       showAppAlert('❌ Error al guardar el tratamiento: ' + err.message, 'error');
+    } finally {
+      // Re-enable submit button
+      submitButton.disabled = false;
     }
   });
 
@@ -994,6 +1004,10 @@ function showAppConfirm(message, callback) {
   vitalsForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    // Prevent duplicate submissions
+    const submitButton = vitalsForm.querySelector('button[type="submit"]');
+    if (submitButton.disabled) return;
+    
     const fecha = $('v_fecha').value;
     const temp = $('v_temp').value;
     const press = $('v_press').value;
@@ -1026,6 +1040,9 @@ function showAppConfirm(message, callback) {
       altura: altura || null,
     };
     
+    // Disable submit button to prevent duplicates
+    submitButton.disabled = true;
+    
     try {
       const response = await fetch('/enfermera/api/vitals', {
         method: 'POST',
@@ -1046,6 +1063,9 @@ function showAppConfirm(message, callback) {
     } catch(err) {
       console.error('Error saving vitals:', err);
       showAppAlert('❌ Error al registrar signos vitales.', 'error');
+    } finally {
+      // Re-enable submit button
+      submitButton.disabled = false;
     }
   });
 

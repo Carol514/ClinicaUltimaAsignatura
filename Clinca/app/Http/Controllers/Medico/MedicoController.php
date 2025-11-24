@@ -352,8 +352,11 @@ class MedicoController extends Controller
                     'detalle'=>($t->name ?? '') . ' ' . ($t->dose ?? ''),
                     'diagnostico'=>null,
                     'autor'=>$autor,
-                    'tratamiento' => ($t->name ?? '') . ' - ' . ($t->dose ?? '') . ' ' . ($t->frequency ?? ''),
-                    'notas' => $t->instructions ?? ''
+                    'tratamiento' => ($t->name ?? '') . ' - ' . ($t->dose ?? '') . ' ' . ($t->route ?? ''),
+                    'notas' => $t->instructions ?? '',
+                    'result_type' => $t->result_type ?? null,
+                    'result_date' => $t->result_date ?? null,
+                    'result_notes' => $t->notes ?? null
                 ];
             }
 
@@ -746,6 +749,7 @@ class MedicoController extends Controller
                     'id' => $record->id,
                     'condition' => $record->condition,
                     'details' => $record->details,
+                    'medical_background' => $record->medical_background,
                     'recorded_at' => $record->recorded_at
                 ];
             });

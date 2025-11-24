@@ -696,9 +696,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       const vitals = await response.json();
       
-      // If there are vitals, autofill with the most recent one
+      // If there are vitals, autofill with the most recent one (first in array, already sorted by date)
       if (vitals && vitals.length > 0) {
-        const mostRecent = vitals[0]; // Already ordered by taken_at desc
+        const mostRecent = vitals[0];
         
         // Autofill vital signs fields
         if (mostRecent.temp) document.getElementById('ah_temp').value = mostRecent.temp;
@@ -809,6 +809,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                   data-alergias="${h.alergias || ''}"
                   data-tratamiento="${h.tratamiento || ''}"
                   data-notas="${h.notas || ''}"
+                  data-result-type="${h.result_type || ''}"
+                  data-result-date="${h.result_date || ''}"
+                  data-result-notes="${h.result_notes || ''}"
                   data-temperatura="${h.temperatura || ''}"
                   data-presion="${h.presion || ''}"
                   data-pulso="${h.pulso || ''}"
@@ -1224,17 +1227,134 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (tipo === 'Tratamiento') {
       spanTrat.textContent = btn.dataset.tratamiento || '—';
       spanMotivo.textContent = btn.dataset.notas || '—';
+      
+      // Display result information in Documentos asociados
+      const resultType = btn.dataset.resultType || '';
+      const resultDate = btn.dataset.resultDate || '';
+      const resultNotes = btn.dataset.resultNotes || '';
+      const autor = btn.dataset.autor || '';
+      
+      spanDocs.innerHTML = '';
+      
+      if (autor) {
+        const autorP = document.createElement('p');
+        autorP.innerHTML = '<strong>Autor:</strong> ' + autor;
+        spanDocs.appendChild(autorP);
+      }
+      
+      if (resultType || resultDate || resultNotes) {
+        const resultsDiv = document.createElement('div');
+        resultsDiv.style.marginTop = '8px';
+        
+        const resultsTitle = document.createElement('p');
+        resultsTitle.innerHTML = '<strong>Resultados relacionados:</strong>';
+        resultsTitle.style.marginBottom = '4px';
+        resultsDiv.appendChild(resultsTitle);
+        
+        if (resultType) {
+          const p = document.createElement('p');
+          p.textContent = 'Tipo: ' + resultType;
+          p.style.margin = '2px 0';
+          resultsDiv.appendChild(p);
+        }
+        if (resultDate) {
+          const p = document.createElement('p');
+          p.textContent = 'Fecha del estudio: ' + resultDate;
+          p.style.margin = '2px 0';
+          resultsDiv.appendChild(p);
+        }
+        if (resultNotes) {
+          const p = document.createElement('p');
+          p.textContent = 'Notas: ' + resultNotes;
+          p.style.margin = '2px 0';
+          resultsDiv.appendChild(p);
+        }
+        
+        spanDocs.appendChild(resultsDiv);
+      }
+      
+      if (!autor && !resultType && !resultDate && !resultNotes) {
+        spanDocs.textContent = '—';
+      }
+      
+      // Load and display latest vital signs, allergies and antecedentes for this patient
+      console.log('Current patient ID:', currentPatientId);
+      if (currentPatientId) {
+        // Fetch vital signs
+        fetch(`/medico/api/vitals?patient_id=${currentPatientId}`)
+          .then(res => {
+            console.log('Vitals response:', res);
+            return res.json();
+          })
+          .then(vitals => {
+            console.log('Vitals data:', vitals);
+            if (vitals && vitals.length > 0) {
+              const latest = vitals[0];
+              spanTemp.textContent = latest.temp ? latest.temp + ' °C' : '—';
+              spanPress.textContent = latest.ta || '—';
+              spanPulse.textContent = latest.pulso ? latest.pulso + ' lpm' : '—';
+              spanFR.textContent = latest.fr ? latest.fr + ' rpm' : '—';
+              spanSpO2.textContent = latest.spo2 ? latest.spo2 + ' %' : '—';
+              spanPeso.textContent = latest.peso ? latest.peso + ' kg' : '—';
+              spanAltura.textContent = latest.altura ? latest.altura + ' cm' : '—';
+            }
+          })
+          .catch(err => console.error('Error loading vitals:', err));
+        
+        // Fetch allergies
+        fetch(`/medico/api/allergies?patient_id=${currentPatientId}`)
+          .then(res => {
+            console.log('Allergies response:', res);
+            return res.json();
+          })
+          .then(allergies => {
+            console.log('Allergies data:', allergies);
+            if (allergies && allergies.length > 0) {
+              const allergyList = allergies.map(a => a.allergen || 'Sin nombre').join(', ');
+              spanAlerg.textContent = allergyList;
+            } else {
+              spanAlerg.textContent = 'Sin alergias registradas';
+            }
+          })
+          .catch(err => {
+            console.error('Error loading allergies:', err);
+            spanAlerg.textContent = '—';
+          });
+        
+        // Fetch antecedentes (medical history)
+        fetch(`/medico/api/medical-history?patient_id=${currentPatientId}`)
+          .then(res => {
+            console.log('Antecedentes response:', res);
+            return res.json();
+          })
+          .then(antecedentes => {
+            console.log('Antecedentes data:', antecedentes);
+            if (antecedentes && antecedentes.length > 0) {
+              const antecedentesList = antecedentes.map(a => a.medical_background || 'Sin descripción').join(', ');
+              spanAnteced.textContent = antecedentesList;
+            } else {
+              spanAnteced.textContent = 'Sin antecedentes registrados';
+            }
+          })
+          .catch(err => {
+            console.error('Error loading antecedentes:', err);
+            spanAnteced.textContent = '—';
+          });
+      } else {
+        console.log('No current patient ID available');
+      }
     } else if (tipo === 'Cita' || tipo === 'Encuentro') {
       spanMotivo.textContent = btn.dataset.motivo || '—';
       if (btn.dataset.notas) {
         spanMotivo.textContent += ' - ' + btn.dataset.notas;
       }
+      // Show author for Cita/Encuentro
+      spanDocs.textContent = btn.dataset.autor ? 'Autor: ' + btn.dataset.autor : '—';
     } else {
       spanMotivo.textContent = btn.dataset.detalle || '—';
+      // Show author for other tipos
+      spanDocs.textContent = btn.dataset.autor ? 'Autor: ' + btn.dataset.autor : '—';
     }
-    
-    // Always show author
-    spanDocs.textContent = btn.dataset.autor ? 'Autor: ' + btn.dataset.autor : '—';
 
     historyModal.classList.remove('hidden');
   }

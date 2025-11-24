@@ -207,6 +207,14 @@ Route::prefix('medico')->group(function () {
 
     // Medico API endpoints (require medico or administrador role)
     Route::prefix('api')->group(function () {
+        Route::get('dashboard', function () {
+            $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+                ->join('roles','roles.id','=','users_roles.role_id')
+                ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+            if (!in_array($role, ['medico','administrador'])) abort(403);
+            return app(\App\Http\Controllers\Medico\MedicoController::class)->dashboardStats(request());
+        });
+
         Route::get('history', function () { 
             $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
                 ->join('roles','roles.id','=','users_roles.role_id')
@@ -223,12 +231,36 @@ Route::prefix('medico')->group(function () {
             return app(\App\Http\Controllers\Medico\MedicoController::class)->searchPatients(request());
         });
 
+        Route::get('diagnoses', function () {
+            $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+                ->join('roles','roles.id','=','users_roles.role_id')
+                ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+            if (!in_array($role, ['medico','administrador'])) abort(403);
+            return app(\App\Http\Controllers\Medico\MedicoController::class)->getDiagnoses(request());
+        });
+
         Route::get('documentos', function () {
             $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
                 ->join('roles','roles.id','=','users_roles.role_id')
                 ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
             if (!in_array($role, ['medico','administrador'])) abort(403);
             return app(\App\Http\Controllers\Medico\MedicoController::class)->documentos(request());
+        });
+
+        Route::get('documentos/{id}/download', function ($id) {
+            $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+                ->join('roles','roles.id','=','users_roles.role_id')
+                ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+            if (!in_array($role, ['medico','administrador'])) abort(403);
+            return app(\App\Http\Controllers\Medico\MedicoController::class)->downloadDocument($id);
+        });
+
+        Route::post('upload-documentos', function () {
+            $role = session('userRole') ?? (Auth::check() ? DB::table('users_roles')
+                ->join('roles','roles.id','=','users_roles.role_id')
+                ->where('users_roles.user_id', Auth::id())->value('roles.code') : null);
+            if (!in_array($role, ['medico','administrador'])) abort(403);
+            return app(\App\Http\Controllers\Medico\MedicoController::class)->uploadDocuments(request());
         });
 
         Route::get('tratamientos', function () {

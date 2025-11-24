@@ -18,6 +18,7 @@ use App\Models\Allergy;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
  
 
 class MedicoController extends Controller
@@ -33,6 +34,56 @@ class MedicoController extends Controller
         }
     }
 
+    // Dashboard statistics
+    public function dashboardStats(Request $request)
+    {
+        $this->ensureMedicoOrAdmin();
+        
+        $today = now()->toDateString();
+        $medicoId = Auth::id();
+        
+        // Today's appointments for this doctor
+        $citasHoy = Appointment::where('clinician_id', $medicoId)
+            ->whereDate('scheduled_at', $today)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->count();
+        
+        // Appointments per day this month for chart
+        $startOfMonth = now()->startOfMonth()->toDateString();
+        $endOfMonth = now()->endOfMonth()->toDateString();
+        
+        $appointmentsByDay = Appointment::where('clinician_id', $medicoId)
+            ->whereBetween('scheduled_at', [$startOfMonth . ' 00:00:00', $endOfMonth . ' 23:59:59'])
+            ->selectRaw('DATE(scheduled_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->mapWithKeys(function($item) {
+                return [$item->date => $item->count];
+            });
+        
+        // Generate array for last 7 days
+        $chartData = [];
+        $dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $dateStr = $date->toDateString();
+            $dayOfWeek = $date->dayOfWeek;
+            
+            $chartData[] = [
+                'label' => $dayNames[$dayOfWeek],
+                'date' => $dateStr,
+                'value' => $appointmentsByDay[$dateStr] ?? 0
+            ];
+        }
+        
+        return response()->json([
+            'citas_hoy' => $citasHoy,
+            'chart_data' => $chartData
+        ]);
+    }
+
     // Search patients by name or id (used by medico panel)
     public function searchPatients(Request $request)
     {
@@ -41,7 +92,20 @@ class MedicoController extends Controller
         $q = $request->query('query');
         if (!$q) return response()->json([], 200);
 
-        $query = Patient::query();
+        $medicoId = Auth::id();
+        
+        // Get patient IDs that have appointments with this doctor
+        $patientIdsWithAppointments = Appointment::where('clinician_id', $medicoId)
+            ->distinct()
+            ->pluck('patient_id')
+            ->toArray();
+        
+        if (empty($patientIdsWithAppointments)) {
+            return response()->json([], 200);
+        }
+
+        $query = Patient::whereIn('id', $patientIdsWithAppointments);
+        
         // Accept numeric ids or UUIDs in the query
         $isUuid = preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $q);
         if (is_numeric($q) || $isUuid) {
@@ -111,16 +175,78 @@ class MedicoController extends Controller
         return response()->json($list);
     }
 
-    // GET medico/api/history?patient_id=XX
+    // GET medico/api/history?patient_id=XX or ?diagnosis=XX
     public function historial(Request $request)
     {
         $this->ensureMedicoOrAdmin();
 
         $pid = $request->query('patient_id') ?? $request->input('patient_id');
+        $diagnosis = $request->query('diagnosis') ?? $request->input('diagnosis');
+        
+        // If searching by diagnosis, get all patients with that diagnosis
+        if ($diagnosis && !$pid) {
+            $medicoId = Auth::id();
+            
+            // Get patient IDs that have appointments with this doctor
+            $patientIdsWithAppointments = Appointment::where('clinician_id', $medicoId)
+                ->distinct()
+                ->pluck('patient_id')
+                ->toArray();
+            
+            if (empty($patientIdsWithAppointments)) {
+                return response()->json([]);
+            }
+            
+            // Get medical records for these patients
+            $recordIds = MedicalRecord::whereIn('patient_id', $patientIdsWithAppointments)
+                ->pluck('id')
+                ->toArray();
+            
+            if (empty($recordIds)) {
+                return response()->json([]);
+            }
+            
+            // Find medical histories with this diagnosis
+            $medicalHistories = MedicalHistory::whereIn('record_id', $recordIds)
+                ->where('condition', 'LIKE', '%' . $diagnosis . '%')
+                ->get();
+            
+            $items = [];
+            foreach ($medicalHistories as $mh) {
+                $record = MedicalRecord::find($mh->record_id);
+                if (!$record) continue;
+                
+                $patient = Patient::find($record->patient_id);
+                if (!$patient) continue;
+                
+                $patientName = trim(($patient->first_name ?? '') . ' ' . ($patient->last_name ?? ''));
+                $dt = $mh->recorded_at ? substr($mh->recorded_at, 0, 10) : ($mh->created_at ? substr($mh->created_at, 0, 10) : null);
+                
+                $autor = null;
+                if ($mh->recorded_by) {
+                    try { $autor = DB::table('users')->where('id', $mh->recorded_by)->value('name'); } catch(\Throwable $e) { }
+                }
+                
+                $items[] = [
+                    'fecha' => $dt,
+                    'paciente' => $patientName,
+                    'tipo' => 'Historial',
+                    'detalle' => ($mh->condition ?? '') . ' - ' . ($mh->details ?? ''),
+                    'diagnostico' => $mh->condition ?? null,
+                    'autor' => $autor
+                ];
+            }
+            
+            usort($items, function($a,$b){ return strcmp($b['fecha'] ?? '', $a['fecha'] ?? ''); });
+            return response()->json(array_values($items));
+        }
+
         if (!$pid) return response()->json(['error'=>'patient_id requerido'], 400);
 
         $patient = Patient::find($pid);
         if (!$patient) return response()->json([], 200);
+
+        $patientName = trim(($patient->first_name ?? '') . ' ' . ($patient->last_name ?? ''));
 
         $record = $patient->record;
         $items = [];
@@ -133,7 +259,14 @@ class MedicoController extends Controller
             if ($a->created_by) {
                 try { $autor = DB::table('users')->where('id', $a->created_by)->value('name'); } catch(\Throwable $e) { }
             }
-            $items[] = ['fecha'=>$dt,'tipo'=>'Cita','detalle'=>trim(($a->reason ?? '') . ' (' . ($a->status ?? '') . ')'),'autor'=>$autor];
+            $items[] = [
+                'fecha'=>$dt,
+                'paciente'=>$patientName,
+                'tipo'=>'Cita',
+                'detalle'=>trim(($a->reason ?? '') . ' (' . ($a->status ?? '') . ')'),
+                'diagnostico'=>null,
+                'autor'=>$autor
+            ];
         }
 
         if ($record) {
@@ -146,7 +279,14 @@ class MedicoController extends Controller
                 if ($e->clinician_id) {
                     try { $autor = DB::table('users')->where('id', $e->clinician_id)->value('name'); } catch(\Throwable $ex) { }
                 }
-                $items[] = ['fecha'=>$dt,'tipo'=>'Encuentro','detalle'=>($e->reason ?? '') . ' ' . ($e->notes ?? ''),'autor'=>$autor];
+                $items[] = [
+                    'fecha'=>$dt,
+                    'paciente'=>$patientName,
+                    'tipo'=>'Encuentro',
+                    'detalle'=>($e->reason ?? '') . ' ' . ($e->notes ?? ''),
+                    'diagnostico'=>null,
+                    'autor'=>$autor
+                ];
             }
 
             $mh = MedicalHistory::where('record_id', $rid)->get();
@@ -156,7 +296,14 @@ class MedicoController extends Controller
                 if ($m->recorded_by) {
                     try { $autor = DB::table('users')->where('id', $m->recorded_by)->value('name'); } catch(\Throwable $e) { }
                 }
-                $items[] = ['fecha'=>$dt,'tipo'=>'Historial','detalle'=>($m->condition ?? '') . ' - ' . ($m->details ?? ''),'autor'=>$autor];
+                $items[] = [
+                    'fecha'=>$dt,
+                    'paciente'=>$patientName,
+                    'tipo'=>'Historial',
+                    'detalle'=>($m->condition ?? '') . ' - ' . ($m->details ?? ''),
+                    'diagnostico'=>$m->condition ?? null,
+                    'autor'=>$autor
+                ];
             }
 
             $docs = Document::where('record_id', $rid)->get();
@@ -166,7 +313,14 @@ class MedicoController extends Controller
                 if ($d->uploaded_by) {
                     try { $autor = DB::table('users')->where('id', $d->uploaded_by)->value('name'); } catch(\Throwable $e) { }
                 }
-                $items[] = ['fecha'=>$dt,'tipo'=>'Documento','detalle'=>($d->title ?? $d->doc_type ?? ''),'autor'=>$autor];
+                $items[] = [
+                    'fecha'=>$dt,
+                    'paciente'=>$patientName,
+                    'tipo'=>'Documento',
+                    'detalle'=>($d->title ?? $d->doc_type ?? ''),
+                    'diagnostico'=>null,
+                    'autor'=>$autor
+                ];
             }
 
             $treats = Treatment::where('record_id', $rid)->get();
@@ -176,7 +330,14 @@ class MedicoController extends Controller
                 if ($t->updated_by) {
                     try { $autor = DB::table('users')->where('id', $t->updated_by)->value('name'); } catch(\Throwable $e) { }
                 }
-                $items[] = ['fecha'=>$dt,'tipo'=>'Tratamiento','detalle'=>($t->name ?? '') . ' ' . ($t->dose ?? ''),'autor'=>$autor];
+                $items[] = [
+                    'fecha'=>$dt,
+                    'paciente'=>$patientName,
+                    'tipo'=>'Tratamiento',
+                    'detalle'=>($t->name ?? '') . ' ' . ($t->dose ?? ''),
+                    'diagnostico'=>null,
+                    'autor'=>$autor
+                ];
             }
 
             $vitals = VitalSign::whereIn('encounter_id', $enc->pluck('id')->toArray())->get();
@@ -186,7 +347,14 @@ class MedicoController extends Controller
                 if ($v->nurse_id) {
                     try { $autor = DB::table('users')->where('id', $v->nurse_id)->value('name'); } catch(\Throwable $e) { }
                 }
-                $items[] = ['fecha'=>$dt,'tipo'=>'Signos vitales','detalle'=>('TA ' . ($v->sbp ?? '') . '/' . ($v->dbp ?? '') . ' · Temp ' . ($v->temp_c ?? '')),'autor'=>$autor];
+                $items[] = [
+                    'fecha'=>$dt,
+                    'paciente'=>$patientName,
+                    'tipo'=>'Signos vitales',
+                    'detalle'=>('TA ' . ($v->sbp ?? '') . '/' . ($v->dbp ?? '') . ' · Temp ' . ($v->temp_c ?? '')),
+                    'diagnostico'=>null,
+                    'autor'=>$autor
+                ];
             }
         }
 
@@ -416,8 +584,9 @@ class MedicoController extends Controller
             'patient_id' => 'required|string',
             'encounter_dt' => 'required|date',
             'reason' => 'nullable|string', // motivo/observaciones
+            'diagnosis' => 'required|string', // diagnóstico
             'allergies' => 'nullable|string',
-            'medical_history' => 'nullable|string', // antecedentes
+            'antecedentes' => 'nullable|string',
             'vitals' => 'nullable|array',
             'vitals.temp' => 'nullable|numeric',
             'vitals.sbp' => 'nullable|integer',
@@ -425,7 +594,8 @@ class MedicoController extends Controller
             'vitals.hr' => 'nullable|integer',
             'vitals.rr' => 'nullable|integer',
             'vitals.spo2' => 'nullable|integer',
-            'vitals.weight' => 'nullable|numeric'
+            'vitals.weight' => 'nullable|numeric',
+            'vitals.height' => 'nullable|numeric'
         ]);
 
         // Find patient and ensure they have a medical record
@@ -451,44 +621,18 @@ class MedicoController extends Controller
             $encounter = new Encounter();
             $encounter->record_id = $recordId;
             $encounter->encounter_dt = $encounterDate;
-            $encounter->reason = $data['reason'] ?? 'Alta de historial';
-            $encounter->doctor_id = $currentUserId;
+            $encounter->reason = $data['reason'] ?? 'Consulta médica';
+            $encounter->clinician_id = $currentUserId;
             $encounter->save();
+        } else {
+            // Update reason if provided
+            if (!empty($data['reason'])) {
+                $encounter->reason = $data['reason'];
+                $encounter->save();
+            }
         }
 
         $results = [];
-
-        // Save vital signs if provided
-        if (!empty($data['vitals'])) {
-            $vitals = $data['vitals'];
-            if (array_filter($vitals)) { // Only save if at least one vital sign has a value
-                // Try to find existing vital signs for this encounter/date
-                $vitalSign = VitalSign::where('encounter_id', $encounter->id)
-                    ->whereDate('taken_at', $encounterDate)
-                    ->first();
-                
-                // If no existing vital sign found, create new one
-                if (!$vitalSign) {
-                    $vitalSign = new VitalSign();
-                    $vitalSign->encounter_id = $encounter->id;
-                    $vitalSign->taken_at = $encounterDate;
-                    $vitalSign->nurse_id = $currentUserId; // Doctor recording vitals
-                }
-                
-                // Update/set the vital sign values
-                $vitalSign->temp_c = $vitals['temp'] ?? $vitalSign->temp_c;
-                $vitalSign->sbp = $vitals['sbp'] ?? $vitalSign->sbp;
-                $vitalSign->dbp = $vitals['dbp'] ?? $vitalSign->dbp;
-                $vitalSign->hr = $vitals['hr'] ?? $vitalSign->hr;
-                $vitalSign->rr = $vitals['rr'] ?? $vitalSign->rr;
-                $vitalSign->spo2 = $vitals['spo2'] ?? $vitalSign->spo2;
-                $vitalSign->weight_kg = $vitals['weight'] ?? $vitalSign->weight_kg;
-                
-                $vitalSign->save();
-                $results['vitals_updated'] = !$vitalSign->wasRecentlyCreated;
-                $results['vitals_saved'] = true;
-            }
-        }
 
         // Save allergies if provided
         if (!empty($data['allergies'])) {
@@ -507,7 +651,7 @@ class MedicoController extends Controller
                         $allergy->record_id = $recordId;
                         $allergy->allergen = $allergen;
                         $allergy->reaction = 'No especificada';
-                        $allergy->severity = 'leve'; // Use valid ENUM value
+                        $allergy->severity = 'leve';
                         $allergy->recorded_by = $currentUserId;
                         $allergy->recorded_at = now();
                         $allergy->save();
@@ -517,36 +661,26 @@ class MedicoController extends Controller
             $results['allergies_saved'] = true;
         }
 
-        // Save medical history (motivo/observaciones) if provided
-        if (!empty($data['reason'])) {
-            $history = new MedicalHistory();
-            $history->record_id = $recordId;
-            $history->condition = $data['reason']; // motivo/observaciones goes in condition
-            $history->details = $data['medical_history'] ?? null; // antecedentes goes in details
-            $history->recorded_by = $currentUserId;
-            $history->recorded_at = now();
-            $history->save();
-            $results['history_saved'] = true;
-        }
+        // Save medical history - diagnosis goes in condition, motivo goes in details
+        $history = new MedicalHistory();
+        $history->record_id = $recordId;
+        $history->condition = $data['diagnosis']; // diagnóstico goes in condition
+        $history->details = $data['reason'] ?? 'Consulta médica'; // motivo/observaciones goes in details
+        $history->recorded_by = $currentUserId;
+        $history->recorded_at = $encounterDate;
+        $history->save();
+        $results['history_saved'] = true;
         
-        // Save antecedentes separately if provided and not already saved with reason
-        if (!empty($data['medical_history']) && empty($data['reason'])) {
-            // Check if this antecedente already exists to avoid duplicates
-            $existingHistory = MedicalHistory::where('record_id', $recordId)
-                ->where('details', 'LIKE', '%' . trim($data['medical_history']) . '%')
-                ->where('condition', 'Antecedentes')
-                ->first();
-                
-            if (!$existingHistory) {
-                $history = new MedicalHistory();
-                $history->record_id = $recordId;
-                $history->condition = 'Antecedentes';
-                $history->details = $data['medical_history'];
-                $history->recorded_by = $currentUserId;
-                $history->recorded_at = now();
-                $history->save();
-                $results['antecedentes_saved'] = true;
-            }
+        // Save antecedentes as a separate medical history entry if provided
+        if (!empty($data['antecedentes'])) {
+            $antecedentesHistory = new MedicalHistory();
+            $antecedentesHistory->record_id = $recordId;
+            $antecedentesHistory->condition = 'Antecedentes';
+            $antecedentesHistory->details = $data['antecedentes'];
+            $antecedentesHistory->recorded_by = $currentUserId;
+            $antecedentesHistory->recorded_at = $encounterDate;
+            $antecedentesHistory->save();
+            $results['antecedentes_saved'] = true;
         }
 
         return response()->json([
@@ -603,5 +737,45 @@ class MedicoController extends Controller
             });
 
         return response()->json($history->toArray());
+    }
+
+    // GET medico/api/diagnoses - Get all unique diagnoses for doctor's patients
+    public function getDiagnoses(Request $request)
+    {
+        $this->ensureMedicoOrAdmin();
+        $medicoId = Auth::id();
+
+        // Get all patient IDs that have appointments with this doctor
+        $patientIds = Appointment::where('clinician_id', $medicoId)
+            ->distinct()
+            ->pluck('patient_id')
+            ->toArray();
+
+        if (empty($patientIds)) {
+            return response()->json([]);
+        }
+
+        // Get medical records for these patients
+        $recordIds = MedicalRecord::whereIn('patient_id', $patientIds)
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($recordIds)) {
+            return response()->json([]);
+        }
+
+        // Get unique diagnoses (conditions) from medical histories
+        $diagnoses = MedicalHistory::whereIn('record_id', $recordIds)
+            ->whereNotNull('condition')
+            ->where('condition', '!=', '')
+            ->where('condition', '!=', 'Antecedentes')
+            ->distinct()
+            ->pluck('condition')
+            ->filter()
+            ->sort()
+            ->values()
+            ->toArray();
+
+        return response()->json($diagnoses);
     }
 }

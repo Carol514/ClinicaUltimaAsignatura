@@ -3,6 +3,41 @@
 @section('title','Panel del Médico')
 
 @section('content')
+<style>
+  .suggestions-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 2px;
+  }
+  
+  .suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .suggestion-item:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .suggestion-item:last-child {
+    border-bottom: none;
+  }
+  
+  .hidden {
+    display: none;
+  }
+</style>
+
 <main class="dashboard medico-dashboard">
   <h2>Panel del Médico</h2>
 
@@ -40,28 +75,25 @@
     {{-- FILTROS --}}
 <div class="med-filters-row">
 
-  <div class="field">
+  <div class="field" style="position: relative;">
     <label for="f_paciente">Buscar paciente</label>
     <div class="search-row">
-      <input id="f_paciente" placeholder="Nombre o ID del paciente">
+      <input id="f_paciente" placeholder="Nombre o ID del paciente" autocomplete="off">
       <button id="btnBuscarHist" class="confirm-btn" type="button">
         <img src="/img/buscar.png" class="btn-icon" alt="Buscar">
       </button>
     </div>
+    <div id="hist-patient-suggestions" class="suggestions-dropdown hidden"></div>
   </div>
 
-  {{-- Filtro por enfermedad / diagnóstico con autocomplete propio --}}
-  <div class="field med-dx-field">
+  {{-- Filtro por enfermedad / diagnóstico --}}
+  <div class="field" style="position: relative;">
     <label for="f_enfermedad">Filtrar por enfermedad / diagnóstico</label>
-    <input id="f_enfermedad" placeholder="Ej. Gastritis, Diabetes...">
-    <div id="dxSuggestions" class="dx-suggestions hidden"></div>
+    <input id="f_enfermedad" placeholder="Ej. Gastritis, Diabetes..." autocomplete="off">
+    <div id="dxSuggestions" class="suggestions-dropdown hidden"></div>
   </div>
 
 </div>
-
-
-
-
     {{-- TABLA HISTORIAL --}}
     <div class="med-card med-card--history">
       <h3 class="med-card-title">Historial de expedientes</h3>
@@ -78,69 +110,24 @@
             </tr>
           </thead>
           <tbody id="medHistoryRows">
-            {{-- Ejemplos para que el profe vea el diseño --}}
-            <tr>
-              <td>21/11/2025</td>
-              <td>Hugo García</td>
-              <td>Dolor de estómago</td>
-              <td>Gastritis aguda</td>
-              <td class="history-actions">
-                <button type="button"
-                        class="icon-btn med-history-detail"
-                        data-fecha="21/11/2025"
-                        data-paciente="Hugo García"
-                        data-motivo="Dolor de estómago de 3 días, ardor después de comer."
-                        data-dx="Gastritis aguda"
-                        data-alergias="Penicilina"
-                        data-antecedentes="Gastritis previa, tabaquismo ocasional."
-                        data-temp="36.5 °C"
-                        data-press="120/80 mmHg"
-                        data-pulse="75 lpm"
-                        data-fr="16 rpm"
-                        data-spo2="98 %"
-                        data-peso="70 kg"
-                        data-altura="170 cm"
-                        data-trat="Omeprazol 20 mg cada 12 horas por 14 días."
-                        data-docs="Laboratorio general; Endoscopía (PDF)">
-                  <a href="#" class="doc-btn" target="_blank" style="font-size: 23px;"><img src="/img/visualizar.png" alt="Ver detalle" style="width:20px; height:20px;"></a>
-                </button>
-              </td>
-            </tr>
-
-            <tr>
-              <td>10/11/2025</td>
-              <td>María López</td>
-              <td>Control de diabetes</td>
-              <td>Diabetes mellitus tipo 2</td>
-              <td class="history-actions">
-                <button type="button"
-                        class="icon-btn med-history-detail"
-                        data-fecha="10/11/2025"
-                        data-paciente="María López"
-                        data-motivo="Consulta de seguimiento, revisión de glucosa."
-                        data-dx="Diabetes mellitus tipo 2"
-                        data-alergias="Ninguna conocida"
-                        data-antecedentes="Diabetes en madre, hipertensión en padre."
-                        data-temp="36.8 °C"
-                        data-press="130/85 mmHg"
-                        data-pulse="80 lpm"
-                        data-fr="18 rpm"
-                        data-spo2="97 %"
-                        data-peso="82 kg"
-                        data-altura="160 cm"
-                        data-trat="Metformina 850 mg cada 12 horas."
-                        data-docs="Perfil de lípidos; Glucosa en ayunas">
-                  <a href="#" class="doc-btn" target="_blank" style="font-size: 23px;"><img src="/img/visualizar.png" alt="Ver detalle" style="width:20px; height:20px;"></a>
-                </button>
-              </td>
-            </tr>
-
+            {{-- Table will be populated by JavaScript from API --}}
           </tbody>
         </table>
 
-        <p id="medHistoryEmpty" class="muted" style="text-align:center;margin-top:10px; display:none;">
-          No se encontraron registros con ese filtro.
+        <p id="medHistoryEmpty" class="muted" style="text-align:center;margin-top:10px;">
+          Busque un paciente para ver su historial.
         </p>
+      </div>
+      
+      {{-- Pagination Controls --}}
+      <div id="historyPagination" class="pagination-container" style="display: none; margin-top: 15px; text-align: center;">
+        <button id="prevPage" class="icon-btn" style="margin: 0 5px;">
+          <img src="/img/flecha-izquierda.png" alt="Anterior" style="width:20px; height:20px;">
+        </button>
+        <span id="pageInfo" style="margin: 0 15px; font-weight: 600;">Página 1 de 1</span>
+        <button id="nextPage" class="icon-btn" style="margin: 0 5px;">
+          <img src="/img/flecha-derecha.png" alt="Siguiente" style="width:20px; height:20px;">
+        </button>
       </div>
     </div>
 
@@ -150,7 +137,7 @@
   {{-- ==========================
         ALTA DE HISTORIAL
       =========================== --}}
-  <section class="med-form-section">
+  <section class="med-form-section hidden" id="altaHistorialSection">
 
     <div class="med-card">
       <h3 class="med-card-title">Alta de historial médico</h3>
@@ -159,14 +146,15 @@
 
         {{-- Paciente + Fecha --}}
         <div class="trat-grid" style="margin-bottom:12px;">
-          <div class="field">
+          <div class="field" style="position: relative;">
             <label for="ah_paciente">Paciente</label>
-            <input id="ah_paciente" placeholder="Nombre del paciente">
+            <input id="ah_paciente" placeholder="Seleccione un paciente primero" autocomplete="off" disabled>
+            <div id="ah-patient-suggestions" class="suggestions-dropdown hidden"></div>
           </div>
 
           <div class="field">
             <label for="ah_fecha">Fecha</label>
-            <input id="ah_fecha" type="date">
+            <input id="ah_fecha" type="date" disabled>
           </div>
         </div>
 
@@ -244,7 +232,7 @@
           <button type="submit" class="confirm-btn">
             <img src="/img/guardar.png" class="btn-icon" alt="Guardar" style="width:24px; height:24px;">
           </button>
-          <button type="button" class="cancel-btn" style="background-color: orange;" onmouseover="this.style.backgroundColor='darkorange'" onmouseout="this.style.backgroundColor='orange'">
+          <button type="button" id="altaClearBtn" class="cancel-btn" style="background-color: orange;" onmouseover="this.style.backgroundColor='darkorange'" onmouseout="this.style.backgroundColor='orange'">
             <img src="/img/limpiar.png" class="btn-icon" alt="Limpiar">
           </button>
         </div>
@@ -258,14 +246,13 @@
   {{-- ==========================
         SUBIR DOCUMENTOS
       =========================== --}}
-  <section class="med-docs-section">
+  <section class="med-docs-section hidden" id="subirDocumentosSection">
 
     <div class="med-card">
       <h3 class="med-card-title">Subir documentos</h3>
 
       <div class="med-docs-patient">
-        <p><strong>Paciente:</strong> <span id="docsPaciente">Hugo García</span></p>
-        <p class="muted">En el futuro se llenará automáticamente según el expediente seleccionado.</p>
+        <p><strong>Paciente:</strong> <span id="docsPaciente">—</span></p>
       </div>
 
       <form id="docsForm" class="form-container">
@@ -316,20 +303,10 @@
       <h3 class="med-card-title">Documentos del paciente</h3>
 
       <div id="docsList" class="docs-list">
-        <div class="doc-item">
-          <img src="/img/documento.png" class="doc-icon" alt="PDF" style="width:24px; height:24px;">
-          <span class="doc-name">Laboratorio_general.pdf</span>
-          <a href="#" class="doc-btn" target="_blank"><img src="/img/visualizar.png" alt="Ver detalle" style="width:20px; height:20px;"></a>
-        </div>
-
-        <div class="doc-item">
-          <img src="/img/documento.png" class="doc-icon" alt="IMG" style="width:24px; height:24px;">
-          <span class="doc-name">Rx_Torax_2025.jpg</span>
-          <a href="#" class="doc-btn" target="_blank"><img src="/img/visualizar.png" alt="Ver detalle" style="width:20px; height:20px;"></a>
-        </div>
+        {{-- Documents will be loaded dynamically --}}
       </div>
 
-      <p id="docsListEmpty" class="muted" style="text-align:center;margin-top:8px; display:none;">
+      <p id="docsListEmpty" class="muted" style="text-align:center;margin-top:8px;">
         Aún no hay documentos.
       </p>
     </div>
@@ -416,95 +393,551 @@
 
 </main>
 
-{{-- ================= JS (SOLO MAQUETA) ================= --}}
+{{-- ================= JS ================= --}}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // ----------- Estadística de citas de hoy (demo) -----------
+document.addEventListener('DOMContentLoaded', async () => {
+  // ----------- Load Dashboard Stats -----------
   const statCitasHoy = document.getElementById('statCitasHoy');
-  const hoy = new Date().toISOString().slice(0,10);
-
-  const DEMO_CITAS = [
-    { fecha: hoy, paciente: 'Hugo García' },
-    { fecha: hoy, paciente: 'María López' },
-    { fecha: hoy, paciente: 'Juan Pérez' },
-    { fecha: hoy, paciente: 'Ana Díaz' },
-    { fecha: hoy, paciente: 'Pedro Torres' },
-  ];
-  statCitasHoy.textContent = DEMO_CITAS.length;
-
-  // ----------- Gráfica simple (barras) -----------
   const miniChart = document.getElementById('miniChart');
-  const dataSemana = [
-    { label: 'Lun', value: 3 },
-    { label: 'Mar', value: 4 },
-    { label: 'Mié', value: 5 },
-    { label: 'Jue', value: 2 },
-    { label: 'Vie', value: 6 },
-    { label: 'Sáb', value: 1 },
-    { label: 'Dom', value: 0 },
-  ];
-  const maxVal = Math.max(...dataSemana.map(d => d.value)) || 1;
 
-  dataSemana.forEach(d => {
-    const bar = document.createElement('div');
-    bar.className = 'mini-chart-bar';
-    bar.style.height = (d.value / maxVal * 100) + '%';
-    bar.innerHTML = `<span class="mini-chart-value">${d.value}</span>
-                     <span class="mini-chart-label">${d.label}</span>`;
-    miniChart.appendChild(bar);
-  });
+  async function loadDashboardStats() {
+    try {
+      const response = await fetch('/medico/api/dashboard', {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to load dashboard stats');
+      
+      const data = await response.json();
+      
+      // Update today's appointments count
+      statCitasHoy.textContent = data.citas_hoy || 0;
+      
+      // Render chart
+      miniChart.innerHTML = '';
+      const maxVal = Math.max(...data.chart_data.map(d => d.value)) || 1;
+      
+      data.chart_data.forEach(d => {
+        const bar = document.createElement('div');
+        bar.className = 'mini-chart-bar';
+        bar.style.height = (d.value / maxVal * 100) + '%';
+        bar.innerHTML = `<span class="mini-chart-value">${d.value}</span>
+                         <span class="mini-chart-label">${d.label}</span>`;
+        miniChart.appendChild(bar);
+      });
+      
+    } catch (error) {
+      console.error('Error loading dashboard stats:', error);
+      statCitasHoy.textContent = '0';
+    }
+  }
 
-  // ----------- Filtro por paciente / enfermedad -----------
+  // Load stats on page load
+  await loadDashboardStats();
+
+  // ----------- Patient Search and History -----------
   const fPaciente    = document.getElementById('f_paciente');
   const fEnfermedad  = document.getElementById('f_enfermedad');
   const btnBuscarHist = document.getElementById('btnBuscarHist');
   const histRows     = document.getElementById('medHistoryRows');
   const histEmpty    = document.getElementById('medHistoryEmpty');
+  const histPatientSuggestions = document.getElementById('hist-patient-suggestions');
+
+  let currentPatientId = null;
+  let currentPatientName = null;
+  let allHistoryData = [];
+  let filteredHistoryData = [];
+  let histSearchTimeout = null;
+  let currentPage = 1;
+  const itemsPerPage = 5;
+  
+  const historyPagination = document.getElementById('historyPagination');
+  const pageInfo = document.getElementById('pageInfo');
+  const prevPageBtn = document.getElementById('prevPage');
+  const nextPageBtn = document.getElementById('nextPage');
+  const docsPacienteSpan = document.getElementById('docsPaciente');
+  const docsList = document.getElementById('docsList');
+  const docsListEmpty = document.getElementById('docsListEmpty');
+
+  async function searchAndLoadHistory() {
+    const query = fPaciente.value.trim();
+    if (!query) {
+      alert('Por favor ingrese un nombre o ID de paciente');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/medico/api/patients?query=${encodeURIComponent(query)}`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to search patients');
+      
+      const patients = await response.json();
+      
+      if (patients.length === 0) {
+        alert('No se encontró ningún paciente con ese nombre o ID');
+        return;
+      }
+      
+      if (patients.length === 1) {
+        // Load history for this patient
+        currentPatientId = patients[0].id;
+        currentPatientName = patients[0].name;
+        await loadPatientHistory(currentPatientId);
+      } else {
+        // Multiple matches - show selection
+        const names = patients.map((p, i) => `${i+1}. ${p.name} (${p.age || 'Sin edad'})`).join('\\n');
+        const selection = prompt(`Se encontraron ${patients.length} pacientes:\\n${names}\\n\\nIngrese el número del paciente:`);
+        const idx = parseInt(selection) - 1;
+        if (idx >= 0 && idx < patients.length) {
+          currentPatientId = patients[idx].id;
+          currentPatientName = patients[idx].name;
+          await loadPatientHistory(currentPatientId);
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error searching patients:', error);
+      alert('Error al buscar pacientes');
+    }
+  }
+
+  async function loadPatientHistory(patientId) {
+    try {
+      const response = await fetch(`/medico/api/history?patient_id=${patientId}`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to load history');
+      
+      allHistoryData = await response.json();
+      
+      // Get patient name from first record if available
+      if (allHistoryData.length > 0 && allHistoryData[0].paciente) {
+        currentPatientName = allHistoryData[0].paciente;
+        docsPacienteSpan.textContent = currentPatientName;
+      }
+      
+      renderHistoryTable(allHistoryData);
+      
+      // Show the sections after patient is selected
+      document.getElementById('altaHistorialSection').classList.remove('hidden');
+      document.getElementById('subirDocumentosSection').classList.remove('hidden');
+      
+      // Autofill and enable the alta historial form
+      const ahPacienteInput = document.getElementById('ah_paciente');
+      const ahFechaInput = document.getElementById('ah_fecha');
+      
+      ahPacienteInput.value = currentPatientName;
+      ahPacienteInput.disabled = true;
+      
+      // Set current date
+      const today = new Date().toISOString().split('T')[0];
+      ahFechaInput.value = today;
+      ahFechaInput.disabled = true;
+      
+      // Load patient documents and vital signs
+      await loadPatientDocuments(patientId);
+      await loadAndAutofillVitals(patientId);
+      
+    } catch (error) {
+      console.error('Error loading history:', error);
+      alert('Error al cargar el historial');
+    }
+  }
+
+  async function loadAndAutofillVitals(patientId) {
+    // Clear all vital signs fields first
+    document.getElementById('ah_temp').value = '';
+    document.getElementById('ah_press').value = '';
+    document.getElementById('ah_pulse').value = '';
+    document.getElementById('ah_resp').value = '';
+    document.getElementById('ah_spo2').value = '';
+    document.getElementById('ah_peso').value = '';
+    document.getElementById('ah_altura').value = '';
+    
+    try {
+      const response = await fetch(`/medico/api/vitals?patient_id=${patientId}`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to load vitals');
+      
+      const vitals = await response.json();
+      
+      // If there are vitals, autofill with the most recent one
+      if (vitals && vitals.length > 0) {
+        const mostRecent = vitals[0]; // Already ordered by taken_at desc
+        
+        // Autofill vital signs fields
+        if (mostRecent.temp) document.getElementById('ah_temp').value = mostRecent.temp;
+        if (mostRecent.sbp && mostRecent.dbp) {
+          document.getElementById('ah_press').value = `${mostRecent.sbp}/${mostRecent.dbp}`;
+        }
+        if (mostRecent.pulso) document.getElementById('ah_pulse').value = mostRecent.pulso;
+        if (mostRecent.fr) document.getElementById('ah_resp').value = mostRecent.fr;
+        if (mostRecent.spo2) document.getElementById('ah_spo2').value = mostRecent.spo2;
+        if (mostRecent.peso) document.getElementById('ah_peso').value = mostRecent.peso;
+        if (mostRecent.talla) document.getElementById('ah_altura').value = mostRecent.talla;
+      }
+      
+    } catch (error) {
+      console.error('Error loading vitals:', error);
+      // Don't alert, just leave fields empty
+    }
+  }
+
+  async function loadPatientDocuments(patientId) {
+    try {
+      const response = await fetch(`/medico/api/documentos?patient_id=${patientId}`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to load documents');
+      
+      const documents = await response.json();
+      renderDocumentsList(documents);
+      
+    } catch (error) {
+      console.error('Error loading documents:', error);
+      // Don't alert, just show empty state
+      renderDocumentsList([]);
+    }
+  }
+
+  function renderDocumentsList(documents) {
+    docsList.innerHTML = '';
+    
+    if (!documents || documents.length === 0) {
+      docsListEmpty.style.display = 'block';
+      return;
+    }
+    
+    docsListEmpty.style.display = 'none';
+    
+    documents.forEach(doc => {
+      const div = document.createElement('div');
+      div.className = 'doc-item';
+      div.innerHTML = `
+        <img src="/img/documento.png" class="doc-icon" alt="Doc" style="width:24px; height:24px;">
+        <span class="doc-name">${doc.title || doc.doc_type || 'Documento'}</span>
+        <a href="/medico/api/documentos/${doc.id}/download" class="doc-btn" target="_blank">
+          <img src="/img/visualizar.png" alt="Ver" style="width:20px; height:20px;">
+        </a>
+      `;
+      docsList.appendChild(div);
+    });
+  }
+
+  function renderHistoryTable(historyData, resetPage = true) {
+    filteredHistoryData = historyData || [];
+    
+    if (resetPage) {
+      currentPage = 1;
+    }
+    
+    histRows.innerHTML = '';
+    
+    if (!filteredHistoryData || filteredHistoryData.length === 0) {
+      histEmpty.style.display = 'block';
+      histEmpty.textContent = 'No se encontró historial para este paciente.';
+      historyPagination.style.display = 'none';
+      return;
+    }
+    
+    histEmpty.style.display = 'none';
+    
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredHistoryData.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const pageData = filteredHistoryData.slice(startIndex, endIndex);
+    
+    // Render current page data
+    pageData.forEach(h => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${h.fecha || '—'}</td>
+        <td>${h.paciente || '—'}</td>
+        <td>${h.detalle || h.tipo || '—'}</td>
+        <td>${h.diagnostico || '—'}</td>
+        <td class="history-actions">
+          <button type="button" class="icon-btn med-history-detail"
+                  data-fecha="${h.fecha || ''}"
+                  data-tipo="${h.tipo || ''}"
+                  data-detalle="${h.detalle || ''}"
+                  data-autor="${h.autor || ''}">
+            <a href="#" class="doc-btn" style="font-size: 23px;">
+              <img src="/img/visualizar.png" alt="Ver detalle" style="width:20px; height:20px;">
+            </a>
+          </button>
+        </td>
+      `;
+      histRows.appendChild(tr);
+    });
+    
+    // Update pagination controls
+    if (totalPages > 1) {
+      historyPagination.style.display = 'block';
+      pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+      prevPageBtn.disabled = currentPage === 1;
+      nextPageBtn.disabled = currentPage === totalPages;
+    } else {
+      historyPagination.style.display = 'none';
+    }
+    
+    // Re-attach event listeners to new buttons
+    document.querySelectorAll('.med-history-detail').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openHistoryModal(btn);
+      });
+    });
+  }
+  
+  // Pagination event listeners
+  prevPageBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderHistoryTable(filteredHistoryData, false);
+    }
+  });
+  
+  nextPageBtn.addEventListener('click', () => {
+    const totalPages = Math.ceil(filteredHistoryData.length / itemsPerPage);
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderHistoryTable(filteredHistoryData, false);
+    }
+  });
 
   function applyHistoryFilter() {
     const termPac = fPaciente.value.trim().toLowerCase();
     const termEnf = fEnfermedad.value.trim().toLowerCase();
 
-    let visibleCount = 0;
-    histRows.querySelectorAll('tr').forEach(tr => {
-      const tds = tr.querySelectorAll('td');
-      if (!tds.length) return;
-      const fecha = tds[0].textContent.toLowerCase();
-      const pac   = tds[1].textContent.toLowerCase();
-      const mot   = tds[2].textContent.toLowerCase();
-      const dx    = tds[3].textContent.toLowerCase();
+    // If only disease filter is active and no data loaded, search for patients with that diagnosis
+    if (!termPac && termEnf && allHistoryData.length === 0) {
+      searchByDiagnosis(termEnf);
+      return;
+    }
+
+    if (!termPac && !termEnf) {
+      // No filters, show all data
+      renderHistoryTable(allHistoryData, true);
+      return;
+    }
+
+    // Filter the data
+    const filtered = allHistoryData.filter(h => {
+      const fecha = (h.fecha || '').toLowerCase();
+      const pac = (h.paciente || '').toLowerCase();
+      const mot = (h.detalle || '').toLowerCase();
+      const dx = (h.diagnostico || '').toLowerCase();
 
       const okPac = !termPac || pac.includes(termPac) || fecha.includes(termPac);
       const okEnf = !termEnf || dx.includes(termEnf) || mot.includes(termEnf);
 
-      const show = okPac && okEnf;
-      tr.style.display = show ? '' : 'none';
-      if (show) visibleCount++;
+      return okPac && okEnf;
     });
 
-    histEmpty.style.display = visibleCount ? 'none' : 'block';
+    renderHistoryTable(filtered, true);
   }
 
-  btnBuscarHist.addEventListener('click', applyHistoryFilter);
+  // Search for patients by diagnosis
+  async function searchByDiagnosis(diagnosis) {
+    try {
+      // Get all patients with this diagnosis
+      const response = await fetch(`/medico/api/history?diagnosis=${encodeURIComponent(diagnosis)}`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to search by diagnosis');
+
+      const historyData = await response.json();
+      
+      if (historyData.length === 0) {
+        histEmpty.style.display = 'block';
+        histEmpty.textContent = 'No se encontraron pacientes con este diagnóstico.';
+        histRows.innerHTML = '';
+        historyPagination.style.display = 'none';
+        return;
+      }
+
+      allHistoryData = historyData;
+      renderHistoryTable(allHistoryData, true);
+
+      // Show the sections
+      document.getElementById('altaHistorialSection').classList.remove('hidden');
+      document.getElementById('subirDocumentosSection').classList.remove('hidden');
+
+    } catch (error) {
+      console.error('Error searching by diagnosis:', error);
+      alert('Error al buscar por diagnóstico');
+    }
+  }
+
+  // Real-time search for history patient field
+  async function searchPatientsForHistory(query) {
+    if (query.length < 2) {
+      histPatientSuggestions.classList.add('hidden');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/medico/api/patients?query=${encodeURIComponent(query)}`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to search patients');
+
+      const patients = await response.json();
+      displayHistoryPatientSuggestions(patients);
+
+    } catch (error) {
+      console.error('Error searching patients:', error);
+    }
+  }
+
+  function displayHistoryPatientSuggestions(patients) {
+    histPatientSuggestions.innerHTML = '';
+
+    if (patients.length === 0) {
+      histPatientSuggestions.innerHTML = '<div class="suggestion-item">No se encontraron pacientes</div>';
+    } else {
+      patients.slice(0, 5).forEach(patient => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.innerHTML = `
+          <strong>${patient.name}</strong><br>
+          <small>Edad: ${patient.age || 'N/A'} | Género: ${patient.gender || 'N/A'}</small>
+        `;
+        div.addEventListener('click', () => selectHistoryPatient(patient));
+        histPatientSuggestions.appendChild(div);
+      });
+    }
+
+    histPatientSuggestions.classList.remove('hidden');
+  }
+
+  async function selectHistoryPatient(patient) {
+    fPaciente.value = patient.name;
+    currentPatientId = patient.id;
+    currentPatientName = patient.name;
+    histPatientSuggestions.classList.add('hidden');
+    // Automatically load the patient's history and documents
+    await loadPatientHistory(currentPatientId);
+    await loadPatientDocuments(currentPatientId);
+    
+    // Apply disease filter if it exists
+    const termEnf = fEnfermedad.value.trim().toLowerCase();
+    if (termEnf) {
+      applyHistoryFilter();
+    }
+  }
+
+  fPaciente.addEventListener('input', () => {
+    clearTimeout(histSearchTimeout);
+    
+    // If input is cleared, reset patient data
+    if (fPaciente.value.trim() === '') {
+      histPatientSuggestions.classList.add('hidden');
+      currentPatientId = null;
+      currentPatientName = '';
+      
+      // Check if there's a disease filter active
+      const termEnf = fEnfermedad.value.trim().toLowerCase();
+      if (termEnf) {
+        // Search by disease only
+        searchByDiagnosis(termEnf);
+      } else {
+        // Clear history table and hide sections
+        allHistoryData = [];
+        histRows.innerHTML = '';
+        histEmpty.style.display = 'block';
+        histEmpty.textContent = 'No se ha buscado ningún paciente aún.';
+        historyPagination.style.display = 'none';
+        
+        // Hide sections until a new search
+        document.getElementById('altaHistorialSection').classList.add('hidden');
+        document.getElementById('subirDocumentosSection').classList.add('hidden');
+        document.getElementById('documentosPacienteSection').classList.add('hidden');
+      }
+      
+      return;
+    }
+    
+    histSearchTimeout = setTimeout(() => {
+      searchPatientsForHistory(fPaciente.value.trim());
+    }, 300);
+  });
+
+  // Close suggestions when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!fPaciente.contains(e.target) && !histPatientSuggestions.contains(e.target)) {
+      histPatientSuggestions.classList.add('hidden');
+    }
+  });
+
+  btnBuscarHist.addEventListener('click', searchAndLoadHistory);
   fEnfermedad.addEventListener('input', applyHistoryFilter);
-  fPaciente.addEventListener('input', applyHistoryFilter);
 
-  // ----------- Autocomplete de diagnóstico (maqueta) -----------
-  const DX_DEMO = [
-    "Gastritis aguda",
-    "Diabetes mellitus tipo 2",
-    "Hipertensión arterial",
-    "Asma persistente",
-    "Migraña crónica",
-    "Colitis nerviosa",
-    "Lumbalgia mecánica",
-    "Infección urinaria",
-    "Resfriado común",
-    "Amigdalitis aguda"
-  ];
-
+  // ----------- Autocomplete de diagnóstico -----------
   const dxInput = document.getElementById('f_enfermedad');
-  const dxBox   = document.getElementById('dxSuggestions');
+  const dxBox = document.getElementById('dxSuggestions');
+  let dxSearchTimeout = null;
+  let allDiagnoses = [];
+
+  // Load all diagnoses from the database on page load
+  async function loadAllDiagnoses() {
+    try {
+      const response = await fetch('/medico/api/diagnoses', {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to load diagnoses');
+
+      allDiagnoses = await response.json();
+    } catch (error) {
+      console.error('Error loading diagnoses:', error);
+      allDiagnoses = [];
+    }
+  }
+
+  // Call on page load
+  loadAllDiagnoses();
 
   function renderDxSuggestions(term) {
     dxBox.innerHTML = '';
@@ -512,23 +945,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const clean = term.trim().toLowerCase();
     let matches = [];
 
-    // Si no hay texto, mostrar todas las opciones
     if (!clean) {
-      matches = DX_DEMO;
+      matches = allDiagnoses.slice(0, 10); // Show first 10 when no search term
     } else {
-      matches = DX_DEMO.filter(dx =>
+      matches = allDiagnoses.filter(dx =>
         dx.toLowerCase().includes(clean)
       );
     }
 
     if (!matches.length) {
-      dxBox.classList.add('hidden');
+      if (allDiagnoses.length === 0) {
+        dxBox.innerHTML = '<div class="suggestion-item">Cargando diagnósticos...</div>';
+      } else {
+        dxBox.innerHTML = '<div class="suggestion-item">No se encontraron coincidencias</div>';
+      }
+      dxBox.classList.remove('hidden');
       return;
     }
 
     matches.forEach(dx => {
       const div = document.createElement('div');
-      div.className = 'dx-suggestion-item';
+      div.className = 'suggestion-item';
       div.textContent = dx;
       div.addEventListener('click', () => {
         dxInput.value = dx;
@@ -541,22 +978,21 @@ document.addEventListener('DOMContentLoaded', () => {
     dxBox.classList.remove('hidden');
   }
 
-  // Mostrar lista completa al enfocar o hacer click
+  // Show suggestions when focusing
   dxInput.addEventListener('focus', () => {
-    renderDxSuggestions('');
-  });
-
-  dxInput.addEventListener('click', () => {
-    renderDxSuggestions('');
-  });
-
-  // Filtrar mientras escribe
-  dxInput.addEventListener('input', () => {
     renderDxSuggestions(dxInput.value);
-    applyHistoryFilter();
   });
 
-  // Cerrar el cuadrito si hace click fuera
+  // Filter while typing with debounce
+  dxInput.addEventListener('input', () => {
+    clearTimeout(dxSearchTimeout);
+    dxSearchTimeout = setTimeout(() => {
+      renderDxSuggestions(dxInput.value);
+      applyHistoryFilter();
+    }, 300);
+  });
+
+  // Close suggestions when clicking outside
   document.addEventListener('click', (e) => {
     if (!dxBox.contains(e.target) && e.target !== dxInput) {
       dxBox.classList.add('hidden');
@@ -585,20 +1021,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openHistoryModal(btn) {
     spanFecha.textContent   = btn.dataset.fecha || '—';
-    spanPac.textContent     = btn.dataset.paciente || '—';
-    spanDx.textContent      = btn.dataset.dx || '—';
-    spanMotivo.textContent  = btn.dataset.motivo || '—';
-    spanAlerg.textContent   = btn.dataset.alergias || '—';
-    spanAnteced.textContent = btn.dataset.antecedentes || '—';
-    spanTemp.textContent    = btn.dataset.temp || '—';
-    spanPress.textContent   = btn.dataset.press || '—';
-    spanPulse.textContent   = btn.dataset.pulse || '—';
-    spanFR.textContent      = btn.dataset.fr || '—';
-    spanSpO2.textContent    = btn.dataset.spo2 || '—';
-    spanPeso.textContent    = btn.dataset.peso || '—';
-    spanAltura.textContent  = btn.dataset.altura || '—';
-    spanTrat.textContent    = btn.dataset.trat || '—';
-    spanDocs.textContent    = btn.dataset.docs || '—';
+    spanPac.textContent     = 'Consulta';
+    spanDx.textContent      = btn.dataset.tipo || '—';
+    spanMotivo.textContent  = btn.dataset.detalle || '—';
+    spanAlerg.textContent   = '—';
+    spanAnteced.textContent = '—';
+    spanTemp.textContent    = '—';
+    spanPress.textContent   = '—';
+    spanPulse.textContent   = '—';
+    spanFR.textContent      = '—';
+    spanSpO2.textContent    = '—';
+    spanPeso.textContent    = '—';
+    spanAltura.textContent  = '—';
+    spanTrat.textContent    = '—';
+    spanDocs.textContent    = btn.dataset.autor ? 'Autor: ' + btn.dataset.autor : '—';
 
     historyModal.classList.remove('hidden');
   }
@@ -633,8 +1069,253 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   docClear.addEventListener('click', () => {
+    docTipo.value = '';
+    docTitulo.value = '';
     fileInput.value = '';
     docEmpty.textContent = 'Sin archivos seleccionados.';
+  });
+
+  // ----------- Subir documentos form submission -----------
+  const docsForm = document.getElementById('docsForm');
+  const docTipo = document.getElementById('doc_tipo');
+  const docTitulo = document.getElementById('doc_titulo');
+
+  docsForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!currentPatientId) {
+      alert('Por favor seleccione un paciente primero');
+      return;
+    }
+
+    if (!fileInput.files.length) {
+      alert('Por favor seleccione al menos un archivo');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('patient_id', currentPatientId);
+    formData.append('doc_type', docTipo.value || 'Otro');
+    formData.append('title', docTitulo.value || 'Documento');
+
+    // Append all selected files
+    for (let i = 0; i < fileInput.files.length; i++) {
+      formData.append('files[]', fileInput.files[i]);
+    }
+
+    try {
+      const response = await fetch('/medico/api/upload-documentos', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload documents');
+      }
+
+      const result = await response.json();
+      alert('Documentos subidos exitosamente');
+
+      // Clear form
+      docTipo.value = '';
+      docTitulo.value = '';
+      fileInput.value = '';
+      docEmpty.textContent = 'Sin archivos seleccionados.';
+
+      // Reload documents list
+      await loadPatientDocuments(currentPatientId);
+
+    } catch (error) {
+      console.error('Error uploading documents:', error);
+      alert('Error al subir documentos: ' + error.message);
+    }
+  });
+
+  // ----------- Alta de historial clear button -----------
+  const altaClearBtn = document.getElementById('altaClearBtn');
+  
+  altaClearBtn.addEventListener('click', () => {
+    // Clear only the specified fields
+    document.getElementById('ah_motivo').value = '';
+    document.getElementById('ah_alergias').value = '';
+    document.getElementById('ah_antecedentes').value = '';
+    document.getElementById('ah_diagnostico').value = '';
+  });
+
+  // ----------- Alta de historial patient search -----------
+  const ahPacienteInput = document.getElementById('ah_paciente');
+  const ahPatientSuggestions = document.getElementById('ah-patient-suggestions');
+  let ahSearchTimeout = null;
+
+  async function searchPatientsForAlta(query) {
+    if (query.length < 2) {
+      ahPatientSuggestions.classList.add('hidden');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/medico/api/patients?query=${encodeURIComponent(query)}`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to search patients');
+
+      const patients = await response.json();
+      displayAltaPatientSuggestions(patients);
+
+    } catch (error) {
+      console.error('Error searching patients:', error);
+    }
+  }
+
+  function displayAltaPatientSuggestions(patients) {
+    ahPatientSuggestions.innerHTML = '';
+
+    if (patients.length === 0) {
+      ahPatientSuggestions.innerHTML = '<div class="suggestion-item">No se encontraron pacientes</div>';
+    } else {
+      patients.slice(0, 5).forEach(patient => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.innerHTML = `
+          <strong>${patient.name}</strong><br>
+          <small>Edad: ${patient.age || 'N/A'} | Género: ${patient.gender || 'N/A'}</small>
+        `;
+        div.addEventListener('click', () => selectAltaPatient(patient));
+        ahPatientSuggestions.appendChild(div);
+      });
+    }
+
+    ahPatientSuggestions.classList.remove('hidden');
+  }
+
+  function selectAltaPatient(patient) {
+    ahPacienteInput.value = patient.name;
+    currentPatientId = patient.id;
+    ahPatientSuggestions.classList.add('hidden');
+  }
+
+  ahPacienteInput.addEventListener('input', () => {
+    clearTimeout(ahSearchTimeout);
+    ahSearchTimeout = setTimeout(() => {
+      searchPatientsForAlta(ahPacienteInput.value.trim());
+    }, 300);
+  });
+
+  // Hide suggestions when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!ahPacienteInput.contains(e.target) && !ahPatientSuggestions.contains(e.target)) {
+      ahPatientSuggestions.classList.add('hidden');
+    }
+  });
+
+  // ----------- Alta de historial form submission -----------
+  const altaHistForm = document.getElementById('altaHistForm');
+  
+  altaHistForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const paciente = document.getElementById('ah_paciente').value.trim();
+    const fecha = document.getElementById('ah_fecha').value;
+    const motivo = document.getElementById('ah_motivo').value.trim();
+    const alergias = document.getElementById('ah_alergias').value.trim();
+    const antecedentes = document.getElementById('ah_antecedentes').value.trim();
+    const diagnostico = document.getElementById('ah_diagnostico').value.trim();
+    
+    // Vital signs
+    const temp = document.getElementById('ah_temp').value;
+    const press = document.getElementById('ah_press').value;
+    const pulse = document.getElementById('ah_pulse').value;
+    const resp = document.getElementById('ah_resp').value;
+    const spo2 = document.getElementById('ah_spo2').value;
+    const peso = document.getElementById('ah_peso').value;
+    const altura = document.getElementById('ah_altura').value;
+    
+    if (!currentPatientId) {
+      alert('Por favor busque y seleccione un paciente primero usando el buscador de historial');
+      return;
+    }
+    
+    if (!fecha) {
+      alert('Por favor seleccione una fecha');
+      return;
+    }
+    
+    if (!diagnostico) {
+      alert('El diagnóstico es obligatorio');
+      return;
+    }
+    
+    // Parse blood pressure
+    let sbp = null, dbp = null;
+    if (press) {
+      const bpMatch = press.match(/(\d{2,3})\/(\d{2,3})/);
+      if (bpMatch) {
+        sbp = parseInt(bpMatch[1]);
+        dbp = parseInt(bpMatch[2]);
+      }
+    }
+    
+    const payload = {
+      patient_id: currentPatientId,
+      encounter_dt: fecha,
+      reason: motivo || 'Consulta médica',
+      diagnosis: diagnostico,
+      allergies: alergias || null,
+      antecedentes: antecedentes || null,
+      vitals: {
+        temp: temp ? parseFloat(temp) : null,
+        sbp: sbp,
+        dbp: dbp,
+        hr: pulse ? parseInt(pulse) : null,
+        rr: resp ? parseInt(resp) : null,
+        spo2: spo2 ? parseInt(spo2) : null,
+        weight: peso ? parseFloat(peso) : null,
+        height: altura ? parseFloat(altura) : null
+      }
+    };
+    
+    try {
+      const response = await fetch('/medico/api/alta-historial', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al guardar');
+      }
+      
+      const result = await response.json();
+      alert('✅ Historial médico guardado exitosamente');
+      
+      // Clear form
+      altaHistForm.reset();
+      
+      // Reload history if we have a patient selected
+      if (currentPatientId) {
+        await loadPatientHistory(currentPatientId);
+      }
+      
+    } catch (error) {
+      console.error('Error saving medical history:', error);
+      alert('❌ Error al guardar el historial: ' + error.message);
+    }
   });
 });
 </script>
